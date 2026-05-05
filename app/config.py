@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     bot_username: str | None = Field(default=None, alias="BOT_USERNAME")
     database_url: str = Field(alias="DATABASE_URL")
     bot_storage_path: Path = Field(default=Path("./data"), alias="BOT_STORAGE_PATH")
+    healthcheck_host: str = Field(default="0.0.0.0", alias="HEALTHCHECK_HOST")
+    healthcheck_port: int = Field(default=8080, alias="PORT")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -23,4 +25,3 @@ def get_settings() -> Settings:
     settings = Settings()
     settings.bot_storage_path.mkdir(parents=True, exist_ok=True)
     return settings
-
