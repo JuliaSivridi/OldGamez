@@ -12,10 +12,12 @@ def games_keyboard(lang: dict[str, str]) -> ReplyKeyboardMarkup:
 
 
 def game_menu_keyboard(lang: dict[str, str], has_size: bool = False) -> ReplyKeyboardMarkup:
-    rows = [[KeyboardButton(text=lang["menu-new"])]]
+    rows = [
+        [KeyboardButton(text=lang["menu-new"]), KeyboardButton(text=lang["menu-stat"])],
+    ]
     if has_size:
-        rows.append([KeyboardButton(text=lang["menu-size"])])
-    rows.append([KeyboardButton(text=lang["menu-stat"])])
-    rows.append([KeyboardButton(text=lang["menu-hlp"])])
+        rows.append([KeyboardButton(text=lang["menu-size"]), KeyboardButton(text=lang["menu-hlp"])])
+    else:
+        rows.append([KeyboardButton(text=lang["menu-hlp"])])
     rows.append([KeyboardButton(text=lang["main-back"])])
     return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)

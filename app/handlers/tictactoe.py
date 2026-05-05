@@ -151,25 +151,9 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"tictactoe_size": size, "current_game": game.code})
-
-    state = game.new_game_state(board_size=size)
-    session = await create_solo_session(
-        user_id=user.id,
-        telegram_chat_id=callback.message.chat.id,
-        game_code=game.code,
-        initial_state=state,
-    )
-
-    state = session.state
     await callback.message.answer(
-        render_status_text(state, lang),
-        reply_markup=board_keyboard(
-            session_id=session.id,
-            board=state["board"],
-            board_size=state["board_size"],
-            is_active=state["current_turn"] == "user",
-            highlight=[state["last_move"]] if state.get("last_move") else [],
-        ),
+        lang["size-saved"],
+        reply_markup=game_menu_keyboard(lang, has_size=True),
     )
 
 
