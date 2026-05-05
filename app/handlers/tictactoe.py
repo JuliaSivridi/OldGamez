@@ -2,6 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
+from app.filters.current_game import CurrentGameFilter
 from app.games.tictactoe import game
 from app.games.tictactoe.keyboards import board_keyboard, size_keyboard
 from app.i18n.translator import get_language_pack
@@ -83,62 +84,35 @@ async def choose_tictactoe_from_menu(message: Message) -> None:
     await cmd_tictactoe(message)
 
 
-@router.message(F.text.in_({"🆕 New game", "🆕 Новая игра"}))
+@router.message(CurrentGameFilter(game.code), F.text.in_({"🆕 New game", "🆕 Новая игра"}))
 async def menu_new_game(message: Message) -> None:
     if message.from_user is None:
         return
 
     user = await upsert_user(message.from_user)
-    current_game = get_user_setting(user, "current_game")
     lang = get_language_pack(user.language_code)
-    if current_game != game.code:
-        await message.answer(lang["bot-choose-game-first"])
-        return
-
     size = int((user.settings or {}).get("tictactoe_size", 3))
     await start_tictactoe_game(message, user, lang, size)
 
 
-@router.message(F.text.in_({"🔢 Size", "🔢 Размер"}))
+@router.message(CurrentGameFilter(game.code), F.text.in_({"🔢 Size", "🔢 Размер"}))
 async def menu_tictactoe_size(message: Message) -> None:
     if message.from_user is None:
         return
 
     user = await upsert_user(message.from_user)
-    current_game = get_user_setting(user, "current_game")
     lang = get_language_pack(user.language_code)
-    if current_game != game.code:
-        await message.answer(lang["bot-choose-game-first"])
-        return
-
     await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
 
 
-@router.message(F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
+@router.message(CurrentGameFilter(game.code), F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
 async def menu_tictactoe_help(message: Message) -> None:
     if message.from_user is None:
         return
 
     user = await upsert_user(message.from_user)
-    current_game = get_user_setting(user, "current_game")
     lang = get_language_pack(user.language_code)
-    if current_game != game.code:
-        await message.answer(lang["bot-choose-game-first"])
-        return
-
     await message.answer(lang["help-xo"], parse_mode="Markdown")
-
-
-@router.message(F.text.in_({"📊 Statistics", "📊 Статистика"}))
-async def menu_tictactoe_stats_from_context(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
-    current_game = get_user_setting(user, "current_game")
-    if current_game != game.code:
-        return
-    await cmd_tictactoe_stats(message)
 
 
 @router.callback_query(F.data.startswith("ttt:size:"))

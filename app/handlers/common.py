@@ -12,6 +12,7 @@ from app.services.users import get_user_setting, update_user_language, update_us
 router = Router()
 
 GAME_CODE_TICTACTOE = "tic_tac_toe"
+GAME_CODE_MINESWEEPER = "minesweeper"
 
 
 def format_stat_message(lang: dict[str, str], played: int, wins: int, losses: int, draws: int) -> str:
@@ -35,6 +36,12 @@ async def send_current_game_menu(message: Message, user) -> None:
         await message.answer(
             lang["menu-xo"],
             reply_markup=game_menu_keyboard(lang, has_size=True),
+        )
+        return
+    if current_game == GAME_CODE_MINESWEEPER:
+        await message.answer(
+            lang["menu-mines"],
+            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
         )
         return
     await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
@@ -64,6 +71,9 @@ async def cmd_help(message: Message) -> None:
     current_game = get_current_game(user)
     if current_game == GAME_CODE_TICTACTOE:
         await message.answer(lang["help-xo"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_MINESWEEPER:
+        await message.answer(lang["help-mines"], parse_mode="Markdown")
         return
     await message.answer(lang["bot-choose-game-first"])
 
@@ -128,7 +138,25 @@ async def cmd_stats(message: Message) -> None:
 
     stat = await get_game_stat(user.id, current_game)
     if stat is None:
+        if current_game == GAME_CODE_MINESWEEPER:
+            await message.answer(
+                lang["stat-ttl"]
+                + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
+                + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
+                + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`",
+                parse_mode="Markdown",
+            )
+            return
         await message.answer(format_stat_message(lang, 0, 0, 0, 0), parse_mode="Markdown")
         return
 
+    if current_game == GAME_CODE_MINESWEEPER:
+        await message.answer(
+            lang["stat-ttl"]
+            + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
+            + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
+            + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`",
+            parse_mode="Markdown",
+        )
+        return
     await message.answer(format_stat_message(lang, stat.played, stat.wins, stat.losses, stat.draws), parse_mode="Markdown")
