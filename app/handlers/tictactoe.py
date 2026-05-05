@@ -42,6 +42,27 @@ def render_status_text(state: dict, lang: dict[str, str]) -> str:
     )
 
 
+async def start_tictactoe_game(message: Message, user, lang: dict[str, str], size: int) -> None:
+    state = game.new_game_state(board_size=size)
+    session = await create_solo_session(
+        user_id=user.id,
+        telegram_chat_id=message.chat.id,
+        game_code=game.code,
+        initial_state=state,
+    )
+    state = session.state
+    await message.answer(
+        render_status_text(state, lang),
+        reply_markup=board_keyboard(
+            session_id=session.id,
+            board=state["board"],
+            board_size=state["board_size"],
+            is_active=state["current_turn"] == "user",
+            highlight=[state["last_move"]] if state.get("last_move") else [],
+        ),
+    )
+
+
 @router.message(Command("tictactoe"))
 @router.message(Command("xo"))
 async def cmd_tictactoe(message: Message) -> None:
@@ -51,7 +72,6 @@ async def cmd_tictactoe(message: Message) -> None:
     user = await upsert_user(message.from_user)
     await update_user_settings(user.id, {"current_game": game.code})
     lang = get_language_pack(user.language_code)
-    preferred_size = int((user.settings or {}).get("tictactoe_size", 3))
     await message.answer(
         lang["menu-xo"],
         reply_markup=game_menu_keyboard(lang, has_size=True),
@@ -75,12 +95,23 @@ async def menu_new_game(message: Message) -> None:
         await message.answer(lang["bot-choose-game-first"])
         return
 
-    await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
+    size = int((user.settings or {}).get("tictactoe_size", 3))
+    await start_tictactoe_game(message, user, lang, size)
 
 
 @router.message(F.text.in_({"🔢 Size", "🔢 Размер"}))
 async def menu_tictactoe_size(message: Message) -> None:
-    await menu_new_game(message)
+    if message.from_user is None:
+        return
+
+    user = await upsert_user(message.from_user)
+    current_game = get_user_setting(user, "current_game")
+    lang = get_language_pack(user.language_code)
+    if current_game != game.code:
+        await message.answer(lang["bot-choose-game-first"])
+        return
+
+    await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
 
 
 @router.message(F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
