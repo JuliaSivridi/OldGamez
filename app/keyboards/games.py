@@ -5,6 +5,7 @@ def games_keyboard(lang: dict[str, str]) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=lang["menu-xo"]), KeyboardButton(text=lang["menu-mines"])],
+            [KeyboardButton(text=lang["menu-15"]), KeyboardButton(text=lang["menu-four"])],
             [KeyboardButton(text=lang["main-back"])],
         ],
         resize_keyboard=True,

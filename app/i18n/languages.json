@@ -50,6 +50,8 @@
 
     "menu-xo": "❌⭕️ TicTacToe",
     "menu-mines": "💣 Minesweeper",
+    "menu-15": "🧩 N-puzzle",
+    "menu-four": "🔴🟡 4 in row",
     "bot-pick-game": "\n\nChoose a game from the menu.",
     "bot-choose-game": "🕹 Choose a game",
     "bot-choose-game-first": "First choose a game.",
@@ -110,6 +112,8 @@
 
     "menu-xo": "❌⭕️ Крестики-нолики",
     "menu-mines": "💣 Сапёр",
+    "menu-15": "🧩 Пятнашки",
+    "menu-four": "🔴🟡 Четыре в ряд",
     "bot-pick-game": "\n\nВыберите игру в меню.",
     "bot-choose-game": "🕹 Выберите игру",
     "bot-choose-game-first": "Сначала выберите игру.",

@@ -13,6 +13,8 @@ router = Router()
 
 GAME_CODE_TICTACTOE = "tic_tac_toe"
 GAME_CODE_MINESWEEPER = "minesweeper"
+GAME_CODE_NPUZZLE = "npuzzle"
+GAME_CODE_FOUR = "four_in_row"
 
 
 def format_stat_message(lang: dict[str, str], played: int, wins: int, losses: int, draws: int) -> str:
@@ -42,6 +44,18 @@ async def send_current_game_menu(message: Message, user) -> None:
         await message.answer(
             lang["menu-mines"],
             reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+        )
+        return
+    if current_game == GAME_CODE_NPUZZLE:
+        await message.answer(
+            lang["menu-15"],
+            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"),
+        )
+        return
+    if current_game == GAME_CODE_FOUR:
+        await message.answer(
+            lang["menu-four"],
+            reply_markup=game_menu_keyboard(lang),
         )
         return
     await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
@@ -74,6 +88,12 @@ async def cmd_help(message: Message) -> None:
         return
     if current_game == GAME_CODE_MINESWEEPER:
         await message.answer(lang["help-mines"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_NPUZZLE:
+        await message.answer(lang["help-npuzzle"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_FOUR:
+        await message.answer(lang["help-four"], parse_mode="Markdown")
         return
     await message.answer(lang["bot-choose-game-first"])
 
@@ -146,6 +166,12 @@ async def cmd_stats(message: Message) -> None:
                 parse_mode="Markdown",
             )
             return
+        if current_game == GAME_CODE_NPUZZLE:
+            await message.answer(
+                lang["stat-ttl"] + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`",
+                parse_mode="Markdown",
+            )
+            return
         await message.answer(format_stat_message(lang, 0, 0, 0, 0), parse_mode="Markdown")
         return
 
@@ -155,6 +181,12 @@ async def cmd_stats(message: Message) -> None:
             + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
             + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
             + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`",
+            parse_mode="Markdown",
+        )
+        return
+    if current_game == GAME_CODE_NPUZZLE:
+        await message.answer(
+            lang["stat-ttl"] + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`",
             parse_mode="Markdown",
         )
         return
@@ -174,6 +206,10 @@ async def cmd_stats(message: Message) -> None:
             "🔢 Размер",
             "🧐 Difficulty",
             "🧐 Сложность",
+            "🧩 N-puzzle",
+            "🧩 Пятнашки",
+            "🔴🟡 4 in row",
+            "🔴🟡 Четыре в ряд",
         }
     )
 )
