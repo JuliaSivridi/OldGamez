@@ -4,10 +4,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app.games.tictactoe.game import EMPTY_CELL, SYMBOLS
 
 
-def size_keyboard() -> InlineKeyboardMarkup:
+def size_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for size in range(3, 9):
-        builder.button(text=f"{size}x{size}", callback_data=f"ttt:size:{size}")
+        builder.button(text=lang[str(size)], callback_data=f"ttt:size:{size}")
     builder.adjust(3)
     return builder.as_markup()
 

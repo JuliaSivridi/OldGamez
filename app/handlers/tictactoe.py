@@ -4,10 +4,10 @@ from aiogram.types import CallbackQuery, Message
 
 from app.games.tictactoe import game
 from app.games.tictactoe.keyboards import board_keyboard, size_keyboard
+from app.i18n.translator import get_language_pack
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    get_active_solo_session,
     get_game_stat,
     get_session_by_id,
     record_game_result,
@@ -18,25 +18,26 @@ from app.services.users import update_user_settings, upsert_user
 router = Router()
 
 
-def render_status_text(state: dict) -> str:
+def render_status_text(state: dict, lang: dict[str, str]) -> str:
     board_size = state["board_size"]
     win_length = state["win_length"]
-    user_symbol = state["user_symbol"].upper()
+    user_symbol = "❌" if state["user_symbol"] == "x" else "⭕"
+    bot_symbol = "⭕" if state["user_symbol"] == "x" else "❌"
 
     if state["status"] == "finished":
         result = state.get("result")
         if result == "win":
-            return "Ты победила!\n\nИгра завершена."
+            return lang["game-win"]
         if result == "loss":
-            return "Бот победил.\n\nИгра завершена."
-        return "Ничья.\n\nИгра завершена."
+            return lang["game-lose"]
+        return lang["game-draw"]
 
-    turn_line = "Твой ход." if state["current_turn"] == "user" else "Ход бота."
+    turn_line = lang["turn-user"] if state["current_turn"] == "user" else lang["turn-comp"]
+    current_symbol = user_symbol if state["current_turn"] == "user" else bot_symbol
     return (
-        f"Tic-Tac-Toe {board_size}x{board_size}\n"
-        f"Для победы нужно собрать {win_length}.\n\n"
-        f"Ты играешь за {user_symbol}.\n"
-        f"{turn_line}"
+        f"{lang['game-xo']}{board_size}x{board_size}"
+        f"{lang['xo-win-need']}{win_length}\n\n"
+        f"{current_symbol} {turn_line}"
     )
 
 
@@ -47,14 +48,15 @@ async def cmd_tictactoe(message: Message) -> None:
         return
 
     user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
     preferred_size = int((user.settings or {}).get("tictactoe_size", 3))
     await message.answer(
-        "Выбирай размер поля для новой игры.",
-        reply_markup=size_keyboard(),
+        lang["chus-size"],
+        reply_markup=size_keyboard(lang),
     )
     if preferred_size != 3:
         await message.answer(
-            f"Сейчас у тебя сохранен размер по умолчанию: {preferred_size}x{preferred_size}."
+            lang["size-saved"] + f" {preferred_size}x{preferred_size}"
         )
 
 
@@ -66,6 +68,7 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     await callback.answer()
     size = int(callback.data.split(":")[2])
     user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"tictactoe_size": size})
 
     state = game.new_game_state(board_size=size)
@@ -78,7 +81,7 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
 
     state = session.state
     await callback.message.answer(
-        render_status_text(state),
+        render_status_text(state, lang),
         reply_markup=board_keyboard(
             session_id=session.id,
             board=state["board"],
@@ -104,20 +107,21 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     position = int(position_text)
 
     user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
     if session is None or session.created_by_user_id != user.id:
-        await callback.answer("Эта игра тебе не принадлежит.", show_alert=True)
+        await callback.answer(lang["ttt-not-yours"], show_alert=True)
         return
     if session.status.value != "active":
-        await callback.answer("Эта игра уже завершена.", show_alert=True)
+        await callback.answer(lang["ttt-already-finished"], show_alert=True)
         return
 
     state = dict(session.state)
     if state["current_turn"] != "user":
-        await callback.answer("Сейчас не твой ход.", show_alert=True)
+        await callback.answer(lang["ttt-not-your-turn"], show_alert=True)
         return
     if state["board"][position] != ".":
-        await callback.answer("Эта клетка уже занята.", show_alert=True)
+        await callback.answer(lang["ttt-cell-busy"], show_alert=True)
         return
 
     user_turn = game.process_turn(
@@ -136,7 +140,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         await finish_session(session.id, state, winner_user_id=user.id if user_turn.state == "win" else None)
         await record_game_result(user.id, game.code, user_turn.state or "draw")
         await callback.message.edit_text(
-            render_status_text(state),
+            render_status_text(state, lang),
             reply_markup=board_keyboard(
                 session_id=session.id,
                 board=state["board"],
@@ -172,7 +176,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         await finish_session(session.id, state, winner_user_id=None)
         await record_game_result(user.id, game.code, bot_turn.state or "draw")
         await callback.message.edit_text(
-            render_status_text(state),
+            render_status_text(state, lang),
             reply_markup=board_keyboard(
                 session_id=session.id,
                 board=state["board"],
@@ -187,7 +191,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     state["current_turn"] = "user"
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
-        render_status_text(state),
+        render_status_text(state, lang),
         reply_markup=board_keyboard(
             session_id=session.id,
             board=state["board"],
@@ -205,20 +209,29 @@ async def cmd_tictactoe_stats(message: Message) -> None:
         return
 
     user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
     stat = await get_game_stat(user.id, game.code)
     if stat is None:
-        await message.answer("По крестикам-ноликам пока нет сыгранных партий.")
+        await message.answer(
+            lang["stat-ttl"]
+            + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
+            + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
+            + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`"
+            + f"`{lang['stat-draw']}{str(0).rjust(21 - len(lang['stat-draw']))}`",
+            parse_mode="Markdown",
+        )
         return
 
     await message.answer(
-        "Статистика Tic-Tac-Toe:\n"
-        f"Сыграно: {stat.played}\n"
-        f"Побед: {stat.wins}\n"
-        f"Поражений: {stat.losses}\n"
-        f"Ничьих: {stat.draws}"
+        lang["stat-ttl"]
+        + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
+        + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
+        + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`"
+        + f"`{lang['stat-draw']}{str(stat.draws).rjust(21 - len(lang['stat-draw']))}`",
+        parse_mode="Markdown",
     )
 
 
-@router.message(F.text == "Крестики-нолики")
+@router.message(F.text.in_({"❌⭕️ TicTacToe", "❌⭕️ Крестики-нолики"}))
 async def menu_tictactoe(message: Message) -> None:
     await cmd_tictactoe(message)

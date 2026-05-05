@@ -8,8 +8,8 @@ PLAYER_X = "x"
 PLAYER_O = "o"
 EMPTY_CELL = "."
 SYMBOLS = {
-    PLAYER_X: "X",
-    PLAYER_O: "O",
+    PLAYER_X: "❌",
+    PLAYER_O: "⭕️",
     EMPTY_CELL: " ",
 }
 

@@ -2,6 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
+from app.i18n.translator import get_language_pack
 from app.keyboards.main_menu import main_menu_keyboard
 from app.services.sessions import get_game_stat
 from app.services.users import upsert_user
@@ -14,52 +15,61 @@ async def cmd_start(message: Message) -> None:
     if message.from_user is None:
         return
 
-    await upsert_user(message.from_user)
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
     text = (
-        "Привет! Это единый бот для мини-игр.\n\n"
-        "Пока мы подняли каркас проекта. Дальше сюда можно добавлять игры как отдельные модули."
+        f"{lang['hi1']}{message.from_user.first_name or ''}{lang['hi2']}"
+        f"{lang['cmd-new']}{lang['cmd-hl']}"
     )
-    await message.answer(text, reply_markup=main_menu_keyboard())
+    await message.answer(text, reply_markup=main_menu_keyboard(lang))
 
 
 @router.message(Command("help"))
 async def cmd_help(message: Message) -> None:
-    text = (
-        "/start - открыть бота\n"
-        "/games - список игр\n"
-        "/tictactoe - начать крестики-нолики\n"
-        "/tictactoe_stats - статистика по крестикам-ноликам\n"
-        "/stats - общий раздел статистики"
-    )
-    await message.answer(text)
+    if message.from_user is None:
+        return
+
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["help-xo"], parse_mode="Markdown")
 
 
 @router.message(Command("games"))
-@router.message(F.text == "Игры")
+@router.message(F.text.in_({"🕹 Games", "🕹 Игры"}))
 async def cmd_games(message: Message) -> None:
-    await message.answer(
-        "Сейчас уже подключена первая игра:\n"
-        "- Крестики-нолики\n\n"
-        "Команда: /tictactoe"
-    )
+    if message.from_user is None:
+        return
+
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["game-links"])
 
 
 @router.message(Command("stats"))
-@router.message(F.text == "Статистика")
+@router.message(F.text.in_({"📊 Statistics", "📊 Статистика"}))
 async def cmd_stats(message: Message) -> None:
     if message.from_user is None:
         return
 
     user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
     stat = await get_game_stat(user.id, "tic_tac_toe")
     if stat is None:
-        await message.answer("Пока нет общей статистики. Начни с /tictactoe")
+        await message.answer(
+            lang["stat-ttl"]
+            + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
+            + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
+            + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`"
+            + f"`{lang['stat-draw']}{str(0).rjust(21 - len(lang['stat-draw']))}`",
+            parse_mode="Markdown",
+        )
         return
 
     await message.answer(
-        "Общая статистика:\n"
-        f"Сыграно: {stat.played}\n"
-        f"Побед: {stat.wins}\n"
-        f"Поражений: {stat.losses}\n"
-        f"Ничьих: {stat.draws}"
+        lang["stat-ttl"]
+        + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
+        + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
+        + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`"
+        + f"`{lang['stat-draw']}{str(stat.draws).rjust(21 - len(lang['stat-draw']))}`",
+        parse_mode="Markdown",
     )
