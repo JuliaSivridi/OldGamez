@@ -31,3 +31,18 @@ async def upsert_user(tg_user: TgUser) -> User:
         await session.refresh(user)
         return user
 
+
+async def update_user_settings(user_id: int, settings_patch: dict) -> User | None:
+    async with SessionLocal() as session:
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            return None
+
+        current_settings = dict(user.settings or {})
+        current_settings.update(settings_patch)
+        user.settings = current_settings
+
+        await session.commit()
+        await session.refresh(user)
+        return user

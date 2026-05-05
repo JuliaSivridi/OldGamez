@@ -3,7 +3,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from app.keyboards.main_menu import main_menu_keyboard
-from app.services.sessions import create_solo_session
+from app.services.sessions import get_game_stat
 from app.services.users import upsert_user
 
 router = Router()
@@ -27,8 +27,9 @@ async def cmd_help(message: Message) -> None:
     text = (
         "/start - открыть бота\n"
         "/games - список игр\n"
-        "/new_tictactoe - создать тестовую игровую сессию\n"
-        "/stats - мои будущие топы и статистика"
+        "/tictactoe - начать крестики-нолики\n"
+        "/tictactoe_stats - статистика по крестикам-ноликам\n"
+        "/stats - общий раздел статистики"
     )
     await message.answer(text)
 
@@ -37,38 +38,28 @@ async def cmd_help(message: Message) -> None:
 @router.message(F.text == "Игры")
 async def cmd_games(message: Message) -> None:
     await message.answer(
-        "Сейчас в каркасе зарегистрирована первая игра-заглушка:\n"
-        "- tic_tac_toe\n\n"
-        "Следом сюда можно перенести твои реальные правила и клавиатуры."
+        "Сейчас уже подключена первая игра:\n"
+        "- Крестики-нолики\n\n"
+        "Команда: /tictactoe"
     )
 
 
 @router.message(Command("stats"))
 @router.message(F.text == "Статистика")
 async def cmd_stats(message: Message) -> None:
-    await message.answer(
-        "Раздел статистики пока не реализован, но структура БД для нее уже добавлена."
-    )
-
-
-@router.message(Command("new_tictactoe"))
-async def cmd_new_tictactoe(message: Message) -> None:
     if message.from_user is None:
         return
 
     user = await upsert_user(message.from_user)
-    session = await create_solo_session(
-        user_id=user.id,
-        telegram_chat_id=message.chat.id,
-        game_code="tic_tac_toe",
-        initial_state={
-            "board_size": 3,
-            "board": ["", "", "", "", "", "", "", "", ""],
-            "status": "created",
-        },
-    )
-    await message.answer(
-        f"Создана тестовая сессия #{session.id} для игры {session.game_code}.\n"
-        "Это уже новая модель: состояние хранится у игровой сессии, а не просто затирает прошлую таблицу."
-    )
+    stat = await get_game_stat(user.id, "tic_tac_toe")
+    if stat is None:
+        await message.answer("Пока нет общей статистики. Начни с /tictactoe")
+        return
 
+    await message.answer(
+        "Общая статистика:\n"
+        f"Сыграно: {stat.played}\n"
+        f"Побед: {stat.wins}\n"
+        f"Поражений: {stat.losses}\n"
+        f"Ничьих: {stat.draws}"
+    )
