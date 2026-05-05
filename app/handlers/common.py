@@ -124,7 +124,6 @@ async def back_to_main_menu(message: Message) -> None:
 
 
 @router.message(Command("stats"))
-@router.message(F.text.in_({"📊 Statistics", "📊 Статистика"}))
 async def cmd_stats(message: Message) -> None:
     if message.from_user is None:
         return
@@ -160,3 +159,31 @@ async def cmd_stats(message: Message) -> None:
         )
         return
     await message.answer(format_stat_message(lang, stat.played, stat.wins, stat.losses, stat.draws), parse_mode="Markdown")
+
+
+@router.message(
+    F.text.in_(
+        {
+            "🆕 New game",
+            "🆕 Новая игра",
+            "📊 Statistics",
+            "📊 Статистика",
+            "ℹ️ Help",
+            "ℹ️ Помощь",
+            "🔢 Size",
+            "🔢 Размер",
+            "🧐 Difficulty",
+            "🧐 Сложность",
+        }
+    )
+)
+async def game_button_without_context(message: Message) -> None:
+    if message.from_user is None:
+        return
+
+    user = await upsert_user(message.from_user)
+    if get_current_game(user) is not None:
+        return
+
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["bot-choose-game-first"])

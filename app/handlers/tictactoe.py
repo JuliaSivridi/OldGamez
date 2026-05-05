@@ -115,6 +115,11 @@ async def menu_tictactoe_help(message: Message) -> None:
     await message.answer(lang["help-xo"], parse_mode="Markdown")
 
 
+@router.message(CurrentGameFilter(game.code), F.text.in_({"📊 Statistics", "📊 Статистика"}))
+async def menu_tictactoe_stats_from_context(message: Message) -> None:
+    await cmd_tictactoe_stats(message)
+
+
 @router.callback_query(F.data.startswith("ttt:size:"))
 async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:

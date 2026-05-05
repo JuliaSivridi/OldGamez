@@ -99,6 +99,11 @@ async def menu_help(message: Message) -> None:
     await message.answer(lang["help-mines"], parse_mode="Markdown")
 
 
+@router.message(CurrentGameFilter(game.code), F.text.in_({"📊 Statistics", "📊 Статистика"}))
+async def menu_stats(message: Message) -> None:
+    await cmd_minesweeper_stats(message)
+
+
 @router.callback_query(F.data == "msw:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
