@@ -15,6 +15,11 @@ GAME_CODE_TICTACTOE = "tic_tac_toe"
 GAME_CODE_MINESWEEPER = "minesweeper"
 GAME_CODE_NPUZZLE = "npuzzle"
 GAME_CODE_FOUR = "four_in_row"
+GAME_CODE_BATTLESHIP = "battleship"
+GAME_CODE_BLACKJACK = "blackjack"
+GAME_CODE_RPS = "ropascis"
+GAME_CODE_HANGMAN = "hangman"
+GAME_CODE_RANDOM = "random"
 
 
 def format_stat_message(lang: dict[str, str], played: int, wins: int, losses: int, draws: int) -> str:
@@ -58,6 +63,38 @@ async def send_current_game_menu(message: Message, user) -> None:
             reply_markup=game_menu_keyboard(lang),
         )
         return
+    if current_game == GAME_CODE_BATTLESHIP:
+        await message.answer(
+            lang["game-sea"],
+            reply_markup=game_menu_keyboard(lang),
+        )
+        return
+    if current_game == GAME_CODE_BLACKJACK:
+        await message.answer(
+            lang["game-bj"],
+            reply_markup=game_menu_keyboard(lang),
+        )
+        return
+    if current_game == GAME_CODE_RPS:
+        from app.games.ropascis.keyboards import game_keyboard
+        await message.answer(
+            lang["game-rsp"],
+            reply_markup=game_keyboard(lang),
+        )
+        return
+    if current_game == GAME_CODE_HANGMAN:
+        await message.answer(
+            lang["game-hang"],
+            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+        )
+        return
+    if current_game == GAME_CODE_RANDOM:
+        from app.games.randomfun.keyboards import game_keyboard
+        await message.answer(
+            lang["game-rand"],
+            reply_markup=game_keyboard(lang),
+        )
+        return
     await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
 
 
@@ -94,6 +131,21 @@ async def cmd_help(message: Message) -> None:
         return
     if current_game == GAME_CODE_FOUR:
         await message.answer(lang["help-four"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_BATTLESHIP:
+        await message.answer(lang["help-sea"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_BLACKJACK:
+        await message.answer(lang["help-bj"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_RPS:
+        await message.answer(lang["help-rsp"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_HANGMAN:
+        await message.answer(lang["help-hang"], parse_mode="Markdown")
+        return
+    if current_game == GAME_CODE_RANDOM:
+        await message.answer(lang["help"], parse_mode="Markdown")
         return
     await message.answer(lang["bot-choose-game-first"])
 
@@ -132,7 +184,7 @@ async def choose_language(message: Message) -> None:
     await message.answer(lang["lang-ok"], reply_markup=main_menu_keyboard(lang))
 
 
-@router.message(F.text.in_({"🔙 Main menu", "🔙 Главное меню"}))
+@router.message(F.text.in_({"⬅️ Back", "⬅️ Назад"}))
 async def back_to_main_menu(message: Message) -> None:
     if message.from_user is None:
         return
@@ -172,6 +224,24 @@ async def cmd_stats(message: Message) -> None:
                 parse_mode="Markdown",
             )
             return
+        if current_game == GAME_CODE_BATTLESHIP:
+            await message.answer(
+                lang["stat-ttl"]
+                + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
+                + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
+                + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`",
+                parse_mode="Markdown",
+            )
+            return
+        if current_game == GAME_CODE_HANGMAN:
+            await message.answer(
+                lang["stat-ttl"]
+                + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
+                + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
+                + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`",
+                parse_mode="Markdown",
+            )
+            return
         await message.answer(format_stat_message(lang, 0, 0, 0, 0), parse_mode="Markdown")
         return
 
@@ -187,6 +257,24 @@ async def cmd_stats(message: Message) -> None:
     if current_game == GAME_CODE_NPUZZLE:
         await message.answer(
             lang["stat-ttl"] + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`",
+            parse_mode="Markdown",
+        )
+        return
+    if current_game == GAME_CODE_BATTLESHIP:
+        await message.answer(
+            lang["stat-ttl"]
+            + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
+            + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
+            + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`",
+            parse_mode="Markdown",
+        )
+        return
+    if current_game == GAME_CODE_HANGMAN:
+        await message.answer(
+            lang["stat-ttl"]
+            + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
+            + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
+            + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`",
             parse_mode="Markdown",
         )
         return
@@ -206,10 +294,6 @@ async def cmd_stats(message: Message) -> None:
             "🔢 Размер",
             "🧐 Difficulty",
             "🧐 Сложность",
-            "🧩 N-puzzle",
-            "🧩 Пятнашки",
-            "🔴🟡 4 in row",
-            "🔴🟡 Четыре в ряд",
         }
     )
 )
@@ -219,7 +303,7 @@ async def game_button_without_context(message: Message) -> None:
 
     user = await upsert_user(message.from_user)
     if get_current_game(user) is not None:
-        return
+        return False
 
     lang = get_language_pack(user.language_code)
     await message.answer(lang["bot-choose-game-first"])

@@ -19,3 +19,18 @@ def board_keyboard(session_id: int, board: list[list[int]], is_active: bool, hig
             builder.button(text=text, callback_data=callback)
     builder.adjust(*([7] * 6))
     return builder.as_markup()
+
+
+def drop_keyboard(session_id: int, board: list[list[int]], sign: int, end_row: int, now_row: int, col: int) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for r, row in enumerate(board):
+        for c, cell in enumerate(row):
+            if r == now_row and c == col:
+                text = f"({SYMBOLS[sign]})"
+            elif r == end_row and c == col:
+                text = SYMBOLS[0]
+            else:
+                text = SYMBOLS[cell]
+            builder.button(text=text, callback_data="fir:noop")
+    builder.adjust(*([7] * 6))
+    return builder.as_markup()

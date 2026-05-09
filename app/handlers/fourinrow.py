@@ -1,10 +1,13 @@
+import asyncio
+
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from app.filters.current_game import CurrentGameFilter
 from app.games.fourinrow import game
-from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard
+from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard, drop_keyboard
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
@@ -24,6 +27,22 @@ def render_text(lang: dict[str, str], state: dict) -> str:
     current_sign = state["user_sign"] if state["current_turn"] == "user" else state["bot_sign"]
     turn_line = lang["turn-user"] if state["current_turn"] == "user" else lang["turn-comp"]
     return f"{lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
+
+
+def render_drop_text(lang: dict[str, str], sign: int, is_user: bool) -> str:
+    return f"{lang['game-four']}\n\n{SYMBOLS[sign]} {lang['turn-user'] if is_user else lang['turn-comp']}"
+
+
+async def animate_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], is_user: bool) -> None:
+    for now_row in range(row):
+        await asyncio.sleep(0.2)
+        try:
+            await message.edit_text(
+                render_drop_text(lang, sign, is_user),
+                reply_markup=drop_keyboard(session_id, board, sign, row, now_row, col),
+            )
+        except TelegramBadRequest:
+            pass
 
 
 async def start_four_game(message: Message, user, lang: dict[str, str]) -> None:
@@ -100,6 +119,8 @@ async def callback_col(callback: CallbackQuery) -> None:
     state = dict(session.state)
     user_result = game.process_turn(state, state["user_sign"], col, True)
     state = user_result["game_state"]
+    user_row, user_col = state["last_move"]
+    await animate_drop(callback.message, session.id, state["board"], state["user_sign"], user_row, user_col, lang, True)
     if user_result["state"] in {"win", "draw"}:
         state["result"] = user_result["state"]
         await finish_session(session.id, state, winner_user_id=user.id if user_result["state"] == "win" else None)
@@ -111,9 +132,16 @@ async def callback_col(callback: CallbackQuery) -> None:
         return
 
     state["current_turn"] = "bot"
+    await callback.message.edit_text(
+        render_text(lang, state),
+        reply_markup=board_keyboard(session.id, state["board"], False, user_result["line"]),
+    )
+    await asyncio.sleep(1)
     bot_col = game.get_smart_move(state["board"], state["bot_sign"], state["user_sign"])
     bot_result = game.process_turn(state, state["bot_sign"], bot_col, False)
     state = bot_result["game_state"]
+    bot_row, bot_col = state["last_move"]
+    await animate_drop(callback.message, session.id, state["board"], state["bot_sign"], bot_row, bot_col, lang, False)
     if bot_result["state"] in {"loss", "draw"}:
         state["result"] = bot_result["state"]
         await finish_session(session.id, state, winner_user_id=None)
