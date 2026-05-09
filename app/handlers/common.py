@@ -302,8 +302,9 @@ async def game_button_without_context(message: Message) -> None:
         return
 
     user = await upsert_user(message.from_user)
+    # If game is selected, let the game-specific handler deal with it
     if get_current_game(user) is not None:
-        return False
+        return
 
     lang = get_language_pack(user.language_code)
     await message.answer(lang["bot-choose-game-first"])

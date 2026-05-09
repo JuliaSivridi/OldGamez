@@ -95,6 +95,16 @@ async def menu_help(message: Message) -> None:
     await message.answer(lang['help'])
 
 
+@router.message(CurrentGameFilter(game.code), F.text.in_({'📊 Statistics', '📊 Статистика'}))
+async def menu_stats(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    # For randomfun, just show a basic message since it's a collection of random games
+    await message.answer(lang['stat-ttl'] + '\n(No statistics available for random games)', parse_mode="Markdown", reply_markup=game_keyboard(lang))
+
+
 @router.message(CurrentGameFilter(game.code), F.text.is_not(None), ~F.text.startswith('/'))
 async def guess_number_or_default(message: Message) -> None:
     if message.from_user is None or message.text is None:
