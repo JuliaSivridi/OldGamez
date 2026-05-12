@@ -84,6 +84,16 @@ async def cmd_hangman_menu(message: Message, user, lang) -> None:
     await open_hangman_menu(message, user, lang)
 
 
+@router.callback_query(F.data == "game:hang")
+async def open_hangman_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await open_hangman_menu(callback.message, user, lang)
+    await callback.answer()
+
+
 @router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
 async def menu_new_game(message: Message, user, lang) -> None:
     lives = int((user.settings or {}).get('hangman_lives', 10))

@@ -83,6 +83,16 @@ async def cmd_minesweeper_menu(message: Message, user, lang) -> None:
     await open_minesweeper_menu(message, user, lang)
 
 
+@router.callback_query(F.data == "game:mines")
+async def open_minesweeper_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await open_minesweeper_menu(callback.message, user, lang)
+    await callback.answer()
+
+
 @router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
 async def menu_new_game(message: Message, user, lang) -> None:
     mines_count = int((user.settings or {}).get("minesweeper_mines", 12))

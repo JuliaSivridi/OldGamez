@@ -1,7 +1,30 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def games_keyboard(lang: dict[str, str]) -> ReplyKeyboardMarkup:
+def games_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+
+    builder.button(text=lang["menu-hang"], callback_data="game:hang")
+    builder.button(text=lang["menu-rand"], callback_data="game:rand")
+
+    builder.button(text=lang["menu-rps"], callback_data="game:rps")
+
+    builder.button(text=lang["menu-bj"], callback_data="game:bj")
+    builder.button(text=lang["menu-mines"], callback_data="game:mines")
+
+    builder.button(text=lang["menu-xo"], callback_data="game:xo")
+    builder.button(text=lang["menu-sea"], callback_data="game:sea")
+
+    builder.button(text=lang["menu-four"], callback_data="game:four")
+    builder.button(text=lang["menu-15"], callback_data="game:15")
+
+    builder.adjust(2, 1, 2, 2, 2)
+
+    return builder.as_markup()
+
+
+def games_keyboard_old(lang: dict[str, str]) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=lang["menu-hang"]), KeyboardButton(text=lang["menu-rand"])],

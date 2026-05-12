@@ -1,6 +1,6 @@
 ﻿from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 from app.filters.current_game import CurrentGameFilter
 from app.games.ropasci import game
@@ -26,23 +26,33 @@ class MenuTextFilter(BaseFilter):
 router = Router()
 
 
-async def open_ropascis_menu(message: Message, user, lang) -> None:
+async def open_ropasci_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(lang["game-rps"], reply_markup=game_keyboard(lang))
 
 
 @router.message(Command("rps"))
-async def cmd_ropascis_command(message: Message) -> None:
+async def cmd_ropasci_command(message: Message) -> None:
     if message.from_user is None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_ropascis_menu(message, user, lang)
+    await open_ropasci_menu(message, user, lang)
 
 
 @router.message(MenuTextFilter("menu-rps"))
-async def cmd_ropascis_menu(message: Message, user, lang) -> None:
-    await open_ropascis_menu(message, user, lang)
+async def cmd_ropasci_menu(message: Message, user, lang) -> None:
+    await open_ropasci_menu(message, user, lang)
+
+
+@router.callback_query(F.data == "game:rps")
+async def open_ropasci_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await open_ropasci_menu(callback.message, user, lang)
+    await callback.answer()
 
 
 @router.message(CurrentGameFilter(game.code), MenuTextFilter("rps-stone", "rps-scissors", "rps-paper"))

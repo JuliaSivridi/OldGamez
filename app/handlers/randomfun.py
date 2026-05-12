@@ -1,6 +1,6 @@
 ﻿from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from app.filters.current_game import CurrentGameFilter
 from app.games.randomfun import game
@@ -44,6 +44,16 @@ async def cmd_random_command(message: Message) -> None:
 @router.message(MenuTextFilter("menu-rand"))
 async def cmd_random_menu(message: Message, user, lang) -> None:
     await open_random_menu(message, user, lang)
+
+
+@router.callback_query(F.data == "game:rand")
+async def open_random_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await open_random_menu(callback.message, user, lang)
+    await callback.answer()
 
 
 @router.message(CurrentGameFilter(game.code), F.text.in_(EMOJI_GAMES))
