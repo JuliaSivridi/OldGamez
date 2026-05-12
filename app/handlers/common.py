@@ -46,16 +46,6 @@ class MenuTextFilter(BaseFilter):
         return False
 
 
-def format_stat_message(lang: dict[str, str], played: int, wins: int, losses: int, draws: int) -> str:
-    return (
-        lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
-    )
-
-
 def get_current_game(user) -> str | None:
     return get_user_setting(user, "current_game")
 

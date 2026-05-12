@@ -24,20 +24,6 @@ def games_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def games_keyboard_old(lang: dict[str, str]) -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=lang["menu-hang"]), KeyboardButton(text=lang["menu-rand"])],
-            [KeyboardButton(text=lang["menu-rps"])],
-            [KeyboardButton(text=lang["menu-bj"]), KeyboardButton(text=lang["menu-mines"])],
-            [KeyboardButton(text=lang["menu-xo"]), KeyboardButton(text=lang["menu-sea"])],
-            [KeyboardButton(text=lang["menu-four"]), KeyboardButton(text=lang["menu-15"])],
-            [KeyboardButton(text=lang["main-back"])],
-        ],
-        resize_keyboard=True,
-    )
-
-
 def game_menu_keyboard(
     lang: dict[str, str],
     extra_setting_key: str | None = None,
