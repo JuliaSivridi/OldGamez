@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
 from app.filters.current_game import CurrentGameFilter
@@ -16,6 +16,19 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import get_user_setting, update_user_settings, upsert_user
+
+class MenuTextFilter(BaseFilter):
+    def __init__(self, key: str):
+        self.key = key
+    async def __call__(self, message: Message):
+        if message.from_user is None or message.text is None:
+            return False
+        user = await upsert_user(message.from_user)
+        lang = get_language_pack(user.language_code)
+        if message.text == lang[self.key]:
+            return {"user": user, "lang": lang}
+        return False
+
 
 router = Router()
 
@@ -51,56 +64,43 @@ async def start_minesweeper_game(message: Message, user, lang: dict[str, str], m
     )
 
 
-@router.message(Command("mines"))
-@router.message(F.text.in_({"💣 Minesweeper", "💣 Сапёр"}))
-async def cmd_minesweeper(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
+async def open_minesweeper_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    lang = get_language_pack(user.language_code)
-    await message.answer(
-        lang["game-mines"],
-        reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
-    )
+    await message.answer(lang["game-mines"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"))
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🆕 New game", "🆕 Новая игра"}))
-async def menu_new_game(message: Message) -> None:
+@router.message(Command("minesweeper"))
+async def cmd_minesweeper_command(message: Message) -> None:
     if message.from_user is None:
         return
-
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
+    await open_minesweeper_menu(message, user, lang)
+
+
+@router.message(MenuTextFilter("menu-mines"))
+async def cmd_minesweeper_menu(message: Message, user, lang) -> None:
+    await open_minesweeper_menu(message, user, lang)
+
+
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+async def menu_new_game(message: Message, user, lang) -> None:
     mines_count = int((user.settings or {}).get("minesweeper_mines", 12))
     await start_minesweeper_game(message, user, lang, mines_count)
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🧐 Difficulty", "🧐 Сложность"}))
-async def menu_difficulty(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(
-        lang["chus-cmplx"] + lang["mines-cmplx"],
-        reply_markup=difficulty_keyboard(lang),
-    )
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-cmplx"))
+async def menu_difficulty(message: Message, user, lang) -> None:
+    await message.answer(lang["chus-cmplx"] + lang["mines-cmplx"], reply_markup=difficulty_keyboard(lang))
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
-async def menu_help(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
+async def menu_help(message: Message, user, lang) -> None:
     await message.answer(lang["help-mines"], parse_mode="Markdown")
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"📊 Statistics", "📊 Статистика"}))
-async def menu_stats(message: Message) -> None:
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
+async def menu_stats(message: Message, **kwargs) -> None:
     await cmd_minesweeper_stats(message)
 
 

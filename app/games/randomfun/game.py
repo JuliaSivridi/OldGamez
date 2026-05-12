@@ -23,54 +23,34 @@ class RandomFunGame:
     def draw_card_art(self, card: dict[str, str]) -> str:
         rank = '🅰️' if card['rank'] == '!' else card['rank']
         suit = card['suit']
+        W = "⬜️"
 
-        if card['rank'] in {'2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'}:
-            middle_lines = {
-                '2️⃣': [f"\n⬜️⬜️{suit}⬜️⬜️", "\n⬜️⬜️⬜️⬜️⬜️", f"\n⬜️⬜️{suit}⬜️⬜️"],
-                '3️⃣': [f"\n⬜️⬜️{suit}⬜️⬜️", "\n⬜️⬜️⬜️⬜️⬜️", f"\n⬜️⬜️{suit}⬜️⬜️"],
-                '4️⃣': [f"\n⬜️{suit}⬜️{suit}⬜️", "\n⬜️⬜️⬜️⬜️⬜️", f"\n⬜️{suit}⬜️{suit}⬜️"],
-                '5️⃣': [f"\n⬜️{suit}⬜️{suit}⬜️", "\n⬜️⬜️⬜️⬜️⬜️", f"\n⬜️⬜️{suit}⬜️⬜️"],
-                '6️⃣': [f"\n⬜️{suit}⬜️{suit}⬜️", "\n⬜️{suit}⬜️{suit}⬜️", f"\n⬜️{suit}⬜️{suit}⬜️"],
-                '7️⃣': [f"\n⬜️{suit}⬜️{suit}⬜️", f"\n⬜️{suit}⬜️{suit}⬜️", f"\n⬜️{suit}⬜️{suit}⬜️"],
-                '8️⃣': [f"\n⬜️{suit}⬜️{suit}⬜️", f"\n⬜️{suit}⬜️{suit}⬜️", f"\n⬜️{suit}⬜️{suit}⬜️"],
-            }
-            lines = [
-                f"\n{rank}⬜️⬜️⬜️{suit}",
-                middle_lines[card['rank']][0],
-                "\n⬜️⬜️⬜️⬜️⬜️",
-                middle_lines[card['rank']][1],
-                "\n⬜️⬜️⬜️⬜️⬜️",
-                middle_lines[card['rank']][2],
-                "\n⬜️⬜️⬜️⬜️⬜️",
-            ]
-            return ''.join(lines)
+        SUIT_POSITIONS = {
+            '2️⃣':  (False, [(1,2), (5,2)]),
+            '3️⃣':  (False, [(1,2), (3,2), (5,2)]),
+            '4️⃣':  (False, [(1,1),(1,3), (5,1),(5,3)]),
+            '5️⃣':  (False, [(1,1),(1,3), (3,2), (5,1),(5,3)]),
+            '6️⃣':  (False, [(1,1),(1,3), (3,1),(3,3), (5,1),(5,3)]),
+            '7️⃣':  (False, [(1,1),(1,3), (2,2), (3,1),(3,3), (5,1),(5,3)]),
+            '8️⃣':  (False, [(1,1),(1,3), (2,2), (3,1),(3,3), (4,2), (5,1),(5,3)]),
+            '9️⃣':  (True,  [(0,1),(0,3), (2,1),(2,3), (3,2), (4,1),(4,3), (6,1),(6,3)]),
+            '🔟':  (True,  [(0,1),(0,3), (1,2), (2,1),(2,3), (4,1),(4,3), (5,2), (6,1),(6,3)]),
+        }
 
-        if card['rank'] == '9️⃣':
-            return (
-                f"\n{rank}{suit}⬜️{suit}{suit}"
-                "\n⬜️⬜️⬜️⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-                "\n⬜️⬜️⬜️⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-                "\n⬜️⬜️⬜️⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-            )
+        if card['rank'] in SUIT_POSITIONS:
+            special_header, positions = SUIT_POSITIONS[card['rank']]
+            suit_set = set(positions)
+            header = f"\n{rank}{suit}{W}{suit}{suit}" if special_header else f"\n{rank}{W}{W}{W}{suit}"
+            rows = [header]
+            for r in range(1, 7):
+                rows.append("\n" + "".join(suit if (r, c) in suit_set else W for c in range(5)))
+            return "".join(rows)
 
-        if card['rank'] == '🔟':
-            return (
-                f"\n{rank}{suit}⬜️{suit}{suit}"
-                "\n⬜️⬜️{suit}⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-                "\n⬜️⬜️⬜️⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-                "\n⬜️⬜️{suit}⬜️⬜️"
-                f"\n⬜️{suit}⬜️{suit}⬜️"
-            )
-
+        # --- Картинки (без изменений) ---
         if card['rank'] == '👨‍🦰':
             if suit in {'♠️', '♣️'}:
                 return (
-                    f"\n{rank}⬜️⬜️⬜️{suit}"
+                    f"\n{rank}{W}{W}{W}{suit}"
                     "\n🟪🟪🟪🟪⬜️"
                     "\n🟫🟫🟫🟫🟫"
                     "\n⬛️🟨⬛️🟨🟫"
@@ -79,7 +59,7 @@ class RandomFunGame:
                     "\n⬜️🟪🟪🟪⬜️"
                 )
             return (
-                f"\n{rank}⬜️⬜️⬜️{suit}"
+                f"\n{rank}{W}{W}{W}{suit}"
                 "\n🟩🟩🟩🟩⬜️"
                 "\n🟧🟧🟧🟧🟧"
                 "\n⬛️🟨⬛️🟨🟧"
@@ -91,7 +71,7 @@ class RandomFunGame:
         if card['rank'] == '👸':
             if suit in {'♠️', '♣️'}:
                 return (
-                    f"\n{rank}⬜️⬜️⬜️{suit}"
+                    f"\n{rank}{W}{W}{W}{suit}"
                     "\n⬜️👑👑👑⬜️"
                     "\n🟫🟫🟫🟫🟫"
                     "\n⬛️🟨⬛️🟨🟫"
@@ -100,19 +80,19 @@ class RandomFunGame:
                     "\n⬜️🟪🟪🟪⬜️"
                 )
             return (
-                f"\n{rank}⬜️⬜️⬜️{suit}"
+                f"\n{rank}{W}{W}{W}{suit}"
                 "\n⬜️👑👑👑⬜️"
                 "\n🟧🟧🟧🟧🟧"
                 "\n⬛️🟨⬛️🟨🟧"
                 "\n🟨🟨🟨🟨🟧"
-                "\n🟥🟨🟨🟨🟧"
+                "\n🟨🟥🟨🟨🟧"
                 "\n⬜️🟩🟩🟩⬜️"
             )
 
         if card['rank'] == '🤴':
             if suit in {'♠️', '♣️'}:
                 return (
-                    f"\n{rank}⬜️⬜️⬜️{suit}"
+                    f"\n{rank}{W}{W}{W}{suit}"
                     "\n👑👑👑👑👑"
                     "\n🟫🟫🟫🟫🟫"
                     "\n⬛️🟨⬛️🟨🟫"
@@ -121,19 +101,19 @@ class RandomFunGame:
                     "\n⬜️🟪🟪🟪⬜️"
                 )
             return (
-                f"\n{rank}⬜️⬜️⬜️{suit}"
-                    "\n👑👑👑👑👑"
-                    "\n🟧🟧🟧🟧🟧"
-                    "\n⬛️🟨⬛️🟨🟧"
-                    "\n🟨🟨🟨🟨🟧"
-                    "\n🟧🟧🟧🟨🟧"
-                    "\n⬜️🟩🟩🟩⬜️"
-                )
+                f"\n{rank}{W}{W}{W}{suit}"
+                "\n👑👑👑👑👑"
+                "\n🟧🟧🟧🟧🟧"
+                "\n⬛️🟨⬛️🟨🟧"
+                "\n🟨🟨🟨🟨🟧"
+                "\n🟧🟧🟧🟨🟧"
+                "\n⬜️🟩🟩🟩⬜️"
+            )
 
         if card['rank'] == '!':
             if suit == '♠️':
                 return (
-                    f"\n{suit}⬜️⬛️⬜️{suit}"
+                    f"\n{suit}{W}⬛️{W}{suit}"
                     "\n⬜️⬛️⬛️⬛️⬜️"
                     "\n⬛️⬛️⬛️⬛️⬛️"
                     "\n⬛️⬛️⬛️⬛️⬛️"
@@ -143,7 +123,7 @@ class RandomFunGame:
                 )
             if suit == '♣️':
                 return (
-                    f"\n{suit}⬜️⬛️⬜️{suit}"
+                    f"\n{suit}{W}⬛️{W}{suit}"
                     "\n⬜️⬛️⬛️⬛️⬜️"
                     "\n⬛️⬜️⬛️⬜️⬛️"
                     "\n⬛️⬛️⬛️⬛️⬛️"
@@ -153,32 +133,32 @@ class RandomFunGame:
                 )
             if suit == '♥️':
                 return (
-                    f"\n{suit}⬜️⬜️⬜️{suit}"
-                    "\n⬜️🟥⬜️🟥⬜️"
+                    f"\n{suit}{W}{W}{W}{suit}"
+                    f"\n{W}🟥{W}🟥{W}"
                     "\n🟥🟥🟥🟥🟥"
                     "\n🟥🟥🟥🟥🟥"
-                    "\n⬜️🟥🟥🟥⬜️"
-                    "\n⬜️🟥🟥🟥⬜️"
-                    "\n⬜️⬜️🟥⬜️⬜️"
+                    f"\n{W}🟥🟥🟥{W}"
+                    f"\n{W}🟥🟥🟥{W}"
+                    f"\n{W}{W}🟥{W}{W}"
                 )
             return (
-                f"\n{suit}⬜️🟥⬜️{suit}"
-                "\n⬜️🟥🟥🟥⬜️"
-                "\n⬜️🟥🟥🟥⬜️"
+                f"\n{suit}{W}🟥{W}{suit}"
+                f"\n{W}🟥🟥🟥{W}"
+                f"\n{W}🟥🟥🟥{W}"
                 "\n🟥🟥🟥🟥🟥"
-                "\n⬜️🟥🟥🟥⬜️"
-                "\n⬜️🟥🟥🟥⬜️"
-                "\n⬜️⬜️🟥⬜️⬜️"
+                f"\n{W}🟥🟥🟥{W}"
+                f"\n{W}🟥🟥🟥{W}"
+                f"\n{W}{W}🟥{W}{W}"
             )
 
         return (
-            f"\n{rank}⬜️⬜️⬜️{suit}"
-            "\n⬜️⬜️⬜️⬜️⬜️"
-            "\n⬜️⬜️⬜️⬜️⬜️"
-            "\n⬜️⬜️⬜️⬜️⬜️"
-            "\n⬜️⬜️⬜️⬜️⬜️"
-            "\n⬜️⬜️⬜️⬜️⬜️"
-            "\n⬜️⬜️⬜️⬜️⬜️"
+            "\n🟧🟦🟧🟦🟧"
+            "\n🟦🔸🔹🔸🟦"
+            "\n🟧🔷🔶🔷🟧"
+            "\n🟦🔶🔷🔶🟦"
+            "\n🟧🔷🔶🔷🟧"
+            "\n🟦🔸🔹🔸🟦"
+            "\n🟧🟦🟧🟦🟧"
         )
 
     def draw_card_text(self, card: dict[str, str], lang: dict[str, str]) -> str:

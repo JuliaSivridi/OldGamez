@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
 from app.filters.current_game import CurrentGameFilter
@@ -9,6 +9,19 @@ from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
+
+class MenuTextFilter(BaseFilter):
+    def __init__(self, key: str):
+        self.key = key
+    async def __call__(self, message: Message):
+        if message.from_user is None or message.text is None:
+            return False
+        user = await upsert_user(message.from_user)
+        lang = get_language_pack(user.language_code)
+        if message.text == lang[self.key]:
+            return {"user": user, "lang": lang}
+        return False
+
 
 router = Router()
 
@@ -27,47 +40,43 @@ async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size:
     )
 
 
-@router.message(Command("npuzzle"))
-@router.message(F.text.in_({"🧩 N-puzzle", "🧩 Пятнашки"}))
-async def cmd_npuzzle(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
+async def open_npuzzle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    lang = get_language_pack(user.language_code)
-    await message.answer(lang["menu-15"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"))
+    await message.answer(lang["game-15"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"))
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🆕 New game", "🆕 Новая игра"}))
-async def menu_new_game(message: Message) -> None:
+@router.message(Command("npuzzle"))
+async def cmd_npuzzle_command(message: Message) -> None:
     if message.from_user is None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
+    await open_npuzzle_menu(message, user, lang)
+
+
+@router.message(MenuTextFilter("menu-15"))
+async def cmd_npuzzle_menu(message: Message, user, lang) -> None:
+    await open_npuzzle_menu(message, user, lang)
+
+
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+async def menu_new_game(message: Message, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
     await start_npuzzle_game(message, user, lang, size)
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🔢 Size", "🔢 Размер"}))
-async def menu_size(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-size"))
+async def menu_size(message: Message, user, lang) -> None:
     await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
-async def menu_help(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
+async def menu_help(message: Message, user, lang) -> None:
     await message.answer(lang["help-npuzzle"], parse_mode="Markdown")
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"📊 Statistics", "📊 Статистика"}))
-async def menu_stats(message: Message) -> None:
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
+async def menu_stats(message: Message, **kwargs) -> None:
     await cmd_npuzzle_stats(message)
 
 

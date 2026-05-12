@@ -6,7 +6,7 @@ from aiogram.types import User as TgUser
 
 
 I18N_PATH = Path(__file__).with_name("languages.json")
-DEFAULT_LANGUAGE = "ru"
+DEFAULT_LANGUAGE = "en"
 
 
 @lru_cache

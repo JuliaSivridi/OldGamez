@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
 from app.filters.current_game import CurrentGameFilter
@@ -16,6 +16,19 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import get_user_setting, update_user_settings, upsert_user
+
+class MenuTextFilter(BaseFilter):
+    def __init__(self, key: str):
+        self.key = key
+    async def __call__(self, message: Message):
+        if message.from_user is None or message.text is None:
+            return False
+        user = await upsert_user(message.from_user)
+        lang = get_language_pack(user.language_code)
+        if message.text == lang[self.key]:
+            return {"user": user, "lang": lang}
+        return False
+
 
 router = Router()
 
@@ -64,59 +77,44 @@ async def start_tictactoe_game(message: Message, user, lang: dict[str, str], siz
     )
 
 
+async def open_tictactoe_menu(message: Message, user, lang) -> None:
+    await update_user_settings(user.id, {"current_game": game.code})
+    await message.answer(lang["game-xo"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"))
+
+
 @router.message(Command("tictactoe"))
 @router.message(Command("xo"))
-async def cmd_tictactoe(message: Message) -> None:
+async def cmd_tictactoe_command(message: Message) -> None:
     if message.from_user is None:
         return
-
-    user = await upsert_user(message.from_user)
-    await update_user_settings(user.id, {"current_game": game.code})
-    lang = get_language_pack(user.language_code)
-    await message.answer(
-        lang["menu-xo"],
-        reply_markup=game_menu_keyboard(lang, has_size=True),
-    )
-
-
-@router.message(F.text.in_({"❌⭕️ TicTacToe", "❌⭕️ Крестики-нолики"}))
-async def choose_tictactoe_from_menu(message: Message) -> None:
-    await cmd_tictactoe(message)
-
-
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🆕 New game", "🆕 Новая игра"}))
-async def menu_new_game(message: Message) -> None:
-    if message.from_user is None:
-        return
-
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
+    await open_tictactoe_menu(message, user, lang)
+
+
+@router.message(MenuTextFilter("menu-xo"))
+async def cmd_tictactoe_menu(message: Message, user, lang) -> None:
+    await open_tictactoe_menu(message, user, lang)
+
+
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+async def menu_new_game(message: Message, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
     await start_tictactoe_game(message, user, lang, size)
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"🔢 Size", "🔢 Размер"}))
-async def menu_tictactoe_size(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-size"))
+async def menu_tictactoe_size(message: Message, user, lang) -> None:
     await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"ℹ️ Help", "ℹ️ Помощь"}))
-async def menu_tictactoe_help(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
+async def menu_help(message: Message, user, lang) -> None:
     await message.answer(lang["help-xo"], parse_mode="Markdown")
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_({"📊 Statistics", "📊 Статистика"}))
-async def menu_tictactoe_stats_from_context(message: Message) -> None:
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
+async def menu_stats(message: Message, **kwargs) -> None:
     await cmd_tictactoe_stats(message)
 
 
@@ -132,7 +130,7 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     await update_user_settings(user.id, {"tictactoe_size": size, "current_game": game.code})
     await callback.message.answer(
         lang["size-saved"],
-        reply_markup=game_menu_keyboard(lang, has_size=True),
+        reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"),
     )
 
 
@@ -154,18 +152,18 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
     if session is None or session.created_by_user_id != user.id:
-        await callback.answer(lang["ttt-not-yours"], show_alert=True)
+        await callback.answer(lang["xo-not-yours"], show_alert=True)
         return
     if session.status.value != "active":
-        await callback.answer(lang["ttt-already-finished"], show_alert=True)
+        await callback.answer(lang["xo-already-finished"], show_alert=True)
         return
 
     state = dict(session.state)
     if state["current_turn"] != "user":
-        await callback.answer(lang["ttt-not-your-turn"], show_alert=True)
+        await callback.answer(lang["xo-not-your-turn"], show_alert=True)
         return
     if state["board"][position] != ".":
-        await callback.answer(lang["ttt-cell-busy"], show_alert=True)
+        await callback.answer(lang["xo-cell-busy"], show_alert=True)
         return
 
     user_turn = game.process_turn(
