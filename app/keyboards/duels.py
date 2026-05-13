@@ -10,3 +10,10 @@ def duel_invite_keyboard(lang: dict[str, str], join_code: str) -> InlineKeyboard
     builder.button(text=lang["duel-share"], url=share_link)
     builder.adjust(1)
     return builder.as_markup()
+
+
+def group_duel_keyboard(lang: dict[str, str], callback_data: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text=lang["group-join"], callback_data=callback_data)
+    builder.adjust(1)
+    return builder.as_markup()

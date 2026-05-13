@@ -66,7 +66,14 @@ async def start_minesweeper_game(message: Message, user, lang: dict[str, str], m
 
 async def open_minesweeper_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-mines"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"))
+    await message.answer(
+        lang["game-mines"],
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key="menu-cmplx",
+            chat_type=message.chat.type,
+        ),
+    )
 
 
 @router.message(Command("minesweeper"))
@@ -130,7 +137,11 @@ async def callback_difficulty(callback: CallbackQuery) -> None:
     await update_user_settings(user.id, {"minesweeper_mines": mines_count, "current_game": game.code})
     await callback.message.answer(
         lang["cmplx-saved"],
-        reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key="menu-cmplx",
+            chat_type=callback.message.chat.type,
+        ),
     )
 
 

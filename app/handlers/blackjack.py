@@ -77,7 +77,10 @@ async def start_blackjack_game(message: Message, user, lang: dict[str, str]) -> 
 
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-bj"], reply_markup=game_menu_keyboard(lang))
+    await message.answer(
+        lang["game-bj"],
+        reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(Command("blackjack"))

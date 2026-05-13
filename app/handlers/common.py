@@ -67,7 +67,12 @@ async def send_current_game_menu(message: Message, user) -> None:
     if current_game == GAME_CODE_FOURINROW:
         await message.answer(
             lang["game-four"],
-            reply_markup=game_menu_keyboard(lang, extra_action_key="menu-friend"),
+            reply_markup=game_menu_keyboard(
+                lang,
+                extra_duel_key="menu-duel",
+                extra_group_key="menu-group",
+                chat_type=message.chat.type,
+            ),
         )
         return
     if current_game == GAME_CODE_TICTACTOE:
@@ -76,32 +81,42 @@ async def send_current_game_menu(message: Message, user) -> None:
             reply_markup=game_menu_keyboard(
                 lang,
                 extra_setting_key="menu-size",
-                extra_action_key="menu-friend",
+                extra_duel_key="menu-duel",
+                extra_group_key="menu-group",
+                chat_type=message.chat.type,
             ),
         )
         return
     if current_game == GAME_CODE_BATTLESHIP:
         await message.answer(
             lang["game-sea"],
-            reply_markup=game_menu_keyboard(lang),
+            reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
         )
         return
     if current_game == GAME_CODE_MINESWEEPER:
         await message.answer(
             lang["game-mines"],
-            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+            reply_markup=game_menu_keyboard(
+                lang,
+                extra_setting_key="menu-cmplx",
+                chat_type=message.chat.type,
+            ),
         )
         return
     if current_game == GAME_CODE_BLACKJACK:
         await message.answer(
             lang["game-bj"],
-            reply_markup=game_menu_keyboard(lang),
+            reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
         )
         return
     if current_game == GAME_CODE_NPUZZLE:
         await message.answer(
             lang["game-15"],
-            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"),
+            reply_markup=game_menu_keyboard(
+                lang,
+                extra_setting_key="menu-size",
+                chat_type=message.chat.type,
+            ),
         )
         return
     if current_game == GAME_CODE_RPS:
@@ -123,10 +138,17 @@ async def send_current_game_menu(message: Message, user) -> None:
     if current_game == GAME_CODE_HANGMAN:
         await message.answer(
             lang["game-hang"],
-            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+            reply_markup=game_menu_keyboard(
+                lang,
+                extra_setting_key="menu-cmplx",
+                chat_type=message.chat.type,
+            ),
         )
         return
-    await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
+    await message.answer(
+        lang["main-ttl"],
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(CommandStart())
@@ -141,7 +163,10 @@ async def cmd_start(message: Message) -> None:
         join_code = start_argument[5:]
         if await handle_private_duel_start(message, user, lang, join_code):
             return
-        await message.answer(lang["duel-missing"], reply_markup=main_menu_keyboard(lang))
+        await message.answer(
+            lang["duel-missing"],
+            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+        )
         return
 
     text = (
@@ -149,7 +174,10 @@ async def cmd_start(message: Message) -> None:
         f"{lang['commands']}"
         f"{lang['choose-game']}"
     )
-    await message.answer(text, reply_markup=main_menu_keyboard(lang))
+    await message.answer(
+        text,
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(Command("games"))
@@ -172,12 +200,18 @@ async def cmd_lang_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await message.answer(lang["lang-ask"], reply_markup=language_keyboard(lang))
+    await message.answer(
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(MenuTextFilter("menu-lang"))
 async def cmd_lang_menu(message: Message, user, lang) -> None:
-    await message.answer(lang["lang-ask"], reply_markup=language_keyboard(lang))
+    await message.answer(
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(LanguageChoiceFilter())
@@ -187,10 +221,16 @@ async def choose_language(message: Message, language_code: str) -> None:
     user = await upsert_user(message.from_user)
     await update_user_language(user.id, language_code)
     lang = get_language_pack(language_code)
-    await message.answer(lang["lang-ok"], reply_markup=main_menu_keyboard(lang))
+    await message.answer(
+        lang["lang-ok"],
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(MenuTextFilter("main-back"))
 async def back_to_main_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": None})
-    await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
+    await message.answer(
+        lang["main-ttl"],
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+    )

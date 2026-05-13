@@ -42,7 +42,14 @@ async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size:
 
 async def open_npuzzle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-15"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"))
+    await message.answer(
+        lang["game-15"],
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key="menu-size",
+            chat_type=message.chat.type,
+        ),
+    )
 
 
 @router.message(Command("npuzzle"))
@@ -104,7 +111,14 @@ async def callback_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"npuzzle_size": size, "current_game": game.code})
-    await callback.message.answer(lang["size-saved"], reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"))
+    await callback.message.answer(
+        lang["size-saved"],
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key="menu-size",
+            chat_type=callback.message.chat.type,
+        ),
+    )
 
 
 @router.callback_query(F.data.startswith("npz:move:"))

@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import F, Router
+from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
@@ -9,7 +10,7 @@ from app.filters.current_game import CurrentGameFilter
 from app.games.fourinrow import game
 from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard, drop_keyboard
 from app.i18n.translator import get_language_pack
-from app.keyboards.duels import duel_invite_keyboard
+from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.keyboards.games import game_menu_keyboard
 from app.keyboards.main_menu import main_menu_keyboard
 from app.services.duels import (
@@ -20,7 +21,9 @@ from app.services.duels import (
     set_duel_message_ref,
 )
 from app.services.sessions import (
+    activate_group_match_session,
     activate_private_duel_session,
+    create_group_match_session,
     create_private_duel_invite,
     create_solo_session,
     finish_session,
@@ -49,8 +52,13 @@ class MenuTextFilter(BaseFilter):
 router = Router()
 
 
-def four_menu_keyboard(lang: dict[str, str]):
-    return game_menu_keyboard(lang, extra_action_key="menu-friend")
+def four_menu_keyboard(lang: dict[str, str], chat_type=None):
+    return game_menu_keyboard(
+        lang,
+        extra_duel_key="menu-duel",
+        extra_group_key="menu-group",
+        chat_type=chat_type,
+    )
 
 
 def get_duel_player_ids(state: dict) -> list[int | None]:
@@ -59,6 +67,28 @@ def get_duel_player_ids(state: dict) -> list[int | None]:
 
 def get_player_sign(state: dict, user_id: int) -> int:
     return 1 if state.get("player_red_id") == user_id else 2
+
+
+def format_player_name(user) -> str:
+    if user is None:
+        return "Player"
+    return user.first_name or user.username or str(user.id)
+
+
+def render_group_status_text(
+    lang: dict[str, str],
+    state: dict,
+    player_names: dict[int, str],
+) -> str:
+    if state["status"] == "finished":
+        if state.get("result") == "draw":
+            return lang["game-draw"]
+        winner_name = player_names.get(state.get("winner_user_id"), str(state.get("winner_user_id") or ""))
+        return f"{lang['group-winner']} {winner_name}"
+
+    current_turn_user_id = state.get("current_turn_user_id")
+    current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
+    return f"{lang['game-four']}\n\n{lang['group-turn']} {current_name}"
 
 
 def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = None) -> str:
@@ -114,8 +144,17 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
         raise ValueError("User not found")
     lang = get_language_pack(user.language_code)
     state = dict(session.state or {})
-    is_active = session.status.value == "active" and session.current_turn_user_id == user_id
-    text = render_text(lang, state, viewer_user_id=user_id)
+    if session.mode.value == "group_match":
+        player_names: dict[int, str] = {}
+        for player_id in get_duel_player_ids(state):
+            if player_id is None:
+                continue
+            player_names[player_id] = format_player_name(await get_user_by_id(player_id))
+        text = render_group_status_text(lang, state, player_names)
+        is_active = session.status.value == "active"
+    else:
+        text = render_text(lang, state, viewer_user_id=user_id)
+        is_active = session.status.value == "active" and session.current_turn_user_id == user_id
     markup = board_keyboard(
         session.id,
         state["board"],
@@ -191,15 +230,45 @@ async def start_four_duel(message: Message, user, lang: dict[str, str]) -> None:
     await update_session_state(session.id, state, None)
 
 
+async def start_four_group(message: Message, user, lang: dict[str, str]) -> None:
+    if message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
+        await message.answer(
+            lang["group-only"],
+            reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+        )
+        return
+
+    state = {
+        "status": "pending",
+    }
+    session = await create_group_match_session(
+        user_id=user.id,
+        telegram_chat_id=message.chat.id,
+        game_code=game.code,
+        initial_state=state,
+    )
+    await message.answer(
+        lang["group-wait"],
+        reply_markup=group_duel_keyboard(lang, f"fir:group_join:{session.id}"),
+    )
+    await update_session_state(session.id, state, None)
+
+
 async def open_four_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-four"], reply_markup=four_menu_keyboard(lang))
+    await message.answer(
+        lang["game-four"],
+        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 async def join_private_duel(message: Message, user, lang: dict[str, str], session) -> None:
     state = dict(session.state or {})
     if session.created_by_user_id == user.id:
-        await message.answer(lang["duel-self"], reply_markup=four_menu_keyboard(lang))
+        await message.answer(
+            lang["duel-self"],
+            reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+        )
         return
 
     await update_user_settings(user.id, {"current_game": game.code})
@@ -217,10 +286,16 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         current_turn_user_id=duel_state["current_turn_user_id"],
     )
     if session is None:
-        await message.answer(lang["duel-missing"], reply_markup=main_menu_keyboard(lang))
+        await message.answer(
+            lang["duel-missing"],
+            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+        )
         return
 
-    await message.answer(lang["duel-join-ok"], reply_markup=four_menu_keyboard(lang))
+    await message.answer(
+        lang["duel-join-ok"],
+        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+    )
     guest_message = await message.answer(
         render_text(lang, duel_state, viewer_user_id=user.id),
         reply_markup=board_keyboard(
@@ -265,9 +340,14 @@ async def menu_new_game(message: Message, user, lang) -> None:
     await start_four_game(message, user, lang)
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-friend"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-duel"))
 async def menu_new_duel(message: Message, user, lang) -> None:
     await start_four_duel(message, user, lang)
+
+
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-group"))
+async def menu_new_group(message: Message, user, lang) -> None:
+    await start_four_group(message, user, lang)
 
 
 @router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
@@ -285,6 +365,65 @@ async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith("fir:group_join:"))
+async def callback_four_group_join(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+    if session is None or session.mode.value != "group_match":
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+    if session.created_by_user_id == user.id:
+        await callback.answer(lang["duel-self"], show_alert=True)
+        return
+    if session.status.value != "pending":
+        await callback.answer(lang["duel-full"], show_alert=True)
+        return
+
+    player_ids = {player.user_id for player in session.players}
+    if user.id in player_ids:
+        await callback.answer(lang["group-already-joined"], show_alert=True)
+        return
+    if len(player_ids) >= 2:
+        await callback.answer(lang["duel-full"], show_alert=True)
+        return
+
+    original_state = dict(session.state or {})
+    duel_state = game.new_duel_state(
+        host_user_id=session.created_by_user_id,
+        guest_user_id=user.id,
+    )
+    session = await activate_group_match_session(
+        session.id,
+        user.id,
+        duel_state,
+        duel_state["current_turn_user_id"],
+    )
+    if session is None:
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+
+    player_names = {
+        player_id: format_player_name(await get_user_by_id(player_id))
+        for player_id in get_duel_player_ids(duel_state)
+        if player_id is not None
+    }
+    await callback.message.edit_text(
+        render_group_status_text(lang, duel_state, player_names),
+        reply_markup=board_keyboard(
+            session.id,
+            duel_state["board"],
+            True,
+            [],
+        ),
+    )
+    await callback.answer(lang["duel-join-ok"])
+
+
 @router.callback_query(F.data.startswith("fir:col:"))
 async def callback_col(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -300,6 +439,55 @@ async def callback_col(callback: CallbackQuery) -> None:
         return
 
     state = dict(session.state or {})
+    if session.mode.value == "group_match":
+        player_ids = {player.user_id for player in session.players}
+        if user.id not in player_ids:
+            return
+        if session.status.value != "active":
+            return
+        if session.current_turn_user_id != user.id:
+            return
+        if state["board"][0][col] != 0:
+            return
+
+        player_sign = get_player_sign(state, user.id)
+        duel_result = game.process_turn(state, player_sign, col, True)
+        state = duel_result["game_state"]
+        move_row, move_col = state["last_move"]
+        state["highlight_line"] = duel_result["line"]
+        player_names = {
+            state["player_red_id"]: format_player_name(await get_user_by_id(state["player_red_id"])),
+            state["player_yellow_id"]: format_player_name(await get_user_by_id(state["player_yellow_id"])),
+        }
+
+        if duel_result["state"] in {"win", "draw"}:
+            state["result"] = duel_result["state"]
+            state["winner_user_id"] = user.id if duel_result["state"] == "win" else None
+            state["current_turn_user_id"] = None
+            await finish_session(session.id, state, winner_user_id=state["winner_user_id"])
+            other_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
+            if duel_result["state"] == "draw":
+                await record_game_result(user.id, game.code, "draw")
+                await record_game_result(other_user_id, game.code, "draw")
+            else:
+                await record_game_result(user.id, game.code, "win")
+                await record_game_result(other_user_id, game.code, "loss")
+            await callback.message.edit_text(
+                render_group_status_text(lang, state, player_names),
+                reply_markup=board_keyboard(session.id, state["board"], False, duel_result["line"]),
+            )
+            return
+
+        next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
+        state["current_turn_user_id"] = next_user_id
+        updated_session = await update_session_state(session.id, state, next_user_id)
+        if updated_session is not None:
+            await callback.message.edit_text(
+                render_group_status_text(lang, state, player_names),
+                reply_markup=board_keyboard(session.id, state["board"], True, duel_result["line"]),
+            )
+        return
+
     if session.mode.value == "duel_private":
         player_ids = set(get_duel_player_ids(state))
         if user.id not in player_ids:

@@ -96,7 +96,10 @@ async def start_battleship_game(message: Message, user, lang: dict[str, str]) ->
 
 async def open_battleship_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-sea"], reply_markup=game_menu_keyboard(lang))
+    await message.answer(
+        lang["game-sea"],
+        reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
+    )
 
 
 @router.message(Command("battleship"))

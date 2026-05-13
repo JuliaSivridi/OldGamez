@@ -1,5 +1,12 @@
+from aiogram.enums import ChatType
 from aiogram.types import InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+
+def _reply_keyboard_allowed(chat_type: ChatType | str | None) -> bool:
+    if chat_type is None:
+        return True
+    return chat_type not in (ChatType.GROUP, ChatType.SUPERGROUP, "group", "supergroup")
 
 
 def games_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
@@ -27,19 +34,25 @@ def games_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
 def game_menu_keyboard(
     lang: dict[str, str],
     extra_setting_key: str | None = None,
-    extra_action_key: str | None = None,
-) -> ReplyKeyboardMarkup:
-    first_row = [KeyboardButton(text=lang["menu-bot"])]
-    if extra_action_key:
-        first_row.append(KeyboardButton(text=lang[extra_action_key]))
+    extra_duel_key: str | None = None,
+    extra_group_key: str | None = None,
+    chat_type: ChatType | str | None = None,
+) -> ReplyKeyboardMarkup | None:
+    if not _reply_keyboard_allowed(chat_type):
+        return None
 
-    rows = [first_row]
+    first_row = [KeyboardButton(text=lang["menu-bot"])]
+    if extra_duel_key:
+        first_row.append(KeyboardButton(text=lang[extra_duel_key]))
+    if extra_group_key:
+        first_row.append(KeyboardButton(text=lang[extra_group_key]))
     if extra_setting_key:
-        rows[0].append(KeyboardButton(text=lang[extra_setting_key]))
-    rows.append([
-        KeyboardButton(text=lang["menu-stat"]),
-        KeyboardButton(text=lang["menu-hlp"]),
-        KeyboardButton(text=lang["main-back"]),
-    ])
+        first_row.append(KeyboardButton(text=lang[extra_setting_key]))
+
+    second_row = [KeyboardButton(text=lang["menu-stat"]),
+                KeyboardButton(text=lang["menu-hlp"]),
+                KeyboardButton(text=lang["main-back"]),]
+    
+    rows = [first_row, second_row]
 
     return ReplyKeyboardMarkup(keyboard=rows, resize_keyboard=True)

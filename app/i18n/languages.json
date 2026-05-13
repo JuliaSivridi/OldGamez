@@ -13,9 +13,12 @@
     "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-saved": "✅ Difficulty set", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
     "menu-size": "🔢 Size", "chus-size": "🔢 Set board size", "size-saved": "✅ Size set", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
-    "turn-comp": "Computer turn...", "turn-user": "Your turn!", "turn-friend": "Friend's turn!", 
-    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Waiting for your friend to join the game", "duel-link": "Send this link:", "duel-share": "Share link",
+
+    "turn-comp": "Computer turn...", "turn-user": "Your turn!", "turn-friend": "Friend's turn!", "group-turn": "Turn:", "group-winner": "Winner:", 
+    "menu-bot": "🕹👾 Bot", "menu-duel": "🕹👤 Friend", "duel-wait": "👥 Waiting for your friend to join the game", "duel-link": "Send this link:", "duel-share": "Share link",
     "duel-join-ok": "✅ You joined the game", "duel-self": "You can't join your own game.", "duel-missing": "This invitation is no longer available.", "duel-full": "This game already has two players.", 
+    "menu-group": "🕹👥 Group", "group-wait": "👥 Group game started. Another player can join using the button below.", "group-join": "Join game", 
+    "group-already-joined": "You already joined this game.", "group-only": "Group mode is only available in group chats.", 
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
     "guess-guess": "Try to guess it: ", "guess-less": "⬇️ The guessed number is less", "guess-more": "⬆️ The guessed number is greater", "guess-equals": "🥳 You guessed it!",
@@ -69,9 +72,12 @@
     "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-saved": "✅ Vaikeustaso asetettu", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
     "menu-size": "🔢 Koko", "chus-size": "🔢 Aseta laudan koko", "size-saved": "✅ Koko asetettu", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
-    "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!", "turn-friend": "Kaverin vuoro!", 
-    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Odotetaan, että kaverisi liittyy peliin", "duel-link": "Lähetä tämä linkki:", "duel-share": "Jaa linkki",
+
+    "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!", "turn-friend": "Kaverin vuoro!", "group-turn": "Vuoro:", "group-winner": "Voittaja:", 
+    "menu-bot": "🕹👾 Bot", "menu-duel": "🕹👤 Kaveri", "duel-wait": "👥 Odotetaan, että kaverisi liittyy peliin", "duel-link": "Lähetä tämä linkki:", "duel-share": "Jaa linkki",
     "duel-join-ok": "✅ Liityit peliin", "duel-self": "Et voi liittyä omaan peliisi.", "duel-missing": "Tämä kutsu ei ole enää käytettävissä.", "duel-full": "Tässä pelissä on jo kaksi pelaajaa.", 
+    "menu-group": "🕹👥 Ryhmä", "group-wait": "👥 Ryhmäpeli käynnissä. Toinen pelaaja voi liittyä painamalla alla olevaa painiketta.", "group-join": "Liity peliin", 
+    "group-already-joined": "Olet jo liittynyt tähän peliin.", "group-only": "Ryhmätila on käytettävissä vain ryhmäkeskusteluissa.", 
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
     "guess-guess": "Yritä arvata: ", "guess-less": "⬇️ Arvattava luku on pienempi", "guess-more": "⬆️ Arvattava luku on suurempi", "guess-equals": "🥳 Arvasit oikein!",
@@ -125,9 +131,12 @@
     "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-saved": "✅ Сложность установлена", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
     "menu-size": "🔢 Размер", "chus-size": "🔢 Установить размер поля", "size-saved": "✅ Размер установлен", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
-    "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!", "turn-friend": "Ход друга!", 
-    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Ожидание подключения друга к игре", "duel-link": "Отправь эту ссылку:", "duel-share": "Поделиться",
+
+    "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!", "turn-friend": "Ход друга!", "group-turn": "Ход:", "group-winner": "Победитель:", 
+    "menu-bot": "🕹👾 Бот", "menu-duel": "🕹👤 Друг", "duel-wait": "👥 Ожидание подключения друга к игре", "duel-link": "Отправь эту ссылку:", "duel-share": "Поделиться",
     "duel-join-ok": "✅ Вы присоединились к игре", "duel-self": "Нельзя присоединиться к своей игре.", "duel-missing": "Это приглашение больше недоступно.", "duel-full": "В этой игре уже есть два игрока.", 
+    "menu-group": "🕹👥 Группа", "group-wait": "👥 Сетевая игра в группе начата. Другой игрок может присоединиться, нажав кнопку.", "group-join": "Присоединиться", 
+    "group-already-joined": "Вы уже присоединились к этой игре.", "group-only": "Групповой режим доступен только в групповых чатах.", 
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",
     "guess-guess": "Попробуйте его угадать: ", "guess-less": "⬇️ Загаданное число меньше", "guess-more": "⬆️ Загаданное число больше", "guess-equals": "🥳 Вы угадали!",

@@ -67,7 +67,14 @@ async def start_hangman_game(message: Message, user, lang: dict[str, str], lives
 
 async def open_hangman_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-hang"], reply_markup=game_menu_keyboard(lang, extra_setting_key='menu-cmplx'))
+    await message.answer(
+        lang["game-hang"],
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key='menu-cmplx',
+            chat_type=message.chat.type,
+        ),
+    )
 
 
 @router.message(Command('hangman'))
@@ -129,7 +136,14 @@ async def callback_difficulty(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {'hangman_lives': lives, 'current_game': game.code})
-    await callback.message.answer(lang['cmplx-saved'], reply_markup=game_menu_keyboard(lang, extra_setting_key='menu-cmplx'))
+    await callback.message.answer(
+        lang['cmplx-saved'],
+        reply_markup=game_menu_keyboard(
+            lang,
+            extra_setting_key='menu-cmplx',
+            chat_type=callback.message.chat.type,
+        ),
+    )
 
 
 @router.callback_query(F.data.startswith('hng:letter:'))
