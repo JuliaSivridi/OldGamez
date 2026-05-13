@@ -50,6 +50,22 @@ class TicTacToeGame:
             "last_move": last_move,
         }
 
+    def new_duel_state(self, board_size: int, host_user_id: int, guest_user_id: int) -> dict:
+        host_starts = bool(random.randint(0, 1))
+        player_x_id = host_user_id if host_starts else guest_user_id
+        player_o_id = guest_user_id if host_starts else host_user_id
+        return {
+            "board_size": board_size,
+            "board": EMPTY_CELL * (board_size * board_size),
+            "status": "active",
+            "player_x_id": player_x_id,
+            "player_o_id": player_o_id,
+            "current_turn_user_id": player_x_id,
+            "winner_user_id": None,
+            "win_length": self.get_win_length(board_size),
+            "last_move": None,
+        }
+
     def supports_mode(self, mode: str) -> bool:
         return mode in {"solo", "duel_private", "group_match"}
 

@@ -94,7 +94,7 @@ async def open_hangman_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
 async def menu_new_game(message: Message, user, lang) -> None:
     lives = int((user.settings or {}).get('hangman_lives', 10))
     await start_hangman_game(message, user, lang, lives=lives)

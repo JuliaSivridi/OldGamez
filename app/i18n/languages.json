@@ -1,9 +1,8 @@
 {
   "en": {
     "hi1": "Hello, ", "hi2": " 😋", 
-    "commands": "\n\nCommands:\n/lang - Change language\n/games - List of games\n/hangman - 😵 Hangman game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/blackjack - 🃏 Blackjack game\n/minesweeper - 💣 Minesweeper game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/fourinrow - 🔴🟡 4 in row game\n/npuzzle - 🧩 N-puzzle game\n/start - Show main menu",
-    "choose-game": "\n\nChoose a game", 
-    "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
+    "commands": "\n\nCommands:\n/games - List of games\n/fourinrow - 🔴🟡 4 in row game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/minesweeper - 💣 Minesweeper game\n/blackjack - 🃏 Blackjack game\n/npuzzle - 🧩 N-puzzle game\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman game\n/lang - Change language\n/start - Show main menu",
+    "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
     "main-back": "⬅️ Back", "main-ttl": "🩶 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n⚖️ Draw: ",
     "menu-hlp": "ℹ️ Help", "help": "ℹ️ There could be some help here",
@@ -13,8 +12,10 @@
 
     "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-saved": "✅ Difficulty set", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
     "menu-size": "🔢 Size", "chus-size": "🔢 Set board size", "size-saved": "✅ Size set", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
-    "menu-new": "🆕 New game", "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
-    "turn-comp": "Computer turn...", "turn-user": "Your turn!",
+    "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
+    "turn-comp": "Computer turn...", "turn-user": "Your turn!", "turn-friend": "Friend's turn!", 
+    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Waiting for your friend to join the game", "duel-link": "Send this link:", "duel-share": "Share link",
+    "duel-join-ok": "✅ You joined the game", "duel-self": "You can't join your own game.", "duel-missing": "This invitation is no longer available.", "duel-full": "This game already has two players.", 
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
     "guess-guess": "Try to guess it: ", "guess-less": "⬇️ The guessed number is less", "guess-more": "⬆️ The guessed number is greater", "guess-equals": "🥳 You guessed it!",
@@ -55,7 +56,7 @@
   },
   "fi": {
     "hi1": "Hei, ", "hi2": " 😋", 
-    "commands": "\n\nKomennot:\n/lang - Vaihda kieli\n/games - Listaa pelit\n/hangman - 😵 Hirttopeli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/blackjack - 🃏 Blackjack-peli\n/minesweeper - 💣 Miinaharava-peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/npuzzle - 🧩 N-pulmapeli\n/start - Näytä päävalikko",
+    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/minesweeper - 💣 Miinaharava-peli\n/blackjack - 🃏 Blackjack-peli\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
     "choose-game": "\n\nValitse peli", 
     "menu-games": "🕹 Pelit", "game-ttl": "🕹 Valitse peli", 
     "main-back": "⬅️ Takaisin", "main-ttl": "🩶 Päävalikko",
@@ -67,8 +68,10 @@
 
     "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-saved": "✅ Vaikeustaso asetettu", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
     "menu-size": "🔢 Koko", "chus-size": "🔢 Aseta laudan koko", "size-saved": "✅ Koko asetettu", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
-    "menu-new": "🆕 Uusi peli", "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
-    "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!",
+    "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
+    "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!", "turn-friend": "Kaverin vuoro!", 
+    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Odotetaan, että kaverisi liittyy peliin", "duel-link": "Lähetä tämä linkki:", "duel-share": "Jaa linkki",
+    "duel-join-ok": "✅ Liityit peliin", "duel-self": "Et voi liittyä omaan peliisi.", "duel-missing": "Tämä kutsu ei ole enää käytettävissä.", "duel-full": "Tässä pelissä on jo kaksi pelaajaa.", 
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
     "guess-guess": "Yritä arvata: ", "guess-less": "⬇️ Arvattava luku on pienempi", "guess-more": "⬆️ Arvattava luku on suurempi", "guess-equals": "🥳 Arvasit oikein!",
@@ -109,7 +112,7 @@
     },
   "ru": {
     "hi1": "Привет, ", "hi2": " 😋", 
-    "commands": "\n\nКоманды:\n/lang - Сменить язык\n/games - Список игр\n/hangman - 😵 Виселица\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/blackjack - 🃏 Блэкджек\n/minesweeper - 💣 Сапёр\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/fourinrow - 🔴🟡 4 в ряд\n/npuzzle - 🧩 Пятнашки\n/start - Показать главное меню",
+    "commands": "\n\nКоманды:\n/games - Список игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
     "choose-game": "\n\nВыберите игру", 
     "menu-games": "🕹 Игры", "game-ttl": "🕹 Выберите игру", 
     "main-back": "⬅️ Назад", "main-ttl": "🩶 Главное меню",
@@ -121,8 +124,10 @@
 
     "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-saved": "✅ Сложность установлена", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
     "menu-size": "🔢 Размер", "chus-size": "🔢 Установить размер поля", "size-saved": "✅ Размер установлен", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
-    "menu-new": "🆕 Новая игра", "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
-    "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!",
+    "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
+    "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!", "turn-friend": "Ход друга!", 
+    "menu-bot": "👤🕹👾", "menu-friend": "👤🕹👤", "duel-wait": "👥 Ожидание подключения друга к игре", "duel-link": "Отправь эту ссылку:", "duel-share": "Поделиться",
+    "duel-join-ok": "✅ Вы присоединились к игре", "duel-self": "Нельзя присоединиться к своей игре.", "duel-missing": "Это приглашение больше недоступно.", "duel-full": "В этой игре уже есть два игрока.", 
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",
     "guess-guess": "Попробуйте его угадать: ", "guess-less": "⬇️ Загаданное число меньше", "guess-more": "⬆️ Загаданное число больше", "guess-equals": "🥳 Вы угадали!",
@@ -158,7 +163,6 @@
 
     "menu-sea": "🚢 Морской Бой", "game-sea": "🚢 Морской Бой",
     "help-sea": "\nℹ️ *Цель игры* - потопить все корабли противника раньше, чем он потопит ваши\n\n*Размещение кораблей*\n• Корабли игрока и компьютера располагаются автоматически случайным образом. У алгоритма генерации есть ограничения\n• Поле 7×7\n• Корабли не могут стоять вплотную боками, но могут касаться углами\n• Корабли могут стоять ↔️ горизонтально или ↕️ вертикально\n• У каждого игрока есть 8-10 кораблей:\n   - 1 корабль (4 клетки)\n   - 2 корабля (3 клетки)\n   - 3 корабля (2 клетки)\n   - 2-4 корабля (1 клетка)\n\n*Ход игры*\n• Игроки по очереди стреляют по клеткам поля противника\n   ⬜️ – Закрытая клетка (неизвестно, что под ней)\n   🟦 – Море\n   🌀 - Промах\n   🚢 – Корабль\n   🔥 – Попадание в корабль\n   ☠️ – Потопленный корабль\n• Если попадание – игрок ходит снова\n• Если промах – ход переходит противнику\n\n*Алгоритм компьютера*\n• Случайный выстрел, пока не найден корабль\n• Если попал, стреляет по соседним клеткам\n• Если корабль найден полностью, открывает море вокруг него\n• Продолжает атаку, пока не промахнется\n\n🚢 Удачи в бою!",
-
     "default": "👻 Я не знаю, что сказать..."
   }
 }

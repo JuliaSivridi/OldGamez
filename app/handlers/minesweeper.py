@@ -93,7 +93,7 @@ async def open_minesweeper_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
 async def menu_new_game(message: Message, user, lang) -> None:
     mines_count = int((user.settings or {}).get("minesweeper_mines", 12))
     await start_minesweeper_game(message, user, lang, mines_count)

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
@@ -16,9 +16,11 @@ class SessionMode(str, Enum):
 
 
 class SessionStatus(str, Enum):
+    pending = "pending"
     active = "active"
     finished = "finished"
     abandoned = "abandoned"
+    expired = "expired"
 
 
 class User(Base):
@@ -47,6 +49,8 @@ class GameSession(Base):
     game_code: Mapped[str] = mapped_column(String(50), index=True)
     mode: Mapped[SessionMode] = mapped_column(SqlEnum(SessionMode), index=True)
     status: Mapped[SessionStatus] = mapped_column(SqlEnum(SessionStatus), default=SessionStatus.active, index=True)
+    join_code: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True, index=True)
+    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     current_turn_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
@@ -54,6 +58,7 @@ class GameSession(Base):
     winner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     created_by: Mapped[User] = relationship(
@@ -72,6 +77,7 @@ class SessionPlayer(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     seat_no: Mapped[int] = mapped_column(Integer)
     role: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     session: Mapped[GameSession] = relationship(back_populates="players")
 

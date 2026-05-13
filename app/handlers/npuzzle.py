@@ -69,7 +69,7 @@ async def open_npuzzle_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
 async def menu_new_game(message: Message, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
     await start_npuzzle_game(message, user, lang, size)

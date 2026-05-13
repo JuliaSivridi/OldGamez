@@ -123,7 +123,7 @@ async def open_battleship_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-new"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
 async def menu_new_game(message: Message, user, lang) -> None:
     await start_battleship_game(message, user, lang)
 

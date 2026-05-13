@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import random
 
@@ -28,6 +28,20 @@ class FourInRowGame:
             state["board"] = move["board"]
             state["last_move"] = [move["row"], col]
         return state
+
+    def new_duel_state(self, host_user_id: int, guest_user_id: int) -> dict:
+        host_starts = bool(random.randint(0, 1))
+        player_red_id = host_user_id if host_starts else guest_user_id
+        player_yellow_id = guest_user_id if host_starts else host_user_id
+        return {
+            "board": [[0 for _ in range(self.cols)] for _ in range(self.rows)],
+            "status": "active",
+            "player_red_id": player_red_id,
+            "player_yellow_id": player_yellow_id,
+            "current_turn_user_id": player_red_id,
+            "winner_user_id": None,
+            "last_move": None,
+        }
 
     def make_move(self, board: list[list[int]], sign: int, col: int) -> dict:
         new_board = [row[:] for row in board]
@@ -106,4 +120,3 @@ class FourInRowGame:
             state["status"] = "finished"
             return {"state": "draw", "game_state": state, "line": []}
         return {"state": "play", "game_state": state, "line": [[row, col]]}
-
