@@ -12,15 +12,15 @@ from app.services.users import get_user_setting, update_user_language, update_us
 
 router = Router()
 
-GAME_CODE_HANGMAN = "hangman"
-GAME_CODE_RANDOM = "random"
-GAME_CODE_RPS = "ropasci"
-GAME_CODE_BLACKJACK = "blackjack"
-GAME_CODE_MINESWEEPER = "minesweeper"
+GAME_CODE_FOURINROW = "four_in_row"
 GAME_CODE_TICTACTOE = "tic_tac_toe"
 GAME_CODE_BATTLESHIP = "battleship"
-GAME_CODE_FOURINROW = "four_in_row"
+GAME_CODE_MINESWEEPER = "minesweeper"
+GAME_CODE_BLACKJACK = "blackjack"
 GAME_CODE_NPUZZLE = "npuzzle"
+GAME_CODE_RPS = "ropasci"
+GAME_CODE_RANDOM = "random"
+GAME_CODE_HANGMAN = "hangman"
 
 
 class LanguageChoiceFilter(BaseFilter):
@@ -64,43 +64,15 @@ def extract_start_argument(message: Message) -> str | None:
 async def send_current_game_menu(message: Message, user) -> None:
     lang = get_language_pack(user.language_code)
     current_game = get_current_game(user)
-    if current_game == GAME_CODE_HANGMAN:
+    if current_game == GAME_CODE_FOURINROW:
         await message.answer(
-            lang["game-hang"],
-            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
-        )
-        return
-    if current_game == GAME_CODE_RANDOM:
-        from app.games.randomfun.keyboards import game_keyboard
-
-        await message.answer(
-            lang["game-rand"],
-            reply_markup=game_keyboard(lang),
-        )
-        return
-    if current_game == GAME_CODE_RPS:
-        from app.games.ropasci.keyboards import game_keyboard
-
-        await message.answer(
-            lang["game-rps"],
-            reply_markup=game_keyboard(lang),
-        )
-        return
-    if current_game == GAME_CODE_BLACKJACK:
-        await message.answer(
-            lang["game-bj"],
-            reply_markup=game_menu_keyboard(lang),
-        )
-        return
-    if current_game == GAME_CODE_MINESWEEPER:
-        await message.answer(
-            lang["menu-mines"],
-            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+            lang["game-four"],
+            reply_markup=game_menu_keyboard(lang, extra_action_key="menu-friend"),
         )
         return
     if current_game == GAME_CODE_TICTACTOE:
         await message.answer(
-            lang["menu-xo"],
+            lang["game-xo"],
             reply_markup=game_menu_keyboard(
                 lang,
                 extra_setting_key="menu-size",
@@ -114,16 +86,44 @@ async def send_current_game_menu(message: Message, user) -> None:
             reply_markup=game_menu_keyboard(lang),
         )
         return
-    if current_game == GAME_CODE_FOURINROW:
+    if current_game == GAME_CODE_MINESWEEPER:
         await message.answer(
-            lang["menu-four"],
-            reply_markup=game_menu_keyboard(lang, extra_action_key="menu-friend"),
+            lang["game-mines"],
+            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
+        )
+        return
+    if current_game == GAME_CODE_BLACKJACK:
+        await message.answer(
+            lang["game-bj"],
+            reply_markup=game_menu_keyboard(lang),
         )
         return
     if current_game == GAME_CODE_NPUZZLE:
         await message.answer(
-            lang["menu-15"],
+            lang["game-15"],
             reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-size"),
+        )
+        return
+    if current_game == GAME_CODE_RPS:
+        from app.games.ropasci.keyboards import game_keyboard
+
+        await message.answer(
+            lang["game-rps"],
+            reply_markup=game_keyboard(lang),
+        )
+        return
+    if current_game == GAME_CODE_RANDOM:
+        from app.games.randomfun.keyboards import game_keyboard
+
+        await message.answer(
+            lang["game-rand"],
+            reply_markup=game_keyboard(lang),
+        )
+        return
+    if current_game == GAME_CODE_HANGMAN:
+        await message.answer(
+            lang["game-hang"],
+            reply_markup=game_menu_keyboard(lang, extra_setting_key="menu-cmplx"),
         )
         return
     await message.answer(lang["main-ttl"], reply_markup=main_menu_keyboard(lang))
