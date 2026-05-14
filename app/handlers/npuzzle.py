@@ -109,7 +109,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("hlp", game.code))
+@router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
     await callback.message.answer(lang["help-npuzzle"], 
         reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),

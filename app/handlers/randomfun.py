@@ -103,7 +103,7 @@ async def menu_rand(message: Message, user, lang) -> None:
     )
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-help"))
 async def menu_help(message: Message, user, lang) -> None:
     await message.answer(lang['help'])
 

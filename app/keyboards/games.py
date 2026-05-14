@@ -63,7 +63,7 @@ def game_menu_keyboard(
         layout.append(1)
 
     builder.button(text=lang["menu-stat"], callback_data=f"game:stat:{game_code}")
-    builder.button(text=lang["menu-hlp"], callback_data=f"game:hlp:{game_code}")
+    builder.button(text=lang["menu-help"], callback_data=f"game:help:{game_code}")
     builder.button(text=lang["main-back"], callback_data="main:back")
     layout.append(3)
 

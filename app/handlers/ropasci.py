@@ -64,7 +64,7 @@ async def play_rps(message: Message, user, lang) -> None:
     await message.answer(f"{lang['rps-comp']}{result['comp_choice']}\n\n{state_msg}", reply_markup=game_keyboard(lang))
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
+@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-help"))
 async def menu_help(message: Message, user, lang) -> None:
     await message.answer(lang["help-rps"], parse_mode="Markdown")
 
