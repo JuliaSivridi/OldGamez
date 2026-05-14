@@ -1,11 +1,11 @@
 from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command, CommandStart
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 
 from app.handlers.duels import handle_private_duel_start
 from app.i18n.languages import LANGUAGE_CHOICES
 from app.i18n.translator import get_language_pack
-from app.keyboards.games import game_menu_keyboard, games_keyboard
+from app.keyboards.games import game_menu_keyboard, games_keyboard, group_games_keyboard
 from app.keyboards.language import language_keyboard
 from app.keyboards.main_menu import main_menu_keyboard
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
@@ -21,32 +21,6 @@ GAME_CODE_NPUZZLE = "npuzzle"
 GAME_CODE_RPS = "ropasci"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_HANGMAN = "hangman"
-
-
-class LanguageChoiceFilter(BaseFilter):
-    async def __call__(self, message: Message):
-        if message.text is None:
-            return False
-        languages = LANGUAGE_CHOICES
-        code = languages.get(message.text)
-        if code:
-            return {"language_code": code}
-        return False
-
-
-class MenuTextFilter(BaseFilter):
-    def __init__(self, *keys: str):
-        self.keys = keys
-
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
-            return False
-        user = await upsert_user(message.from_user)
-        lang = get_language_pack(user.language_code)
-        allowed_texts = {lang[key] for key in self.keys}
-        if message.text in allowed_texts:
-            return {"user": user, "lang": lang}
-        return False
 
 
 def get_current_game(user) -> str | None:
@@ -69,8 +43,9 @@ async def send_current_game_menu(message: Message, user) -> None:
             lang["game-four"],
             reply_markup=game_menu_keyboard(
                 lang,
-                extra_duel_key="menu-duel",
-                extra_group_key="menu-group",
+                game_code=GAME_CODE_FOURINROW,
+                extra_duel_key="duel",
+                extra_group_key="group",
                 chat_type=message.chat.type,
             ),
         )
@@ -80,9 +55,10 @@ async def send_current_game_menu(message: Message, user) -> None:
             lang["game-xo"],
             reply_markup=game_menu_keyboard(
                 lang,
-                extra_setting_key="menu-size",
-                extra_duel_key="menu-duel",
-                extra_group_key="menu-group",
+                game_code=GAME_CODE_TICTACTOE,
+                extra_setting_key="size",
+                extra_duel_key="duel",
+                extra_group_key="group",
                 chat_type=message.chat.type,
             ),
         )
@@ -90,7 +66,11 @@ async def send_current_game_menu(message: Message, user) -> None:
     if current_game == GAME_CODE_BATTLESHIP:
         await message.answer(
             lang["game-sea"],
-            reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=game_menu_keyboard(
+                lang,
+                game_code=GAME_CODE_BATTLESHIP,
+                chat_type=message.chat.type
+            ),
         )
         return
     if current_game == GAME_CODE_MINESWEEPER:
@@ -98,7 +78,8 @@ async def send_current_game_menu(message: Message, user) -> None:
             lang["game-mines"],
             reply_markup=game_menu_keyboard(
                 lang,
-                extra_setting_key="menu-cmplx",
+                game_code=GAME_CODE_MINESWEEPER,
+                extra_setting_key="cmplx",
                 chat_type=message.chat.type,
             ),
         )
@@ -106,15 +87,20 @@ async def send_current_game_menu(message: Message, user) -> None:
     if current_game == GAME_CODE_BLACKJACK:
         await message.answer(
             lang["game-bj"],
-            reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=game_menu_keyboard(
+                lang,
+                game_code=GAME_CODE_BLACKJACK,
+                chat_type=message.chat.type
+            ),
         )
         return
     if current_game == GAME_CODE_NPUZZLE:
         await message.answer(
-            lang["game-15"],
+            lang["game-npuzzle"],
             reply_markup=game_menu_keyboard(
                 lang,
-                extra_setting_key="menu-size",
+                game_code=GAME_CODE_NPUZZLE,
+                extra_setting_key="size",
                 chat_type=message.chat.type,
             ),
         )
@@ -140,7 +126,8 @@ async def send_current_game_menu(message: Message, user) -> None:
             lang["game-hang"],
             reply_markup=game_menu_keyboard(
                 lang,
-                extra_setting_key="menu-cmplx",
+                game_code=GAME_CODE_HANGMAN,
+                extra_setting_key="cmplx",
                 chat_type=message.chat.type,
             ),
         )
@@ -189,9 +176,33 @@ async def cmd_games_command(message: Message) -> None:
     await message.answer(lang["game-ttl"], reply_markup=games_keyboard(lang))
 
 
-@router.message(MenuTextFilter("menu-games"))
-async def cmd_games_menu(message: Message, user, lang) -> None:
-    await message.answer(lang["game-ttl"], reply_markup=games_keyboard(lang))
+@router.callback_query(F.data == "menu:games")
+async def callback_menu_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await callback.message.answer(lang["game-ttl"], reply_markup=games_keyboard(lang))
+    await callback.answer()
+
+
+@router.message(Command("group"))
+async def cmd_group_games(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["game-ttl"], reply_markup=group_games_keyboard(lang))
+
+
+@router.callback_query(F.data == "menu:group-games")
+async def callback_menu_group_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await callback.message.answer(lang["game-ttl"], reply_markup=group_games_keyboard(lang))
+    await callback.answer()
 
 
 @router.message(Command("lang"))
@@ -206,31 +217,43 @@ async def cmd_lang_command(message: Message) -> None:
     )
 
 
-@router.message(MenuTextFilter("menu-lang"))
-async def cmd_lang_menu(message: Message, user, lang) -> None:
-    await message.answer(
-        lang["lang-ask"],
-        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
-    )
-
-
-@router.message(LanguageChoiceFilter())
-async def choose_language(message: Message, language_code: str) -> None:
-    if message.from_user is None:
+@router.callback_query(F.data == "menu:lang")
+async def callback_menu_lang(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
         return
-    user = await upsert_user(message.from_user)
-    await update_user_language(user.id, language_code)
-    lang = get_language_pack(language_code)
-    await message.answer(
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await callback.message.answer(
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("lang:"))
+async def callback_language_choice(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    lang_code = callback.data.split(":")[1]
+    user = await upsert_user(callback.from_user)
+    await update_user_language(user.id, lang_code)
+    lang = get_language_pack(lang_code)
+    await callback.message.answer(
         lang["lang-ok"],
-        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
+    await callback.answer()
 
 
-@router.message(MenuTextFilter("main-back"))
-async def back_to_main_menu(message: Message, user, lang) -> None:
+@router.callback_query(F.data == "main:back")
+async def callback_menu_back(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": None})
-    await message.answer(
+    await callback.message.answer(
         lang["main-ttl"],
-        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
+    await callback.answer()

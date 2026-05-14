@@ -1,10 +1,11 @@
 from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.filters.current_game import CurrentGameFilter
 from app.games.minesweeper import game
-from app.games.minesweeper.keyboards import difficulty_keyboard, field_keyboard
+from app.games.minesweeper.keyboards import field_keyboard
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import (
@@ -17,20 +18,42 @@ from app.services.sessions import (
 )
 from app.services.users import get_user_setting, update_user_settings, upsert_user
 
-class MenuTextFilter(BaseFilter):
-    def __init__(self, key: str):
-        self.key = key
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
+
+class GameCallbackFilter(BaseFilter):
+    def __init__(self, action: str, game_code: str):
+        self.action = action
+        self.game_code = game_code
+
+    async def __call__(self, callback: CallbackQuery):
+        if (callback.from_user is None 
+            or callback.data is None
+            or callback.message is None
+        ):
             return False
-        user = await upsert_user(message.from_user)
+
+        expected = f"game:{self.action}:{self.game_code}"
+        if callback.data != expected:
+            return False
+
+        user = await upsert_user(callback.from_user)
         lang = get_language_pack(user.language_code)
-        if message.text == lang[self.key]:
-            return {"user": user, "lang": lang}
-        return False
+
+        return {"user": user, "lang": lang}
 
 
 router = Router()
+
+
+def cmplx_keyboard(lang: dict[str, str]):
+    b = InlineKeyboardBuilder()
+    for key, value in (
+        ("cmplx-easy", 8),
+        ("cmplx-norm", 12),
+        ("cmplx-hard", 16),
+    ):
+        b.button(text=lang[key], callback_data=f"msw:cmplx:{value}")
+    b.adjust(3)
+    return b.as_markup()
 
 
 def render_game_text(lang: dict[str, str], state: dict) -> str:
@@ -64,15 +87,20 @@ async def start_minesweeper_game(message: Message, user, lang: dict[str, str], m
     )
 
 
+def minesweeper_menu_keyboard(lang: dict[str, str], chat_type=None):
+    return game_menu_keyboard(
+        lang,
+        game_code=game.code,
+        extra_setting_key="cmplx",
+        chat_type=chat_type,
+    )
+
+
 async def open_minesweeper_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         lang["game-mines"],
-        reply_markup=game_menu_keyboard(
-            lang,
-            extra_setting_key="menu-cmplx",
-            chat_type=message.chat.type,
-        ),
+        reply_markup=minesweeper_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
 
@@ -82,11 +110,6 @@ async def cmd_minesweeper_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_minesweeper_menu(message, user, lang)
-
-
-@router.message(MenuTextFilter("menu-mines"))
-async def cmd_minesweeper_menu(message: Message, user, lang) -> None:
     await open_minesweeper_menu(message, user, lang)
 
 
@@ -100,25 +123,34 @@ async def open_minesweeper_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
-async def menu_new_game(message: Message, user, lang) -> None:
+@router.callback_query(GameCallbackFilter("bot", game.code))
+async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     mines_count = int((user.settings or {}).get("minesweeper_mines", 12))
-    await start_minesweeper_game(message, user, lang, mines_count)
+    await start_minesweeper_game(callback.message, user, lang, mines_count)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-cmplx"))
-async def menu_difficulty(message: Message, user, lang) -> None:
-    await message.answer(lang["chus-cmplx"] + lang["mines-cmplx"], reply_markup=difficulty_keyboard(lang))
+@router.callback_query(GameCallbackFilter("cmplx", game.code))
+async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["chus-cmplx"], reply_markup=cmplx_keyboard(lang))
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
-async def menu_help(message: Message, user, lang) -> None:
-    await message.answer(lang["help-mines"], parse_mode="Markdown")
+@router.callback_query(GameCallbackFilter("stat", game.code))
+async def menu_stats(callback: CallbackQuery, user, lang) -> None:
+    text = await get_minesweeper_stats_text(user.id, lang)
+    await callback.message.answer(text, 
+        reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
-async def menu_stats(message: Message, **kwargs) -> None:
-    await cmd_minesweeper_stats(message)
+@router.callback_query(GameCallbackFilter("hlp", game.code))
+async def menu_help(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["help-mines"], 
+        reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
 @router.callback_query(F.data == "msw:noop")
@@ -126,8 +158,8 @@ async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("msw:difficulty:"))
-async def callback_difficulty(callback: CallbackQuery) -> None:
+@router.callback_query(F.data.startswith("msw:cmplx:"))
+async def callback_cmplx(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
     await callback.answer()
@@ -137,11 +169,7 @@ async def callback_difficulty(callback: CallbackQuery) -> None:
     await update_user_settings(user.id, {"minesweeper_mines": mines_count, "current_game": game.code})
     await callback.message.answer(
         lang["cmplx-saved"],
-        reply_markup=game_menu_keyboard(
-            lang,
-            extra_setting_key="menu-cmplx",
-            chat_type=callback.message.chat.type,
-        ),
+        reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
 
 
@@ -226,14 +254,15 @@ async def callback_move(callback: CallbackQuery) -> None:
         )
 
 
-@router.message(Command("mines_stats"))
-async def cmd_minesweeper_stats(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    stat = await get_game_stat(user.id, game.code)
+async def get_minesweeper_stats_text(user_id: int, lang: dict[str, str]) -> str:
+    stat = await get_game_stat(user_id, game.code)
     if stat is None:
-        await message.answer(render_stat_text(lang, 0, 0, 0), parse_mode="Markdown")
-        return
-    await message.answer(render_stat_text(lang, stat.played, stat.wins, stat.losses), parse_mode="Markdown")
+        played = wins = losses = 0
+    else:
+        played, wins, losses = stat.played, stat.wins, stat.losses
+    return (
+        lang["stat-ttl"]
+        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
+        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
+        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
+    )

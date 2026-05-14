@@ -1,8 +1,8 @@
 {
   "en": {
     "hi1": "Hello, ", "hi2": " 😋", 
-    "commands": "\n\nCommands:\n/games - List of games\n/fourinrow - 🔴🟡 4 in row game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/minesweeper - 💣 Minesweeper game\n/blackjack - 🃏 Blackjack game\n/npuzzle - 🧩 N-puzzle game\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman game\n/lang - Change language\n/start - Show main menu",
-    "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
+    "commands": "\n\nCommands:\n/games - List of games\n/group - List of group games\n/fourinrow - 🔴🟡 4 in row game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/minesweeper - 💣 Minesweeper game\n/blackjack - 🃏 Blackjack game\n/npuzzle - 🧩 N-puzzle game\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman game\n/lang - Change language\n/start - Show main menu",
+    "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "menu-group-games": "🕹 Group games", "game-ttl": "🕹 Choose a game", 
     "main-back": "⬅️ Back", "main-ttl": "🩶 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n⚖️ Draw: ",
     "menu-hlp": "ℹ️ Help", "help": "ℹ️ There could be some help here",
@@ -15,9 +15,9 @@
     "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
 
     "turn-comp": "Computer turn...", "turn-user": "Your turn!", "turn-friend": "Friend's turn!", "group-turn": "Turn:", "group-winner": "Winner:", 
-    "menu-bot": "🕹👾 Bot", "menu-duel": "🕹👤 Friend", "duel-wait": "👥 Waiting for your friend to join the game", "duel-link": "Send this link:", "duel-share": "Share link",
+    "menu-bot": "🕹 Play with bot 👾", "menu-duel": "🕹 Play with friend 👤", "duel-wait": "👥 Waiting for your friend to join the game", "duel-link": "Send this link:", "duel-share": "Share link",
     "duel-join-ok": "✅ You joined the game", "duel-self": "You can't join your own game.", "duel-missing": "This invitation is no longer available.", "duel-full": "This game already has two players.", 
-    "menu-group": "🕹👥 Group", "group-wait": "👥 Group game started. Another player can join using the button below.", "group-join": "Join game", 
+    "menu-group": "🕹 Play in group 👥", "group-wait": "👥 Group game started. Another player can join using the button below.", "group-join": "Join game", 
     "group-already-joined": "You already joined this game.", "group-only": "Group mode is only available in group chats.", 
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
@@ -41,7 +41,7 @@
     "mines-regime": "Regime: ", "mode-dig": " ⛏️ Dig ", "mode-flag": " 🚩 Mark ", "mines-count": "Mines on field: ", "mines-mark": "Marked: ",
     "help-mines": "ℹ️ *Goal of the game* - open all safe cells \n1️⃣ A number on a cell indicates how many mines are around it (horizontally, vertically, and diagonally) \n💣 If you open a cell with a mine, the game is over \n\nYou can switch between modes: \n⛏️ Dig - opens a cell \n🚩 Mark - places a flag on a suspected mine \n\nIncorrectly placed flags are marked with ❌ at the end of the game\n\n*Your first click is always safe* 🎉",
 
-    "menu-15": "🧩 N-puzzle", "game-15": "🧩 N-puzzle game ",
+    "menu-npuzzle": "🧩 N-puzzle", "game-npuzzle": "🧩 N-puzzle game ",
     "help-npuzzle": "ℹ️ *Goal of the game* - arrange the tiles in the correct order: left -> right, top -> bottom, with the empty space in the bottom-right corner \n\nMove the tiles using the empty space to restore the correct order of numbers",
 
     "menu-xo": "❌⭕️ TicTacToe", "game-xo": "❌⭕️ TicTacToe ", "xo-win-need": "\nTo win, make a line of length ",
@@ -59,9 +59,8 @@
   },
   "fi": {
     "hi1": "Hei, ", "hi2": " 😋", 
-    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/minesweeper - 💣 Miinaharava-peli\n/blackjack - 🃏 Blackjack-peli\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
-    "choose-game": "\n\nValitse peli", 
-    "menu-games": "🕹 Pelit", "game-ttl": "🕹 Valitse peli", 
+    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/group - Listaa ryhmäpelit\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/minesweeper - 💣 Miinaharava-peli\n/blackjack - 🃏 Blackjack-peli\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
+    "choose-game": "\n\nValitse peli", "menu-games": "🕹 Pelit", "menu-group-games": "🕹 Ryhmäpelit", "game-ttl": "🕹 Valitse peli", 
     "main-back": "⬅️ Takaisin", "main-ttl": "🩶 Päävalikko",
     "menu-stat": "📊 Tilastot", "stat-ttl": "📊 Tilastot", "stat-all": "\n🕹 Pelejä pelattu: ", "stat-win": "\n🥇 Voitot: ", "stat-lose": "\n💀 Häviöt: ", "stat-draw": "\n⚖️ Tasapelit: ",
     "menu-hlp": "ℹ️ Ohje", "help": "ℹ️ Täällä voisi olla ohjeita",
@@ -74,9 +73,9 @@
     "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
 
     "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!", "turn-friend": "Kaverin vuoro!", "group-turn": "Vuoro:", "group-winner": "Voittaja:", 
-    "menu-bot": "🕹👾 Bot", "menu-duel": "🕹👤 Kaveri", "duel-wait": "👥 Odotetaan, että kaverisi liittyy peliin", "duel-link": "Lähetä tämä linkki:", "duel-share": "Jaa linkki",
+    "menu-bot": "🕹 Pelaa botin kanssa 👾", "menu-duel": "🕹 Pelaa kaverin kanssa 👤", "duel-wait": "👥 Odotetaan, että kaverisi liittyy peliin", "duel-link": "Lähetä tämä linkki:", "duel-share": "Jaa linkki",
     "duel-join-ok": "✅ Liityit peliin", "duel-self": "Et voi liittyä omaan peliisi.", "duel-missing": "Tämä kutsu ei ole enää käytettävissä.", "duel-full": "Tässä pelissä on jo kaksi pelaajaa.", 
-    "menu-group": "🕹👥 Ryhmä", "group-wait": "👥 Ryhmäpeli käynnissä. Toinen pelaaja voi liittyä painamalla alla olevaa painiketta.", "group-join": "Liity peliin", 
+    "menu-group": "🕹 Pelaa ryhmässä 👥", "group-wait": "👥 Ryhmäpeli käynnissä. Toinen pelaaja voi liittyä painamalla alla olevaa painiketta.", "group-join": "Liity peliin", 
     "group-already-joined": "Olet jo liittynyt tähän peliin.", "group-only": "Ryhmätila on käytettävissä vain ryhmäkeskusteluissa.", 
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
@@ -100,7 +99,7 @@
     "mines-regime": "Tila: ", "mode-dig": " ⛏️ Kaiva ", "mode-flag": " 🚩 Merkitse ", "mines-count": "Miinoja kentällä: ", "mines-mark": "Merkitty: ",
     "help-mines": "ℹ️ *Tavoite* - avata kaikki turvalliset ruudut \n1️⃣ Ruudun numero kertoo, kuinka monta miinaa on sen ympärillä (vaaka-, pysty- ja vinosuunnissa) \n💣 Jos avaat miinan sisältävän ruudun, peli päättyy \n\nVoit vaihtaa tilaa: \n⛏️ Kaiva - avaa ruudun \n🚩 Merkitse - asettaa lipun epäilyttävälle ruudulle \n\nVäärin asetetut liput merkitään ❌:llä pelin lopussa\n\n*Ensimmäinen klikkaus on aina turvallinen* 🎉",
 
-    "menu-15": "🧩 N-pulmapeli", "game-15": "🧩 N-pulmapeli ",
+    "menu-npuzzle": "🧩 N-pulmapeli", "game-npuzzle": "🧩 N-pulmapeli ",
     "help-npuzzle": "ℹ️ *Tavoite* - järjestää palat oikeaan järjestykseen: vasemmalta oikealle, ylhäältä alas, tyhjä ruutu oikeassa alakulmassa \n\nSiirrä paloja tyhjän ruudun avulla ja palauta numeroiden oikea järjestys",
 
     "menu-xo": "❌⭕️ Ristinolla", "game-xo": "❌⭕️ Ristinolla ", "xo-win-need": "\nVoittaaksesi muodosta rivi, jonka pituus on ",
@@ -118,9 +117,8 @@
     },
   "ru": {
     "hi1": "Привет, ", "hi2": " 😋", 
-    "commands": "\n\nКоманды:\n/games - Список игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
-    "choose-game": "\n\nВыберите игру", 
-    "menu-games": "🕹 Игры", "game-ttl": "🕹 Выберите игру", 
+    "commands": "\n\nКоманды:\n/games - Список игр\n/group - Список групповых игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
+    "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Игры", "menu-group-games": "🕹 Групповые игры", "game-ttl": "🕹 Выберите игру", 
     "main-back": "⬅️ Назад", "main-ttl": "🩶 Главное меню",
     "menu-stat": "📊 Статистика", "stat-ttl": "📊 Статистика", "stat-all": "\n🕹 Игр сыграно: ", "stat-win": "\n🥇 Побед: ", "stat-lose": "\n💀 Поражений: ", "stat-draw": "\n⚖️ Ничьих: ",
     "menu-hlp": "ℹ️ Помощь", "help": "ℹ️ Тут могла бы быть справка",
@@ -133,9 +131,9 @@
     "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
 
     "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!", "turn-friend": "Ход друга!", "group-turn": "Ход:", "group-winner": "Победитель:", 
-    "menu-bot": "🕹👾 Бот", "menu-duel": "🕹👤 Друг", "duel-wait": "👥 Ожидание подключения друга к игре", "duel-link": "Отправь эту ссылку:", "duel-share": "Поделиться",
+    "menu-bot": "🕹 Играть с ботом 👾", "menu-duel": "🕹 Играть с другом 👤", "duel-wait": "👥 Ожидание подключения друга к игре", "duel-link": "Отправь эту ссылку:", "duel-share": "Поделиться",
     "duel-join-ok": "✅ Вы присоединились к игре", "duel-self": "Нельзя присоединиться к своей игре.", "duel-missing": "Это приглашение больше недоступно.", "duel-full": "В этой игре уже есть два игрока.", 
-    "menu-group": "🕹👥 Группа", "group-wait": "👥 Сетевая игра в группе начата. Другой игрок может присоединиться, нажав кнопку.", "group-join": "Присоединиться", 
+    "menu-group": "🕹 Играть в группе 👥", "group-wait": "👥 Сетевая игра в группе начата. Другой игрок может присоединиться, нажав кнопку.", "group-join": "Присоединиться", 
     "group-already-joined": "Вы уже присоединились к этой игре.", "group-only": "Групповой режим доступен только в групповых чатах.", 
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",
@@ -159,7 +157,7 @@
     "mines-regime": "Режим: ", "mode-dig": " ⛏️ Копать ", "mode-flag": " 🚩 Пометить ", "mines-count": "Мин на поле: ", "mines-mark": "Помечено: ",
     "help-mines": "ℹ️ *Цель игры* - открыть все безопасные клетки \n1️⃣ Число на клетке показывает, сколько мин находится вокруг неё (по горизонтали, вертикали и диагоналям) \n💣 Если вы открываете клетку с миной, игра заканчивается \n\nВы можете переключаться между режимами: \n⛏️ Копать - открывает клетку \n🚩 Пометить - ставит флажок на предполагаемую мину \n\nНеправильно установленные флажки в конце игры отмечаются ❌ крестиком\n\n*Ваш первый клик всегда безопасен* 🎉",
 
-    "menu-15": "🧩 Пятнашки", "game-15": "🧩 Пятнашки ",
+    "menu-npuzzle": "🧩 Пятнашки", "game-npuzzle": "🧩 Пятнашки ",
     "help-npuzzle": "ℹ️ *Цель игры* - расположить тайлы в правильном порядке: слева -> направо, сверху -> вниз, с пустым местом в правом нижнем углу \n\nПеремещайте тайлы, используя пустое место, чтобы восстановить правильный порядок цифр",
 
     "menu-xo": "❌⭕️ Крестики-нолики", "game-xo": "❌⭕️ Крестики-нолики ", "xo-win-need": "\nДля победы сделайте линию длиной  ",

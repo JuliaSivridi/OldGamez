@@ -20,18 +20,6 @@ SYMBOLS = {
 }
 
 
-def difficulty_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    for key, value in (
-        ("cmplx-easy", 8),
-        ("cmplx-norm", 12),
-        ("cmplx-hard", 16),
-    ):
-        builder.button(text=lang[key], callback_data=f"msw:difficulty:{value}")
-    builder.adjust(3)
-    return builder.as_markup()
-
-
 def field_keyboard(lang: dict[str, str], state: dict, session_id: int, game_over: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     is_dig = state["is_dig"]

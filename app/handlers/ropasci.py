@@ -74,7 +74,6 @@ async def menu_stats(message: Message, **kwargs) -> None:
     await cmd_rps_stats(message)
 
 
-@router.message(Command("rps_stats"))
 async def cmd_rps_stats(message: Message) -> None:
     if message.from_user is None:
         return

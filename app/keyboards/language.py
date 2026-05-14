@@ -1,14 +1,12 @@
-from aiogram.enums import ChatType
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def language_keyboard(lang: dict[str, str], chat_type: ChatType | str | None = None) -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🇷🇺 ru"), KeyboardButton(text="🇫🇮 fi"), KeyboardButton(text="🇬🇧 en")],
-            [KeyboardButton(text=lang["main-back"])],
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
+def language_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🇷🇺 ru", callback_data="lang:ru")
+    builder.button(text="🇫🇮 fi", callback_data="lang:fi")
+    builder.button(text="🇬🇧 en", callback_data="lang:en")
+    builder.adjust(3)
+    return builder.as_markup()
 

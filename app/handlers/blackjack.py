@@ -10,17 +10,27 @@ from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
-class MenuTextFilter(BaseFilter):
-    def __init__(self, key: str):
-        self.key = key
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
+
+class GameCallbackFilter(BaseFilter):
+    def __init__(self, action: str, game_code: str):
+        self.action = action
+        self.game_code = game_code
+
+    async def __call__(self, callback: CallbackQuery):
+        if (callback.from_user is None 
+            or callback.data is None
+            or callback.message is None
+        ):
             return False
-        user = await upsert_user(message.from_user)
+
+        expected = f"game:{self.action}:{self.game_code}"
+        if callback.data != expected:
+            return False
+
+        user = await upsert_user(callback.from_user)
         lang = get_language_pack(user.language_code)
-        if message.text == lang[self.key]:
-            return {"user": user, "lang": lang}
-        return False
+
+        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -75,11 +85,19 @@ async def start_blackjack_game(message: Message, user, lang: dict[str, str]) -> 
     await message.answer(render_game_text(lang, state), parse_mode="Markdown", reply_markup=game_keyboard(session.id, lang, True))
 
 
+def blackjack_menu_keyboard(lang: dict[str, str], chat_type=None):
+    return game_menu_keyboard(
+        lang,
+        game_code=game.code,
+        chat_type=chat_type,
+    )
+
+
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         lang["game-bj"],
-        reply_markup=game_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
 
@@ -89,11 +107,6 @@ async def cmd_blackjack_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_blackjack_menu(message, user, lang)
-
-
-@router.message(MenuTextFilter("menu-bj"))
-async def cmd_blackjack_menu(message: Message, user, lang) -> None:
     await open_blackjack_menu(message, user, lang)
 
 
@@ -107,19 +120,27 @@ async def open_blackjack_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
-async def menu_new_game(message: Message, user, lang) -> None:
-    await start_blackjack_game(message, user, lang)
+@router.callback_query(GameCallbackFilter("bot", game.code))
+async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
+    await start_blackjack_game(callback.message, user, lang)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
-async def menu_help(message: Message, user, lang) -> None:
-    await message.answer(lang["help-bj"], parse_mode="Markdown")
+@router.callback_query(GameCallbackFilter("stat", game.code))
+async def menu_stats(callback: CallbackQuery, user, lang) -> None:
+    text = await get_blackjack_stats_text(user.id, lang)
+    await callback.message.answer(text, 
+        reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
-async def menu_stats(message: Message, **kwargs) -> None:
-    await cmd_blackjack_stats(message)
+@router.callback_query(GameCallbackFilter("hlp", game.code))
+async def menu_help(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["help-bj"], 
+        reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
 @router.callback_query(F.data == "bj:noop")
@@ -154,22 +175,16 @@ async def callback_game(callback: CallbackQuery) -> None:
     await finish_blackjack(session.id, state, lang, user.id, callback.message)
 
 
-@router.message(Command("blackjack_stats"))
-async def cmd_blackjack_stats(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    stat = await get_game_stat(user.id, game.code)
+async def get_blackjack_stats_text(user_id: int, lang: dict[str, str]) -> str:
+    stat = await get_game_stat(user_id, game.code)
     if stat is None:
         played = wins = losses = draws = 0
     else:
         played, wins, losses, draws = stat.played, stat.wins, stat.losses, stat.draws
-    await message.answer(
+    return (
         lang["stat-ttl"]
         + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
         + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
         + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`",
-        parse_mode="Markdown",
+        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
     )

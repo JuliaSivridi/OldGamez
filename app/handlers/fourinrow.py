@@ -35,18 +35,26 @@ from app.services.sessions import (
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
 
-class MenuTextFilter(BaseFilter):
-    def __init__(self, key: str):
-        self.key = key
+class GameCallbackFilter(BaseFilter):
+    def __init__(self, action: str, game_code: str):
+        self.action = action
+        self.game_code = game_code
 
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
+    async def __call__(self, callback: CallbackQuery):
+        if (callback.from_user is None 
+            or callback.data is None
+            or callback.message is None
+        ):
             return False
-        user = await upsert_user(message.from_user)
+
+        expected = f"game:{self.action}:{self.game_code}"
+        if callback.data != expected:
+            return False
+
+        user = await upsert_user(callback.from_user)
         lang = get_language_pack(user.language_code)
-        if message.text == lang[self.key]:
-            return {"user": user, "lang": lang}
-        return False
+
+        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -55,8 +63,9 @@ router = Router()
 def four_menu_keyboard(lang: dict[str, str], chat_type=None):
     return game_menu_keyboard(
         lang,
-        extra_duel_key="menu-duel",
-        extra_group_key="menu-group",
+        game_code=game.code,
+        extra_duel_key="duel",
+        extra_group_key="group",
         chat_type=chat_type,
     )
 
@@ -83,12 +92,15 @@ def render_group_status_text(
     if state["status"] == "finished":
         if state.get("result") == "draw":
             return lang["game-draw"]
-        winner_name = player_names.get(state.get("winner_user_id"), str(state.get("winner_user_id") or ""))
-        return f"{lang['group-winner']} {winner_name}"
+        winner_id = state.get("winner_user_id")
+        winner_symbol = SYMBOLS[1] if winner_id == state.get("player_red_id") else SYMBOLS[2]
+        winner_name = player_names.get(winner_id, str(winner_id or ""))
+        return f"{lang['group-winner']} {winner_symbol} {winner_name}"
 
     current_turn_user_id = state.get("current_turn_user_id")
+    current_symbol = SYMBOLS[1] if current_turn_user_id == state.get("player_red_id") else SYMBOLS[2]
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
-    return f"{lang['game-four']}\n\n{lang['group-turn']} {current_name}"
+    return f"{lang['game-four']}\n\n{lang['group-turn']} {current_symbol} {current_name}"
 
 
 def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = None) -> str:
@@ -132,6 +144,18 @@ async def animate_drop(message: Message, session_id: int, board: list[list[int]]
         try:
             await message.edit_text(
                 render_drop_text(lang, sign, "user" if is_user else "comp"),
+                reply_markup=drop_keyboard(session_id, board, sign, row, now_row, col),
+            )
+        except TelegramBadRequest:
+            pass
+
+
+async def animate_group_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], player_names: dict[int, str], state: dict) -> None:
+    for now_row in range(row):
+        await asyncio.sleep(0.2)
+        try:
+            await message.edit_text(
+                render_group_status_text(lang, state, player_names),
                 reply_markup=drop_keyboard(session_id, board, sign, row, now_row, col),
             )
         except TelegramBadRequest:
@@ -254,14 +278,6 @@ async def start_four_group(message: Message, user, lang: dict[str, str]) -> None
     await update_session_state(session.id, state, None)
 
 
-async def open_four_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(
-        lang["game-four"],
-        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
-    )
-
-
 async def join_private_duel(message: Message, user, lang: dict[str, str], session) -> None:
     state = dict(session.state or {})
     if session.created_by_user_id == user.id:
@@ -311,17 +327,20 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         await sync_duel_messages(message.bot, session)
 
 
+async def open_four_menu(message: Message, user, lang) -> None:
+    await update_user_settings(user.id, {"current_game": game.code})
+    await message.answer(
+        lang["game-four"],
+        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+    )
+
+
 @router.message(Command("fourinrow"))
 async def cmd_four_command(message: Message) -> None:
     if message.from_user is None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_four_menu(message, user, lang)
-
-
-@router.message(MenuTextFilter("menu-four"))
-async def cmd_four_menu(message: Message, user, lang) -> None:
     await open_four_menu(message, user, lang)
 
 
@@ -335,29 +354,39 @@ async def open_four_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
-async def menu_new_game(message: Message, user, lang) -> None:
-    await start_four_game(message, user, lang)
+@router.callback_query(GameCallbackFilter("bot", game.code))
+async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
+    await start_four_game(callback.message, user, lang)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-duel"))
-async def menu_new_duel(message: Message, user, lang) -> None:
-    await start_four_duel(message, user, lang)
+@router.callback_query(GameCallbackFilter("duel", game.code))
+async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
+    await start_four_duel(callback.message, user, lang)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-group"))
-async def menu_new_group(message: Message, user, lang) -> None:
-    await start_four_group(message, user, lang)
+@router.callback_query(GameCallbackFilter("group", game.code))
+async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
+    await start_four_group(callback.message, user, lang)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
-async def menu_help(message: Message, user, lang) -> None:
-    await message.answer(lang["help-four"], parse_mode="Markdown")
+@router.callback_query(GameCallbackFilter("stat", game.code))
+async def menu_stats(callback: CallbackQuery, user, lang) -> None:
+    text = await get_four_stats_text(user.id, lang)
+    await callback.message.answer(text, 
+        reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
-async def menu_stats(message: Message, **kwargs) -> None:
-    await cmd_four_stats(message)
+@router.callback_query(GameCallbackFilter("hlp", game.code))
+async def menu_help(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["help-four"], 
+        reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
 @router.callback_query(F.data == "fir:noop")
@@ -480,6 +509,7 @@ async def callback_col(callback: CallbackQuery) -> None:
 
         next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
         state["current_turn_user_id"] = next_user_id
+        await animate_group_drop(callback.message, session.id, state["board"], player_sign, move_row, move_col, lang, player_names, state)
         updated_session = await update_session_state(session.id, state, next_user_id)
         if updated_session is not None:
             await callback.message.edit_text(
@@ -578,22 +608,16 @@ async def callback_col(callback: CallbackQuery) -> None:
     )
 
 
-@router.message(Command("four_stats"))
-async def cmd_four_stats(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    stat = await get_game_stat(user.id, game.code)
+async def get_four_stats_text(user_id: int, lang: dict[str, str]) -> str:
+    stat = await get_game_stat(user_id, game.code)
     if stat is None:
         played = wins = losses = draws = 0
     else:
         played, wins, losses, draws = stat.played, stat.wins, stat.losses, stat.draws
-    await message.answer(
+    return (
         lang["stat-ttl"]
         + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
         + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
         + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`",
-        parse_mode="Markdown",
+        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
     )

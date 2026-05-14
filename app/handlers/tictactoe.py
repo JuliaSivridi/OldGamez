@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from aiogram import F, Router
 from aiogram.enums import ChatType
 from aiogram.filters import BaseFilter, Command
@@ -34,18 +36,27 @@ from app.services.sessions import (
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
 
-class MenuTextFilter(BaseFilter):
-    def __init__(self, key: str):
-        self.key = key
 
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
+class GameCallbackFilter(BaseFilter):
+    def __init__(self, action: str, game_code: str):
+        self.action = action
+        self.game_code = game_code
+
+    async def __call__(self, callback: CallbackQuery):
+        if (callback.from_user is None 
+            or callback.data is None
+            or callback.message is None
+        ):
             return False
-        user = await upsert_user(message.from_user)
+
+        expected = f"game:{self.action}:{self.game_code}"
+        if callback.data != expected:
+            return False
+
+        user = await upsert_user(callback.from_user)
         lang = get_language_pack(user.language_code)
-        if message.text == lang[self.key]:
-            return {"user": user, "lang": lang}
-        return False
+
+        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -54,9 +65,10 @@ router = Router()
 def tictactoe_menu_keyboard(lang: dict[str, str], chat_type=None):
     return game_menu_keyboard(
         lang,
-        extra_setting_key="menu-size",
-        extra_duel_key="menu-duel",
-        extra_group_key="menu-group",
+        game_code=game.code,
+        extra_setting_key="size",
+        extra_duel_key="duel",
+        extra_group_key="group",
         chat_type=chat_type,
     )
 
@@ -86,15 +98,18 @@ def render_group_status_text(
     if state["status"] == "finished":
         if state.get("result") == "draw":
             return lang["game-draw"]
-        winner_name = player_names.get(state.get("winner_user_id"), str(state.get("winner_user_id") or ""))
-        return f"{lang['group-winner']} {winner_name}"
+        winner_id = state.get("winner_user_id")
+        winner_symbol = "❌" if winner_id == state.get("player_x_id") else "⭕"
+        winner_name = player_names.get(winner_id, str(winner_id or ""))
+        return f"{lang['group-winner']} {winner_symbol} {winner_name}"
 
     current_turn_user_id = state.get("current_turn_user_id")
+    current_symbol = "❌" if current_turn_user_id == state.get("player_x_id") else "⭕"
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
     return (
         f"{lang['game-xo']}{board_size}x{board_size}"
         f"{lang['xo-win-need']}{win_length}\n\n"
-        f"{lang['group-turn']} {current_name}"
+        f"{lang['group-turn']} {current_symbol} {current_name}"
     )
 
 
@@ -249,14 +264,6 @@ async def start_tictactoe_group(message: Message, user, lang: dict[str, str], si
     await update_session_state(session.id, state, None)
 
 
-async def open_tictactoe_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(
-        lang["game-xo"],
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
-    )
-
-
 async def join_private_duel(message: Message, user, lang: dict[str, str], session) -> None:
     state = dict(session.state or {})
     if session.created_by_user_id == user.id:
@@ -308,6 +315,14 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         await sync_duel_messages(message.bot, session)
 
 
+async def open_tictactoe_menu(message: Message, user, lang) -> None:
+    await update_user_settings(user.id, {"current_game": game.code})
+    await message.answer(
+        lang["game-xo"],
+        reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
+    )
+
+
 @router.message(Command("tictactoe"))
 @router.message(Command("xo"))
 async def cmd_tictactoe_command(message: Message) -> None:
@@ -315,11 +330,6 @@ async def cmd_tictactoe_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_tictactoe_menu(message, user, lang)
-
-
-@router.message(MenuTextFilter("menu-xo"))
-async def cmd_tictactoe_menu(message: Message, user, lang) -> None:
     await open_tictactoe_menu(message, user, lang)
 
 
@@ -333,37 +343,48 @@ async def open_tictactoe_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-bot"))
-async def menu_new_game(message: Message, user, lang) -> None:
+@router.callback_query(GameCallbackFilter("bot", game.code))
+async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await start_tictactoe_game(message, user, lang, size)
+    await start_tictactoe_game(callback.message, user, lang, size)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-duel"))
-async def menu_new_duel(message: Message, user, lang) -> None:
+@router.callback_query(GameCallbackFilter("duel", game.code))
+async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await start_tictactoe_duel(message, user, lang, size)
+    await start_tictactoe_duel(callback.message, user, lang, size)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-group"))
-async def menu_new_group(message: Message, user, lang) -> None:
+@router.callback_query(GameCallbackFilter("group", game.code))
+async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await start_tictactoe_group(message, user, lang, size)
+    await start_tictactoe_group(callback.message, user, lang, size)
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-size"))
-async def menu_tictactoe_size(message: Message, user, lang) -> None:
-    await message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
+@router.callback_query(GameCallbackFilter("size", game.code))
+async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-hlp"))
-async def menu_help(message: Message, user, lang) -> None:
-    await message.answer(lang["help-xo"], parse_mode="Markdown")
+@router.callback_query(GameCallbackFilter("stat", game.code))
+async def menu_stats(callback: CallbackQuery, user, lang) -> None:
+    text = await get_tictactoe_stats_text(user.id, lang)
+    await callback.message.answer(text, 
+        reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-stat"))
-async def menu_stats(message: Message, **kwargs) -> None:
-    await cmd_tictactoe_stats(message)
+@router.callback_query(GameCallbackFilter("hlp", game.code))
+async def menu_help(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang["help-xo"], 
+        reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        parse_mode="Markdown")
+    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("ttt:size:"))
@@ -646,6 +667,18 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         return
 
     state["current_turn"] = "bot"
+    await callback.message.edit_text(
+        render_status_text(state, lang),
+        reply_markup=board_keyboard(
+            session_id=session.id,
+            board=state["board"],
+            board_size=state["board_size"],
+            is_active=False,
+            highlight=user_turn.highlight,
+        ),
+    )
+    await callback.answer()
+    await asyncio.sleep(1)
 
     bot_position = game.get_smart_move(
         board=state["board"],
@@ -697,30 +730,18 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(Command("tictactoe_stats"))
-async def cmd_tictactoe_stats(message: Message) -> None:
-    if message.from_user is None:
-        return
-
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    stat = await get_game_stat(user.id, game.code)
+async def get_tictactoe_stats_text(user_id: int, lang) -> str:
+    stat = await get_game_stat(user_id, game.code)
+    
     if stat is None:
-        await message.answer(
-            lang["stat-ttl"]
-            + f"`{lang['stat-all']}{str(0).rjust(20 - len(lang['stat-all']))}`"
-            + f"`{lang['stat-win']}{str(0).rjust(20 - len(lang['stat-win']))}`"
-            + f"`{lang['stat-lose']}{str(0).rjust(20 - len(lang['stat-lose']))}`"
-            + f"`{lang['stat-draw']}{str(0).rjust(21 - len(lang['stat-draw']))}`",
-            parse_mode="Markdown",
-        )
-        return
+        played, wins, losses, draws = 0, 0, 0, 0
+    else:
+        played, wins, losses, draws = stat.played, stat.wins, stat.losses, stat.draws
 
-    await message.answer(
+    return (
         lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(stat.played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(stat.wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(stat.losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(stat.draws).rjust(21 - len(lang['stat-draw']))}`",
-        parse_mode="Markdown",
+        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
+        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
+        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
+        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
     )
