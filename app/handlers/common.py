@@ -7,7 +7,6 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.handlers.duels import handle_private_duel_start
-from app.i18n.languages import LANGUAGE_CHOICES
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard, games_keyboard, group_games_keyboard
 from app.keyboards.language import language_keyboard
