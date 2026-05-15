@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -30,13 +31,13 @@ def cmplx_keyboard(lang: dict[str, str]):
 
 def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> str:
     if final == 'win':
-        return f"{lang['game-win']}\n*{state['word']}*"
+        return f"{lang['game-win']}\n<b>{state['word']}</b>"
     if final == 'loss':
-        return f"{game.hang_art(state['lives_total'], state['lives'])}\n{lang['game-lose']}\n*{state['word']}*"
+        return f"{game.hang_art(state['lives_total'], state['lives'])}\n{lang['game-lose']}\n<b>{state['word']}</b>"
     return (
         f"{game.hang_art(state['lives_total'], state['lives'])}\n"
         f"{lang['game-hang']} | {lang['hang-lives']}{state['lives']}\n"
-        f"{' '.join(state['guess'])}"
+        f"<code>{' '.join(state['guess'])}</code>"
     )
 
 
@@ -52,6 +53,7 @@ async def start_hangman_game(message: Message, user, lang: dict[str, str], lives
     await message.answer(
         render_text(lang, session.state),
         reply_markup=letters_keyboard(session.id, session.state['letters'], lang, True),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -173,6 +175,7 @@ async def callback_play(callback: CallbackQuery) -> None:
         await callback.message.edit_text(
             render_text(lang, state, final='win'),
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
+            parse_mode=ParseMode.HTML,
         )
         await open_hangman_menu(callback.message, user, lang)
         return
@@ -183,6 +186,7 @@ async def callback_play(callback: CallbackQuery) -> None:
         await callback.message.edit_text(
             render_text(lang, state, final='loss'),
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
+            parse_mode=ParseMode.HTML,
         )
         await open_hangman_menu(callback.message, user, lang)
         return
@@ -191,6 +195,7 @@ async def callback_play(callback: CallbackQuery) -> None:
     await callback.message.edit_text(
         render_text(lang, state),
         reply_markup=letters_keyboard(session.id, state['letters'], lang, True),
+        parse_mode=ParseMode.HTML,
     )
 
 
