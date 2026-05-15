@@ -41,9 +41,11 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
     )
 
 
-async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int) -> None:
+async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int, menu_message_id: int | None = None) -> None:
     lang_code = 'en' if (user.language_code or 'en').startswith('en') else 'ru'
     state = game.new_game_state(lang_code=lang_code, lives=lives)
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -97,8 +99,7 @@ async def open_hangman_callback(callback: CallbackQuery) -> None:
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     lives = int((user.settings or {}).get('hangman_lives', 10))
-    await callback.message.delete()
-    await start_hangman_game(callback.message, user, lang, lives=lives)
+    await start_hangman_game(callback.message, user, lang, lives=lives, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -159,6 +160,7 @@ async def callback_play(callback: CallbackQuery) -> None:
         return
 
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     letter = None
     if action == 'hint':
         letter = game.use_hint(state)
@@ -179,6 +181,11 @@ async def callback_play(callback: CallbackQuery) -> None:
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
             parse_mode=ParseMode.HTML,
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_hangman_menu(callback.message, user, lang)
         return
 
@@ -190,6 +197,11 @@ async def callback_play(callback: CallbackQuery) -> None:
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
             parse_mode=ParseMode.HTML,
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_hangman_menu(callback.message, user, lang)
         return
 

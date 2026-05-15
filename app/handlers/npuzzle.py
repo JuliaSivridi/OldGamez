@@ -15,8 +15,10 @@ from app.services.users import update_user_settings, upsert_user
 router = Router()
 
 
-async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size: int) -> None:
+async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(size=size)
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -70,8 +72,7 @@ async def open_npuzzle_callback(callback: CallbackQuery) -> None:
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
-    await callback.message.delete()
-    await start_npuzzle_game(callback.message, user, lang, size)
+    await start_npuzzle_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -128,6 +129,7 @@ async def callback_move(callback: CallbackQuery) -> None:
     if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
         return
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     result = game.move(state, tile_index)
     state = result["game_state"]
     if result["state"] == "win":
@@ -137,6 +139,11 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-win"],
             reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"]),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_npuzzle_menu(callback.message, user, lang)
         return
     await update_session_state(session.id, state, current_turn_user_id=user.id)

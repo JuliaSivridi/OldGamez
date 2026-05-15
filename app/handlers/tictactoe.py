@@ -198,8 +198,10 @@ async def send_tictactoe_menu_to_other_duel_players(
             pass
 
 
-async def start_tictactoe_game(message: Message, user, lang: dict[str, str], size: int) -> None:
+async def start_tictactoe_game(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(board_size=size)
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -349,8 +351,7 @@ async def open_tictactoe_callback(callback: CallbackQuery) -> None:
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await callback.message.delete()
-    await start_tictactoe_game(callback.message, user, lang, size)
+    await start_tictactoe_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -646,6 +647,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         await callback.answer(lang["xo-cell-busy"], show_alert=True)
         return
 
+    menu_msg_id = state.get("menu_message_id")
     user_turn = game.process_turn(
         board=state["board"],
         board_size=state["board_size"],
@@ -672,6 +674,11 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 highlight=user_turn.highlight,
             ),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_tictactoe_menu(callback.message, user, lang)
         await callback.answer()
         return
@@ -722,6 +729,11 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 highlight=bot_turn.highlight,
             ),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_tictactoe_menu(callback.message, user, lang)
         await callback.answer()
         return

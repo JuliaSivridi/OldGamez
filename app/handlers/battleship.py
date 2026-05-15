@@ -62,8 +62,10 @@ async def run_computer_turns(callback_message: Message, session_id: int, lang: d
     return state, "play"
 
 
-async def start_battleship_game(message: Message, user, lang: dict[str, str]) -> None:
+async def start_battleship_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state()
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -123,8 +125,7 @@ async def open_battleship_callback(callback: CallbackQuery) -> None:
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.delete()
-    await start_battleship_game(callback.message, user, lang)
+    await start_battleship_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -164,6 +165,7 @@ async def callback_shot(callback: CallbackQuery) -> None:
         return
 
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     if state["current_turn"] != "user" or state["bot_cover"][row][col]:
         return
 
@@ -174,6 +176,11 @@ async def callback_shot(callback: CallbackQuery) -> None:
         await finish_session(session.id, state, winner_user_id=user.id)
         await record_game_result(user.id, game.code, "win")
         await redraw(callback.message, session.id, lang, state, is_game_over=True, is_win=True)
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_battleship_menu(callback.message, user, lang)
         return
 
@@ -183,6 +190,11 @@ async def callback_shot(callback: CallbackQuery) -> None:
         if outcome == "loss":
             await finish_session(session.id, state, winner_user_id=None)
             await record_game_result(user.id, game.code, "loss")
+            if menu_msg_id:
+                try:
+                    await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+                except Exception:
+                    pass
             await open_battleship_menu(callback.message, user, lang)
             return
 

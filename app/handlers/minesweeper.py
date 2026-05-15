@@ -54,8 +54,10 @@ def render_stat_text(lang: dict[str, str], played: int, wins: int, losses: int) 
     )
 
 
-async def start_minesweeper_game(message: Message, user, lang: dict[str, str], mines_count: int) -> None:
+async def start_minesweeper_game(message: Message, user, lang: dict[str, str], mines_count: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(mines_count=mines_count)
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -108,8 +110,7 @@ async def open_minesweeper_callback(callback: CallbackQuery) -> None:
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     mines_count = int((user.settings or {}).get("minesweeper_mines", 12))
-    await callback.message.delete()
-    await start_minesweeper_game(callback.message, user, lang, mines_count)
+    await start_minesweeper_game(callback.message, user, lang, mines_count, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -192,6 +193,7 @@ async def callback_move(callback: CallbackQuery) -> None:
     if session is None or session.created_by_user_id != user.id:
         return
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     if session.status != SessionStatus.active:
         return
 
@@ -208,6 +210,11 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-lose"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_minesweeper_menu(callback.message, user, lang)
         return
 
@@ -218,6 +225,11 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-win"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_minesweeper_menu(callback.message, user, lang)
         return
 

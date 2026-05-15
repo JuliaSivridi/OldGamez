@@ -234,8 +234,10 @@ async def send_four_menu_to_other_duel_players(
             pass
 
 
-async def start_four_game(message: Message, user, lang: dict[str, str]) -> None:
+async def start_four_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state()
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -372,8 +374,7 @@ async def open_four_callback(callback: CallbackQuery) -> None:
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.delete()
-    await start_four_game(callback.message, user, lang)
+    await start_four_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -592,6 +593,7 @@ async def callback_col(callback: CallbackQuery) -> None:
     if session.created_by_user_id != user.id or session.status != SessionStatus.active:
         return
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     user_result = game.process_turn(state, state["user_sign"], col, True)
     state = user_result["game_state"]
     user_row, user_col = state["last_move"]
@@ -605,6 +607,11 @@ async def callback_col(callback: CallbackQuery) -> None:
             render_text(lang, state),
             reply_markup=board_keyboard(session.id, state["board"], False, user_result["line"]),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_four_menu(callback.message, user, lang)
         return
 
@@ -628,6 +635,11 @@ async def callback_col(callback: CallbackQuery) -> None:
             render_text(lang, state),
             reply_markup=board_keyboard(session.id, state["board"], False, bot_result["line"]),
         )
+        if menu_msg_id:
+            try:
+                await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+            except Exception:
+                pass
         await open_four_menu(callback.message, user, lang)
         return
 

@@ -40,6 +40,7 @@ def render_game_text(lang: dict[str, str], state: dict, game_over_message: str |
 
 
 async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], user, message: Message) -> None:
+    menu_msg_id = state.get("menu_message_id")
     state = game.dealer_finish(state, lang)
     verdict = game.resolve_result(lang, state["comp_cards"], state["comp_cost"], state["user_cards"], state["user_cost"])
     state["status"] = "finished"
@@ -47,11 +48,18 @@ async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], u
     await finish_session(session_id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
     await record_game_result(user.id, game.code, verdict["result"])
     await message.edit_text(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown")
+    if menu_msg_id:
+        try:
+            await message.bot.delete_message(message.chat.id, menu_msg_id)
+        except Exception:
+            pass
     await open_blackjack_menu(message, user, lang)
 
 
-async def start_blackjack_game(message: Message, user, lang: dict[str, str]) -> None:
+async def start_blackjack_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state(lang)
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_solo_session(user_id=user.id, telegram_chat_id=message.chat.id, game_code=game.code, initial_state=state)
     if game.is_blackjack(state["user_cards"], state["user_cost"]):
         state = game.dealer_finish(state, lang)
@@ -61,6 +69,12 @@ async def start_blackjack_game(message: Message, user, lang: dict[str, str]) -> 
         await finish_session(session.id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
         await record_game_result(user.id, game.code, verdict["result"])
         await message.answer(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown")
+        if menu_message_id:
+            try:
+                await message.bot.delete_message(message.chat.id, menu_message_id)
+            except Exception:
+                pass
+        await open_blackjack_menu(message, user, lang)
         return
     await message.answer(render_game_text(lang, state), parse_mode="Markdown", reply_markup=game_keyboard(session.id, lang, True))
 
@@ -103,8 +117,7 @@ async def open_blackjack_callback(callback: CallbackQuery) -> None:
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.delete()
-    await start_blackjack_game(callback.message, user, lang)
+    await start_blackjack_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -147,8 +160,11 @@ async def callback_game(callback: CallbackQuery) -> None:
         return
 
     state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
     if action == "hit":
         state = game.player_hit(state, lang)
+        if menu_msg_id:
+            state["menu_message_id"] = menu_msg_id
         if state["user_cost"] < 21:
             await update_session_state(session.id, state, current_turn_user_id=user.id)
             await callback.message.edit_text(render_game_text(lang, state), parse_mode="Markdown", reply_markup=game_keyboard(session.id, lang, True))
