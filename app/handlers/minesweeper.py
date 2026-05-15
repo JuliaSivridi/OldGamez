@@ -12,6 +12,7 @@ from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
+    format_game_stats_text,
     get_active_solo_session,
     get_game_stat,
     get_session_by_id,
@@ -236,13 +237,4 @@ async def callback_move(callback: CallbackQuery) -> None:
 
 async def get_minesweeper_stats_text(user_id: int, lang: dict[str, str]) -> str:
     stat = await get_game_stat(user_id, game.code)
-    if stat is None:
-        played = wins = losses = 0
-    else:
-        played, wins, losses = stat.played, stat.wins, stat.losses
-    return (
-        lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-    )
+    return format_game_stats_text(stat, lang, ["played", "wins", "losses"])

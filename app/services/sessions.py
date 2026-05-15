@@ -375,3 +375,29 @@ async def get_game_stat(user_id: int, game_code: str) -> GameStat | None:
 
 def generate_join_code() -> str:
     return secrets.token_hex(4)
+
+
+_STAT_FIELD_KEYS: dict[str, str] = {
+    "played": "stat-all",
+    "wins": "stat-win",
+    "losses": "stat-lose",
+    "draws": "stat-draw",
+}
+
+
+def format_game_stats_text(
+    stat: GameStat | None,
+    lang: dict[str, str],
+    fields: list[str],
+) -> str:
+    values = {
+        "played": stat.played if stat else 0,
+        "wins": stat.wins if stat else 0,
+        "losses": stat.losses if stat else 0,
+        "draws": stat.draws if stat else 0,
+    }
+    result = lang["stat-ttl"]
+    for field in fields:
+        label = lang[_STAT_FIELD_KEYS[field]]
+        result += f"`{label}{str(values[field]).rjust(20 - len(label))}`"
+    return result

@@ -8,7 +8,7 @@ from app.games.npuzzle.keyboards import size_keyboard, tiles_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
-from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
 
@@ -150,5 +150,4 @@ async def callback_move(callback: CallbackQuery) -> None:
 
 async def get_npuzzle_stats_text(user_id: int, lang: dict[str, str]) -> str:
     stat = await get_game_stat(user_id, game.code)
-    wins = 0 if stat is None else stat.wins
-    return lang["stat-ttl"] + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
+    return format_game_stats_text(stat, lang, ["wins"])

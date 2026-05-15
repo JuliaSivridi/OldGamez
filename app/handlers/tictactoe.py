@@ -30,6 +30,7 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
+    format_game_stats_text,
     get_game_stat,
     get_session_by_id,
     record_game_result,
@@ -739,18 +740,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-async def get_tictactoe_stats_text(user_id: int, lang) -> str:
+async def get_tictactoe_stats_text(user_id: int, lang: dict[str, str]) -> str:
     stat = await get_game_stat(user_id, game.code)
-    
-    if stat is None:
-        played, wins, losses, draws = 0, 0, 0, 0
-    else:
-        played, wins, losses, draws = stat.played, stat.wins, stat.losses, stat.draws
-
-    return (
-        lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
-    )
+    return format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])

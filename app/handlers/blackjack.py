@@ -8,7 +8,7 @@ from app.games.blackjack.keyboards import game_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
-from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
 
@@ -157,14 +157,4 @@ async def callback_game(callback: CallbackQuery) -> None:
 
 async def get_blackjack_stats_text(user_id: int, lang: dict[str, str]) -> str:
     stat = await get_game_stat(user_id, game.code)
-    if stat is None:
-        played = wins = losses = draws = 0
-    else:
-        played, wins, losses, draws = stat.played, stat.wins, stat.losses, stat.draws
-    return (
-        lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-        + f"`{lang['stat-draw']}{str(draws).rjust(21 - len(lang['stat-draw']))}`"
-    )
+    return format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
