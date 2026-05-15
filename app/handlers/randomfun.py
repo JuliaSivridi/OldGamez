@@ -153,16 +153,11 @@ async def guess_number_or_default(message: Message) -> None:
         guess_msg_id = get_user_setting(user, 'guess_msg_id')
         if guess_msg_id:
             try:
-                await message.bot.edit_message_text(
-                    response_text, chat_id=message.chat.id, message_id=int(guess_msg_id),
-                    reply_markup=keyboard,
-                )
+                await message.bot.delete_message(chat_id=message.chat.id, message_id=int(guess_msg_id))
             except Exception:
-                sent = await message.answer(response_text, reply_markup=keyboard)
-                await update_user_settings(user.id, {'guess_msg_id': sent.message_id})
-        else:
-            sent = await message.answer(response_text, reply_markup=keyboard)
-            await update_user_settings(user.id, {'guess_msg_id': sent.message_id})
+                pass
+        sent = await message.answer(response_text, reply_markup=keyboard)
+        await update_user_settings(user.id, {'guess_msg_id': sent.message_id})
 
         if value == int(target):
             await update_user_settings(user.id, {'random_target': None, 'guess_msg_id': None, 'current_game': game.code})
