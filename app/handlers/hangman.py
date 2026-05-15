@@ -3,7 +3,6 @@ from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.hangman import game
 from app.games.hangman.keyboards import letters_keyboard
 from app.i18n.translator import get_language_pack
@@ -202,6 +201,7 @@ async def callback_play(callback: CallbackQuery) -> None:
             parse_mode='HTML',
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
         )
+        await open_hangman_menu(callback.message, user, lang)
         return
 
     if result['state'] == 'loss':
@@ -212,6 +212,7 @@ async def callback_play(callback: CallbackQuery) -> None:
             parse_mode='HTML',
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
         )
+        await open_hangman_menu(callback.message, user, lang)
         return
 
     await update_session_state(session.id, state, current_turn_user_id=user.id)

@@ -7,7 +7,6 @@ from aiogram.enums import ChatType
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.tictactoe import game
 from app.games.tictactoe.keyboards import board_keyboard, size_keyboard
 from app.i18n.translator import get_language_pack
@@ -194,6 +193,35 @@ async def sync_duel_messages(bot, session) -> None:
         get_duel_message_map(state),
         lambda user_id: render_duel_message_for_user(session, user_id),
     )
+
+
+async def send_tictactoe_menu_to_other_duel_players(
+    bot,
+    state: dict,
+    excluded_user_id: int,
+    current_chat_id: int,
+    current_chat_type,
+) -> None:
+    message_map = get_duel_message_map(state)
+    for player_id in get_duel_player_ids(state):
+        if player_id is None or player_id == excluded_user_id:
+            continue
+        message_meta = message_map.get(str(player_id))
+        if not message_meta:
+            continue
+        user = await get_user_by_id(player_id)
+        if user is None:
+            continue
+        lang = get_language_pack(user.language_code)
+        chat_type = current_chat_type if message_meta["chat_id"] == current_chat_id else ChatType.PRIVATE
+        try:
+            await bot.send_message(
+                chat_id=message_meta["chat_id"],
+                text=lang["game-xo"],
+                reply_markup=tictactoe_menu_keyboard(lang, chat_type=chat_type),
+            )
+        except TelegramBadRequest:
+            pass
 
 
 async def start_tictactoe_game(message: Message, user, lang: dict[str, str], size: int) -> None:
@@ -543,6 +571,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                     highlight=duel_turn.highlight,
                 ),
             )
+            await open_tictactoe_menu(callback.message, user, lang)
             await callback.answer()
             return
 
@@ -613,6 +642,14 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             refreshed_session = await get_session_by_id(session.id)
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
+            await open_tictactoe_menu(callback.message, user, lang)
+            await send_tictactoe_menu_to_other_duel_players(
+                callback.bot,
+                state,
+                excluded_user_id=user.id,
+                current_chat_id=callback.message.chat.id,
+                current_chat_type=callback.message.chat.type,
+            )
             await callback.answer()
             return
 
@@ -663,6 +700,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 highlight=user_turn.highlight,
             ),
         )
+        await open_tictactoe_menu(callback.message, user, lang)
         await callback.answer()
         return
 
@@ -712,6 +750,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 highlight=bot_turn.highlight,
             ),
         )
+        await open_tictactoe_menu(callback.message, user, lang)
         await callback.answer()
         return
 

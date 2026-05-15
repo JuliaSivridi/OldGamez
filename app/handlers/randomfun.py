@@ -1,25 +1,33 @@
 ﻿from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.randomfun import game
-from app.games.randomfun.keyboards import game_keyboard
 from app.i18n.translator import get_language_pack
 from app.services.users import get_user_setting, update_user_settings, upsert_user
 
-class MenuTextFilter(BaseFilter):
-    def __init__(self, *keys: str):
-        self.keys = keys
-    async def __call__(self, message: Message):
-        if message.from_user is None or message.text is None:
+
+class GameCallbackFilter(BaseFilter):
+    def __init__(self, action: str, game_code: str):
+        self.action = action
+        self.game_code = game_code
+
+    async def __call__(self, callback: CallbackQuery):
+        if (callback.from_user is None 
+            or callback.data is None
+            or callback.message is None
+        ):
             return False
-        user = await upsert_user(message.from_user)
+
+        expected = f"game:{self.action}:{self.game_code}"
+        if callback.data != expected:
+            return False
+
+        user = await upsert_user(callback.from_user)
         lang = get_language_pack(user.language_code)
-        allowed_texts = {lang[key] for key in self.keys}
-        if message.text in allowed_texts:
-            return {"user": user, "lang": lang}
-        return False
+
+        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -27,9 +35,26 @@ router = Router()
 EMOJI_GAMES = {'🎰', '🎲', '🎯', '🎳', '⚽️', '🏀'}
 
 
+def random_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMarkup:
+    b = InlineKeyboardBuilder()
+    b.button(text=lang["menu-cazino"], callback_data="rand:emoji:🎰")
+    b.button(text=lang["menu-dice"], callback_data="rand:emoji:🎲")
+    b.button(text=lang["menu-dart"], callback_data="rand:emoji:🎯")
+    b.button(text=lang["menu-bowling"], callback_data="rand:emoji:🎳")
+    b.button(text=lang["menu-soccer"], callback_data="rand:emoji:⚽️")
+    b.button(text=lang["menu-basketball"], callback_data="rand:emoji:🏀")
+    b.button(text=lang["menu-coin"], callback_data="rand:coin")
+    b.button(text=lang["menu-card"], callback_data="rand:card")
+    b.button(text=lang["menu-guess"], callback_data="rand:guess")
+    b.button(text=lang["menu-help"], callback_data=f"game:help:{game.code}")
+    b.button(text=lang["main-back"], callback_data="main:back")
+    b.adjust(6, 2, 1, 2)
+    return b.as_markup()
+
+
 async def open_random_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-rand"], reply_markup=game_keyboard(lang))
+    await message.answer(lang["game-rand"], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 @router.message(Command('random'))
@@ -38,11 +63,6 @@ async def cmd_random_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await open_random_menu(message, user, lang)
-
-
-@router.message(MenuTextFilter("menu-rand"))
-async def cmd_random_menu(message: Message, user, lang) -> None:
     await open_random_menu(message, user, lang)
 
 
@@ -56,59 +76,83 @@ async def open_random_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), F.text.in_(EMOJI_GAMES))
-async def menu_emoji_games(_message: Message) -> None:
-    return
+@router.callback_query(F.data.startswith("rand:emoji:"))
+async def callback_emoji_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    # Извлекаем эмодзи из callback_data
+    emoji = callback.data.split(":")[-1]
+    await callback.message.answer_dice(emoji=emoji)
+    await callback.answer()
 
 
 @router.message(Command('coin'))
-async def cmd_coin(message: Message) -> None:
+async def cmd_coin_command(message: Message) -> None:
     if message.from_user is None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {'current_game': game.code})
-    await message.answer(game.flip_coin(lang), reply_markup=game_keyboard(lang))
+    await message.answer(game.flip_coin(lang), reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-coin"))
-async def menu_coin(message: Message, user, lang) -> None:
-    await message.answer(game.flip_coin(lang), reply_markup=game_keyboard(lang))
+@router.callback_query(F.data == "rand:coin")
+async def callback_coin(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await update_user_settings(user.id, {'current_game': game.code})
+    await callback.message.answer(game.flip_coin(lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
 @router.message(Command('card'))
-async def cmd_card(message: Message) -> None:
+async def cmd_card_command(message: Message) -> None:
     if message.from_user is None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
     card = game.random_card(lang)
     await update_user_settings(user.id, {'current_game': game.code})
-    await message.answer(game.draw_card_text(card, lang), reply_markup=game_keyboard(lang))
+    await message.answer(game.draw_card_text(card, lang), reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-card"))
-async def menu_card(message: Message, user, lang) -> None:
+@router.callback_query(F.data == "rand:card")
+async def callback_card(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     card = game.random_card(lang)
-    await message.answer(game.draw_card_text(card, lang), reply_markup=game_keyboard(lang))
+    await update_user_settings(user.id, {'current_game': game.code})
+    await callback.message.answer(game.draw_card_text(card, lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-guess"))
-async def menu_rand(message: Message, user, lang) -> None:
+@router.callback_query(F.data == "rand:guess")
+async def callback_guess(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     state = game.new_guess_game()
     await update_user_settings(user.id, {'random_target': state['target'], 'current_game': game.code})
-    await message.answer(
+    await callback.message.answer(
         f"{lang['guess-low']}{state['low']}{lang['guess-top']}{state['high']}\n{lang['guess-guess']}",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type)
     )
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), MenuTextFilter("menu-help"))
-async def menu_help(message: Message, user, lang) -> None:
-    await message.answer(lang['help'])
+@router.callback_query(GameCallbackFilter("help", game.code))
+async def menu_help(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.answer(lang['help'], 
+        reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
-@router.message(CurrentGameFilter(game.code), F.text.is_not(None), ~F.text.startswith('/'))
+@router.message(F.text.is_not(None), ~F.text.startswith('/'))
 async def guess_number_or_default(message: Message) -> None:
     if message.from_user is None or message.text is None:
         return
@@ -119,13 +163,13 @@ async def guess_number_or_default(message: Message) -> None:
     if message.text.isdigit() and target is not None:
         value = int(message.text)
         if value < int(target):
-            await message.answer(lang['guess-more'], reply_markup=ReplyKeyboardRemove())
+            await message.answer(lang['guess-more'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
             return
         if value > int(target):
-            await message.answer(lang['guess-less'], reply_markup=ReplyKeyboardRemove())
+            await message.answer(lang['guess-less'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
             return
-        await message.answer(lang['guess-equals'], reply_markup=game_keyboard(lang))
+        await message.answer(lang['guess-equals'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
         await update_user_settings(user.id, {'random_target': None, 'current_game': game.code})
         return
 
-    await message.answer(lang['default'], reply_markup=game_keyboard(lang))
+    await message.answer(lang['default'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))

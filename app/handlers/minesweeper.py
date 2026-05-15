@@ -3,7 +3,6 @@ from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.minesweeper import game
 from app.games.minesweeper.keyboards import field_keyboard
 from app.i18n.translator import get_language_pack
@@ -231,6 +230,7 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-lose"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
+        await open_minesweeper_menu(callback.message, user, lang)
         return
 
     if result["state"] == "win":
@@ -240,6 +240,7 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-win"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
+        await open_minesweeper_menu(callback.message, user, lang)
         return
 
     await update_session_state(session.id, state, current_turn_user_id=user.id)

@@ -6,7 +6,6 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.fourinrow import game
 from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard, drop_keyboard
 from app.i18n.translator import get_language_pack
@@ -150,6 +149,27 @@ async def animate_drop(message: Message, session_id: int, board: list[list[int]]
             pass
 
 
+async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None:
+    state = dict(session.state or {})
+    player_ids = get_duel_player_ids(state)
+    message_map = get_duel_message_map(state)
+    for now_row in range(row):
+        await asyncio.sleep(0.2)
+
+        async def render_frame(user_id: int):
+            user = await get_user_by_id(user_id)
+            if user is None:
+                raise ValueError("User not found")
+            lang = get_language_pack(user.language_code)
+            viewer_turn = "user" if user_id == session.current_turn_user_id else "friend"
+            return (
+                render_drop_text(lang, sign, viewer_turn),
+                drop_keyboard(session.id, state["board"], sign, row, now_row, col),
+            )
+
+        await broadcast_private_duel_update(bot, player_ids, message_map, render_frame)
+
+
 async def animate_group_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], player_names: dict[int, str], state: dict) -> None:
     for now_row in range(row):
         await asyncio.sleep(0.2)
@@ -160,6 +180,14 @@ async def animate_group_drop(message: Message, session_id: int, board: list[list
             )
         except TelegramBadRequest:
             pass
+
+    try:
+        await message.edit_text(
+            render_group_status_text(lang, state, player_names),
+            reply_markup=drop_keyboard(session_id, board, sign, row, row, col),
+        )
+    except TelegramBadRequest:
+        pass
 
 
 async def render_duel_message_for_user(session, user_id: int) -> tuple[str, object]:
@@ -198,25 +226,33 @@ async def sync_duel_messages(bot, session) -> None:
     )
 
 
-async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None:
-    state = dict(session.state or {})
-    player_ids = get_duel_player_ids(state)
+async def send_four_menu_to_other_duel_players(
+    bot,
+    state: dict,
+    excluded_user_id: int,
+    current_chat_id: int,
+    current_chat_type,
+) -> None:
     message_map = get_duel_message_map(state)
-    for now_row in range(row):
-        await asyncio.sleep(0.2)
-
-        async def render_frame(user_id: int):
-            user = await get_user_by_id(user_id)
-            if user is None:
-                raise ValueError("User not found")
-            lang = get_language_pack(user.language_code)
-            viewer_turn = "user" if user_id == session.current_turn_user_id else "friend"
-            return (
-                render_drop_text(lang, sign, viewer_turn),
-                drop_keyboard(session.id, state["board"], sign, row, now_row, col),
+    for player_id in get_duel_player_ids(state):
+        if player_id is None or player_id == excluded_user_id:
+            continue
+        message_meta = message_map.get(str(player_id))
+        if not message_meta:
+            continue
+        user = await get_user_by_id(player_id)
+        if user is None:
+            continue
+        lang = get_language_pack(user.language_code)
+        chat_type = current_chat_type if message_meta["chat_id"] == current_chat_id else ChatType.PRIVATE
+        try:
+            await bot.send_message(
+                chat_id=message_meta["chat_id"],
+                text=lang["game-four"],
+                reply_markup=four_menu_keyboard(lang, chat_type=chat_type),
             )
-
-        await broadcast_private_duel_update(bot, player_ids, message_map, render_frame)
+        except TelegramBadRequest:
+            pass
 
 
 async def start_four_game(message: Message, user, lang: dict[str, str]) -> None:
@@ -505,6 +541,14 @@ async def callback_col(callback: CallbackQuery) -> None:
                 render_group_status_text(lang, state, player_names),
                 reply_markup=board_keyboard(session.id, state["board"], False, duel_result["line"]),
             )
+            await open_four_menu(callback.message, user, lang)
+            await send_four_menu_to_other_duel_players(
+                callback.bot,
+                state,
+                excluded_user_id=user.id,
+                current_chat_id=callback.message.chat.id,
+                current_chat_type=callback.message.chat.type,
+            )
             return
 
         next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
@@ -551,6 +595,14 @@ async def callback_col(callback: CallbackQuery) -> None:
             refreshed_session = await get_session_by_id(session.id)
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
+            await open_four_menu(callback.message, user, lang)
+            await send_four_menu_to_other_duel_players(
+                callback.bot,
+                state,
+                excluded_user_id=user.id,
+                current_chat_id=callback.message.chat.id,
+                current_chat_type=callback.message.chat.type,
+            )
             return
 
         next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
@@ -576,6 +628,7 @@ async def callback_col(callback: CallbackQuery) -> None:
             render_text(lang, state),
             reply_markup=board_keyboard(session.id, state["board"], False, user_result["line"]),
         )
+        await open_four_menu(callback.message, user, lang)
         return
 
     state["current_turn"] = "bot"
@@ -598,6 +651,7 @@ async def callback_col(callback: CallbackQuery) -> None:
             render_text(lang, state),
             reply_markup=board_keyboard(session.id, state["board"], False, bot_result["line"]),
         )
+        await open_four_menu(callback.message, user, lang)
         return
 
     state["current_turn"] = "user"

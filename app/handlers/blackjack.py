@@ -2,7 +2,6 @@
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.blackjack import game
 from app.games.blackjack.keyboards import game_keyboard
 from app.i18n.translator import get_language_pack
@@ -60,14 +59,15 @@ def render_game_text(lang: dict[str, str], state: dict, game_over_message: str |
     return text
 
 
-async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], user_id: int, message: Message) -> None:
+async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], user, message: Message) -> None:
     state = game.dealer_finish(state, lang)
     verdict = game.resolve_result(lang, state["comp_cards"], state["comp_cost"], state["user_cards"], state["user_cost"])
     state["status"] = "finished"
     state["result"] = verdict["result"]
-    await finish_session(session_id, state, winner_user_id=user_id if verdict["result"] == "win" else None)
-    await record_game_result(user_id, game.code, verdict["result"])
+    await finish_session(session_id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
+    await record_game_result(user.id, game.code, verdict["result"])
     await message.edit_text(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown")
+    await open_blackjack_menu(message, user, lang)
 
 
 async def start_blackjack_game(message: Message, user, lang: dict[str, str]) -> None:
@@ -172,7 +172,7 @@ async def callback_game(callback: CallbackQuery) -> None:
             await callback.message.edit_text(render_game_text(lang, state), parse_mode="Markdown", reply_markup=game_keyboard(session.id, lang, True))
             return
 
-    await finish_blackjack(session.id, state, lang, user.id, callback.message)
+    await finish_blackjack(session.id, state, lang, user, callback.message)
 
 
 async def get_blackjack_stats_text(user_id: int, lang: dict[str, str]) -> str:

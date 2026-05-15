@@ -4,7 +4,6 @@ from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.battleship import game
 from app.games.battleship.keyboards import SYMBOLS, board_keyboard
 from app.i18n.translator import get_language_pack
@@ -42,7 +41,7 @@ def render_game_text(lang: dict[str, str], state: dict, is_game_over: bool = Fal
     if is_game_over:
         return lang["game-win"] if is_win else lang["game-lose"]
 
-    lines = [f"{lang['game-sea']}         (\\/)_ (0_0)_ (\\/)"]
+    lines = [f"{lang['game-sea']}     (\\/)_(0_0)_(\\/)"]
     for row in state["user_board"]:
         lines.append("".join(SYMBOLS[cell] for cell in row))
 
@@ -195,6 +194,7 @@ async def callback_shot(callback: CallbackQuery) -> None:
         await finish_session(session.id, state, winner_user_id=user.id)
         await record_game_result(user.id, game.code, "win")
         await redraw(callback.message, session.id, lang, state, is_game_over=True, is_win=True)
+        await open_battleship_menu(message, user, lang)
         return
 
     await redraw(callback.message, session.id, lang, state)
@@ -203,6 +203,7 @@ async def callback_shot(callback: CallbackQuery) -> None:
         if outcome == "loss":
             await finish_session(session.id, state, winner_user_id=None)
             await record_game_result(user.id, game.code, "loss")
+            await open_battleship_menu(callback.message, user, lang)
             return
 
     await update_session_state(session.id, state, current_turn_user_id=user.id if state["status"] == "active" else None)

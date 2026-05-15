@@ -3,7 +3,7 @@
     "hi1": "Hello, ", "hi2": " 😋", 
     "commands": "\n\nCommands:\n/games - List of games\n/group - List of group games\n/fourinrow - 🔴🟡 4 in row game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/minesweeper - 💣 Minesweeper game\n/blackjack - 🃏 Blackjack game\n/npuzzle - 🧩 N-puzzle game\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman game\n/lang - Change language\n/start - Show main menu",
     "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "menu-group-games": "🕹 Group games", "game-ttl": "🕹 Choose a game", 
-    "main-back": "⬅️ Back", "main-ttl": "🩶 Main menu",
+    "main-back": "⬅️ Back", "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n⚖️ Draw: ",
     "menu-help": "ℹ️ Help", "help": "ℹ️ There could be some help here",
     "contact-dev": "⁉️ Bugs, requests - write to developer", "source-code": "🌐 View source code",
@@ -27,7 +27,7 @@
     "!": "Ace", "🤴": "King", "👸": "Queen", "👨‍🦰": "Jack", "🔟": "Ten", "9️⃣": "Nine", "8️⃣": "Eight", "7️⃣": "Seven", "6️⃣": "Six", "5️⃣": "Five", "4️⃣": "Four", "3️⃣": "Three", "2️⃣": "Two",
     "menu-cazino": "🎰", "menu-dice": "🎲", "menu-dart": "🎯", "menu-bowling": "🎳", "menu-soccer": "⚽️", "menu-basketball": "🏀",
 
-    "menu-rps": "🪨 Rock 📄 Paper ✂️ Scissors", "game-rps": "🪨 Rock 📄 Paper ✂️ Scissors", "rps-stone": "🪨 Rock", "rps-scissors": "✂️ Scissors", "rps-paper": "📄 Paper", "rps-comp": "Computer choice: ",
+    "menu-rps": "🪨 Rock 📄 Paper ✂️ Scissors", "game-rps": "🪨 Rock 📄 Paper ✂️ Scissors", "rps-stone": "🪨 Rock", "rps-scissors": "✂️ Scissors", "rps-paper": "📄 Paper", "rps-user": "Your choice: ", "rps-comp": "Computer choice: ",
     "help-rps": "ℹ️ A classic game for two players. Choose one of the options: 🪨 Rock, ✂️ Scissors, or 📄 Paper \n\n• 🪨 Rock beats ✂️ Scissors \n• ✂️ Scissors beat 📄 Paper \n• 📄 Paper beats 🪨 Rock \n\nIf you and your opponent make the same choice, it's a draw",
 
     "menu-hang": "😵 Hangman", "game-hang": "😵 Hangman", "hang-lives": "Lives: ", "hang-cmplx": "\n\n🥱 Easy - 15 lives \n🙂 Normal - 10 lives \n😳 Hard - 5 lives ", "hang-one": "👀 Open one letter",
@@ -61,7 +61,7 @@
     "hi1": "Hei, ", "hi2": " 😋", 
     "commands": "\n\nKomennot:\n/games - Listaa pelit\n/group - Listaa ryhmäpelit\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/minesweeper - 💣 Miinaharava-peli\n/blackjack - 🃏 Blackjack-peli\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
     "choose-game": "\n\nValitse peli", "menu-games": "🕹 Pelit", "menu-group-games": "🕹 Ryhmäpelit", "game-ttl": "🕹 Valitse peli", 
-    "main-back": "⬅️ Takaisin", "main-ttl": "🩶 Päävalikko",
+    "main-back": "⬅️ Takaisin", "main-ttl": "👾 Päävalikko",
     "menu-stat": "📊 Tilastot", "stat-ttl": "📊 Tilastot", "stat-all": "\n🕹 Pelejä pelattu: ", "stat-win": "\n🥇 Voitot: ", "stat-lose": "\n💀 Häviöt: ", "stat-draw": "\n⚖️ Tasapelit: ",
     "menu-help": "ℹ️ Ohje", "help": "ℹ️ Täällä voisi olla ohjeita",
     "contact-dev": "⁉️ Bugit, toiveet - kirjoita kehittäjälle", "source-code": "🌐 Katso lähdekoodi",
@@ -85,7 +85,7 @@
     "!": "Ässä", "🤴": "Kuningas", "👸": "Kuningatar", "👨‍🦰": "Jätkä", "🔟": "Kymmenen", "9️⃣": "Yhdeksän", "8️⃣": "Kahdeksan", "7️⃣": "Seitsemän", "6️⃣": "Kuusi", "5️⃣": "Viisi", "4️⃣": "Neljä", "3️⃣": "Kolme", "2️⃣": "Kaksi",
     "menu-cazino": "🎰", "menu-dice": "🎲", "menu-dart": "🎯", "menu-bowling": "🎳", "menu-soccer": "⚽️", "menu-basketball": "🏀",
 
-    "menu-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "game-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "rps-stone": "🪨 Kivi", "rps-scissors": "✂️ Sakset", "rps-paper": "📄 Paperi", "rps-comp": "Tietokoneen valinta: ",
+    "menu-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "game-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "rps-stone": "🪨 Kivi", "rps-scissors": "✂️ Sakset", "rps-paper": "📄 Paperi", "rps-user": "Sinun valinta: ", "rps-comp": "Tietokoneen valinta: ",
     "help-rps": "ℹ️ Klassinen kahden pelaajan peli. Valitse yksi vaihtoehdoista: 🪨 Kivi, ✂️ Sakset tai 📄 Paperi \n\n• 🪨 Kivi voittaa ✂️ Sakset \n• ✂️ Sakset voittavat 📄 Paperin \n• 📄 Paperi voittaa 🪨 Kiven \n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
 
     "menu-hang": "😵 Hirttopeli", "game-hang": "😵 Hirttopeli", "hang-lives": "Elämät: ", "hang-cmplx": "\n\n🥱 Helppo - 15 elämää \n🙂 Normaali - 10 elämää \n😳 Vaikea - 5 elämää ", "hang-one": "👀 Avaa yksi kirjain",
@@ -119,7 +119,7 @@
     "hi1": "Привет, ", "hi2": " 😋", 
     "commands": "\n\nКоманды:\n/games - Список игр\n/group - Список групповых игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
     "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Игры", "menu-group-games": "🕹 Групповые игры", "game-ttl": "🕹 Выберите игру", 
-    "main-back": "⬅️ Назад", "main-ttl": "🩶 Главное меню",
+    "main-back": "⬅️ Назад", "main-ttl": "👾 Главное меню",
     "menu-stat": "📊 Статистика", "stat-ttl": "📊 Статистика", "stat-all": "\n🕹 Игр сыграно: ", "stat-win": "\n🥇 Побед: ", "stat-lose": "\n💀 Поражений: ", "stat-draw": "\n⚖️ Ничьих: ",
     "menu-help": "ℹ️ Помощь", "help": "ℹ️ Тут могла бы быть справка",
     "contact-dev": "⁉️ Ошибки, пожелания - написать разработчику", "source-code": "🌐 Посмотреть исходный код",
@@ -143,7 +143,7 @@
     "!": "Туз", "🤴": "Король", "👸": "Дама", "👨‍🦰": "Валет", "🔟": "Десятка", "9️⃣": "Девятка", "8️⃣": "Восьмерка", "7️⃣": "Семерка", "6️⃣": "Шестерка", "5️⃣": "Пятерка", "4️⃣": "Четверка", "3️⃣": "Тройка", "2️⃣": "Двойка",
     "menu-cazino": "🎰", "menu-dice": "🎲", "menu-dart": "🎯", "menu-bowling": "🎳", "menu-soccer": "⚽️", "menu-basketball": "🏀",
 
-    "menu-rps": "🪨 Камень ✂️ Ножницы 📄 Бумага", "game-rps": "🪨 Камень ✂️ Ножницы 📄 Бумага", "rps-stone": "🪨 Камень", "rps-scissors": "✂️ Ножницы", "rps-paper": "📄 Бумага", "rps-comp": "Выбор компьютера: ",
+    "menu-rps": "🪨 Камень ✂️ Ножницы 📄 Бумага", "game-rps": "🪨 Камень ✂️ Ножницы 📄 Бумага", "rps-stone": "🪨 Камень", "rps-scissors": "✂️ Ножницы", "rps-paper": "📄 Бумага", "rps-user": "Ваш выбор: ", "rps-comp": "Выбор компьютера: ",
     "help-rps": "ℹ️ Классическая игра для двоих. Выберите один из вариантов: 🪨 Камень, ✂️ Ножницы или 📄 Бумага \n\n• 🪨 Камень побеждает ✂️ Ножницы \n• ✂️ Ножницы побеждают 📄 Бумагу \n• 📄 Бумага побеждает 🪨 Камень \n\nЕсли у вас и у соперника один и тот же выбор, то это ничья",
 
     "menu-hang": "😵 Виселица", "game-hang": "😵 Виселица", "hang-lives": "Жизней: ", "hang-cmplx": "\n\n🥱 Легко - 15 жизней \n🙂 Нормально - 10 жизней \n😳 Сложно - 5 жизней ", "hang-one": "👀 Открыть одну букву",

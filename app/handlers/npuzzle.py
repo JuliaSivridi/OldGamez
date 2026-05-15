@@ -2,7 +2,6 @@ from aiogram import F, Router
 from aiogram.filters import BaseFilter, Command
 from aiogram.types import CallbackQuery, Message
 
-from app.filters.current_game import CurrentGameFilter
 from app.games.npuzzle import game
 from app.games.npuzzle.keyboards import size_keyboard, tiles_keyboard
 from app.i18n.translator import get_language_pack
@@ -160,6 +159,7 @@ async def callback_move(callback: CallbackQuery) -> None:
             lang["game-win"],
             reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"]),
         )
+        await open_npuzzle_menu(callback.message, user, lang)
         return
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
