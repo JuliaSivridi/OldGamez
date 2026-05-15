@@ -121,7 +121,7 @@ async def callback_guess(callback: CallbackQuery) -> None:
         f"{lang['guess-low']}{state['low']}{lang['guess-top']}{state['high']}\n{lang['guess-guess']}",
         reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type)
     )
-    await update_user_settings(user.id, {'random_target': state['target'], 'current_game': game.code, 'guess_msg_id': callback.message.message_id})
+    await update_user_settings(user.id, {'random_target': state['target'], 'guess_low': state['low'], 'guess_high': state['high'], 'current_game': game.code, 'guess_msg_id': callback.message.message_id})
     await callback.answer()
 
 
@@ -142,13 +142,18 @@ async def guess_number_or_default(message: Message) -> None:
 
     if message.text.isdigit() and target is not None:
         value = int(message.text)
-        if value < int(target):
-            response_text = lang['guess-more']
-        elif value > int(target):
-            response_text = lang['guess-less']
-        else:
-            response_text = lang['guess-equals']
+        low = get_user_setting(user, 'guess_low')
+        high = get_user_setting(user, 'guess_high')
+        range_line = f"{lang['guess-low']}{low}{lang['guess-top']}{high}"
 
+        if value < int(target):
+            result_line = lang['guess-more']
+        elif value > int(target):
+            result_line = lang['guess-less']
+        else:
+            result_line = lang['guess-equals']
+
+        response_text = f"{range_line}\n{lang['guess-user']}{value}\n{result_line}"
         keyboard = random_menu_keyboard(lang, chat_type=message.chat.type)
         guess_msg_id = get_user_setting(user, 'guess_msg_id')
         if guess_msg_id:
@@ -160,7 +165,7 @@ async def guess_number_or_default(message: Message) -> None:
         await update_user_settings(user.id, {'guess_msg_id': sent.message_id})
 
         if value == int(target):
-            await update_user_settings(user.id, {'random_target': None, 'guess_msg_id': None, 'current_game': game.code})
+            await update_user_settings(user.id, {'random_target': None, 'guess_low': None, 'guess_high': None, 'guess_msg_id': None, 'current_game': game.code})
         return
 
     await message.answer(lang['default'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))

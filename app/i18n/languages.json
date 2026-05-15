@@ -21,7 +21,7 @@
     "group-already-joined": "You already joined this game.", "group-only": "Group mode is only available in group chats.", 
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
-    "guess-guess": "Try to guess it: ", "guess-less": "⬇️ The guessed number is less", "guess-more": "⬆️ The guessed number is greater", "guess-equals": "🥳 You guessed it!",
+    "guess-guess": "Try to guess it: ", "guess-user": "Your number: ", "guess-less": "⬇️ The guessed number is less", "guess-more": "⬆️ The guessed number is greater", "guess-equals": "🥳 You guessed it!",
     "menu-coin": "🟡 Coin", "coin-head": "🦅 Head", "coin-tail": "🟡 Tail",
     "menu-card": "🃏 Card", "card-ttl": "🃏 Random card is", "♠️": "of Spades", "♣️": "of Clubs", "♥️": "of Hearts", "♦️": "of Diamonds",
     "!": "Ace", "🤴": "King", "👸": "Queen", "👨‍🦰": "Jack", "🔟": "Ten", "9️⃣": "Nine", "8️⃣": "Eight", "7️⃣": "Seven", "6️⃣": "Six", "5️⃣": "Five", "4️⃣": "Four", "3️⃣": "Three", "2️⃣": "Two",
@@ -79,7 +79,7 @@
     "group-already-joined": "Olet jo liittynyt tähän peliin.", "group-only": "Ryhmätila on käytettävissä vain ryhmäkeskusteluissa.", 
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
-    "guess-guess": "Yritä arvata: ", "guess-less": "⬇️ Arvattava luku on pienempi", "guess-more": "⬆️ Arvattava luku on suurempi", "guess-equals": "🥳 Arvasit oikein!",
+    "guess-guess": "Yritä arvata: ", "guess-user": "Numerosi: ", "guess-less": "⬇️ Arvattava luku on pienempi", "guess-more": "⬆️ Arvattava luku on suurempi", "guess-equals": "🥳 Arvasit oikein!",
     "menu-coin": "🟡 Kolikko", "coin-head": "🦅 Kruuna", "coin-tail": "🟡 Klaava",
     "menu-card": "🃏 Kortti", "card-ttl": "🃏 Satunnainen kortti on", "♠️": "pata", "♣️": "risti", "♥️": "hertta", "♦️": "ruutu",
     "!": "Ässä", "🤴": "Kuningas", "👸": "Kuningatar", "👨‍🦰": "Jätkä", "🔟": "Kymmenen", "9️⃣": "Yhdeksän", "8️⃣": "Kahdeksan", "7️⃣": "Seitsemän", "6️⃣": "Kuusi", "5️⃣": "Viisi", "4️⃣": "Neljä", "3️⃣": "Kolme", "2️⃣": "Kaksi",
@@ -137,7 +137,7 @@
     "group-already-joined": "Вы уже присоединились к этой игре.", "group-only": "Групповой режим доступен только в групповых чатах.", 
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",
-    "guess-guess": "Попробуйте его угадать: ", "guess-less": "⬇️ Загаданное число меньше", "guess-more": "⬆️ Загаданное число больше", "guess-equals": "🥳 Вы угадали!",
+    "guess-guess": "Попробуйте его угадать: ", "guess-user": "Ваше число: ", "guess-less": "⬇️ Загаданное число меньше", "guess-more": "⬆️ Загаданное число больше", "guess-equals": "🥳 Вы угадали!",
     "menu-coin": "🟡 Монетка", "coin-head": "🦅 Орел", "coin-tail": "🟡 Решка",
     "menu-card": "🃏 Карта", "card-ttl": "🃏 Случайная карта", "♠️": "Пик", "♣️": "Треф", "♥️": "Червей", "♦️": "Бубей",
     "!": "Туз", "🤴": "Король", "👸": "Дама", "👨‍🦰": "Валет", "🔟": "Десятка", "9️⃣": "Девятка", "8️⃣": "Восьмерка", "7️⃣": "Семерка", "6️⃣": "Шестерка", "5️⃣": "Пятерка", "4️⃣": "Четверка", "3️⃣": "Тройка", "2️⃣": "Двойка",
