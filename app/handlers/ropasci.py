@@ -51,7 +51,8 @@ async def open_ropasci_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_ropasci_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-rps"], reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -59,19 +60,19 @@ async def open_ropasci_callback(callback: CallbackQuery) -> None:
 async def callback_rps_move(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    
+
     move = callback.data.split(":")[2]
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    
+
     move_lang_key = f"rps-{move}"
     move_text = lang.get(move_lang_key, move)
-    
+
     result = game.play(move_text, lang)
     await record_game_result(user.id, game.code, result["result"])
-    
+
     state_msg = lang["game-win"] if result["result"] == "win" else lang["game-lose"] if result["result"] == "loss" else lang["game-draw"]
-    await callback.message.answer(
+    await callback.message.edit_text(
         f"{lang['rps-user']}{move_text}\n{lang['rps-comp']}{result['comp_choice']}\n\n{state_msg}",
         reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type)
     )
@@ -81,17 +82,13 @@ async def callback_rps_move(callback: CallbackQuery) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_rps_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(text, reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-rps"], 
-        reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(lang["help-rps"], reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

@@ -62,37 +62,35 @@ async def open_npuzzle_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_npuzzle_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-npuzzle"], reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
+    await callback.message.delete()
     await start_npuzzle_game(callback.message, user, lang, size)
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
+    await callback.message.edit_text(lang["chus-size"], reply_markup=size_keyboard(lang))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_npuzzle_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(text, reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-npuzzle"], 
-        reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(lang["help-npuzzle"], reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -110,7 +108,7 @@ async def callback_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"npuzzle_size": size, "current_game": game.code})
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang["size-saved"],
         reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )

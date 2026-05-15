@@ -365,12 +365,14 @@ async def open_four_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_four_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.delete()
     await start_four_game(callback.message, user, lang)
     await callback.answer()
 
@@ -390,17 +392,13 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_four_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-four"], 
-        reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(lang["help-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

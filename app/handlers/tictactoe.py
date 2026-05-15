@@ -341,13 +341,15 @@ async def open_tictactoe_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_tictactoe_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
+    await callback.message.delete()
     await start_tictactoe_game(callback.message, user, lang, size)
     await callback.answer()
 
@@ -368,20 +370,20 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["chus-size"], reply_markup=size_keyboard(lang))
+    await callback.message.edit_text(lang["chus-size"], reply_markup=size_keyboard(lang))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_tictactoe_stats_text(user.id, lang)
-    await callback.message.answer(text, reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(text, reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(lang["help-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -395,7 +397,7 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"tictactoe_size": size, "current_game": game.code})
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang["size-saved"],
         reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )

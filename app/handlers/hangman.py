@@ -89,33 +89,35 @@ async def open_hangman_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_hangman_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-hang"], reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     lives = int((user.settings or {}).get('hangman_lives', 10))
+    await callback.message.delete()
     await start_hangman_game(callback.message, user, lang, lives=lives)
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("cmplx", game.code))
 async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["chus-cmplx"], reply_markup=cmplx_keyboard(lang))
+    await callback.message.edit_text(lang["chus-cmplx"], reply_markup=cmplx_keyboard(lang))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_hangman_stats_text(user.id, lang)
-    await callback.message.answer(text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-hang"], reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(lang["help-hang"], reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -133,7 +135,7 @@ async def callback_cmplx(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {'hangman_lives': lives, 'current_game': game.code})
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang['cmplx-saved'],
         reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )

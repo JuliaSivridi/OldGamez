@@ -51,7 +51,8 @@ async def open_random_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_random_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-rand"], reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -82,7 +83,7 @@ async def callback_coin(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {'current_game': game.code})
-    await callback.message.answer(game.flip_coin(lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(game.flip_coin(lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -105,7 +106,7 @@ async def callback_card(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     card = game.random_card(lang)
     await update_user_settings(user.id, {'current_game': game.code})
-    await callback.message.answer(game.draw_card_text(card, lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.message.edit_text(game.draw_card_text(card, lang), reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -117,7 +118,7 @@ async def callback_guess(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     state = game.new_guess_game()
     await update_user_settings(user.id, {'random_target': state['target'], 'current_game': game.code})
-    await callback.message.answer(
+    await callback.message.edit_text(
         f"{lang['guess-low']}{state['low']}{lang['guess-top']}{state['high']}\n{lang['guess-guess']}",
         reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type)
     )
@@ -126,7 +127,7 @@ async def callback_guess(callback: CallbackQuery) -> None:
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang['help'], 
+    await callback.message.edit_text(lang['help'],
         reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 

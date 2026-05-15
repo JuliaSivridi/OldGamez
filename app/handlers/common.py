@@ -156,7 +156,7 @@ async def callback_menu_lang(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang["lang-ask"],
         reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -187,7 +187,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         )
 
     stats_text = f"*{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
-    await callback.message.answer(
+    await callback.message.edit_text(
         stats_text,
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -202,7 +202,7 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     await update_user_language(user.id, lang_code)
     lang = get_language_pack(lang_code)
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang["lang-ok"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -216,7 +216,7 @@ async def callback_menu_back(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": None})
-    await callback.message.answer(
+    await callback.message.edit_text(
         lang["main-ttl"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )

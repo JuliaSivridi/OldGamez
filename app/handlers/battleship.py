@@ -116,12 +116,14 @@ async def open_battleship_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await open_battleship_menu(callback.message, user, lang)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await callback.message.edit_text(lang["game-sea"], reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
+    await callback.message.delete()
     await start_battleship_game(callback.message, user, lang)
     await callback.answer()
 
@@ -129,17 +131,13 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_battleship_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(text, reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-sea"], 
-        reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        )
+    await callback.message.edit_text(lang["help-sea"], reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
