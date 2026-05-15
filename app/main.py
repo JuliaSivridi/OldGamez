@@ -7,7 +7,6 @@ from aiogram.enums import ParseMode
 
 from app.config import get_settings
 from app.db.base import Base
-from app.db.bootstrap import ensure_schema
 from app.db.session import engine
 from app.handlers import register_routers
 from app.services.sessions import expire_stale_private_duels
@@ -16,7 +15,6 @@ from app.services.sessions import expire_stale_private_duels
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    await ensure_schema()
 
 
 async def start_healthcheck_server(host: str, port: int) -> asyncio.AbstractServer:
