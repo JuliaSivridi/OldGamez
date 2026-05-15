@@ -1,10 +1,11 @@
 import asyncio
+from collections.abc import Callable
 
 from aiogram import F, Router
 from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from app.db.models import SessionMode, SessionStatus
 from app.games.fourinrow import game
@@ -112,26 +113,39 @@ def render_drop_text(lang: dict[str, str], sign: int, viewer_turn: str) -> str:
     return f"{lang['game-four']}\n\n{SYMBOLS[sign]} {turn_line}"
 
 
-async def animate_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], is_user: bool) -> None:
-    for now_row in range(row):
+async def _run_drop_animation(
+    message: Message,
+    get_frame: Callable[[int], tuple[str, InlineKeyboardMarkup]],
+    row: int,
+) -> None:
+    for now_row in range(row + 1):
         await asyncio.sleep(0.2)
         try:
-            await message.edit_text(
-                render_drop_text(lang, sign, "user" if is_user else "comp"),
-                reply_markup=drop_keyboard(session_id, board, sign, row, now_row, col),
-            )
+            text, markup = get_frame(now_row)
+            await message.edit_text(text, reply_markup=markup)
         except TelegramBadRequest:
             pass
+
+
+async def animate_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], is_user: bool) -> None:
+    await _run_drop_animation(
+        message,
+        lambda now_row: (
+            render_drop_text(lang, sign, "user" if is_user else "comp"),
+            drop_keyboard(session_id, board, sign, row, now_row, col),
+        ),
+        row,
+    )
 
 
 async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None:
     state = dict(session.state or {})
     player_ids = get_duel_player_ids(state)
     message_map = get_duel_message_map(state)
-    for now_row in range(row):
+    for now_row in range(row + 1):
         await asyncio.sleep(0.2)
 
-        async def render_frame(user_id: int):
+        async def render_frame(user_id: int, _now_row: int = now_row) -> tuple[str, object]:
             user = await get_user_by_id(user_id)
             if user is None:
                 raise ValueError("User not found")
@@ -139,30 +153,21 @@ async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None
             viewer_turn = "user" if user_id == session.current_turn_user_id else "friend"
             return (
                 render_drop_text(lang, sign, viewer_turn),
-                drop_keyboard(session.id, state["board"], sign, row, now_row, col),
+                drop_keyboard(session.id, state["board"], sign, row, _now_row, col),
             )
 
         await broadcast_private_duel_update(bot, player_ids, message_map, render_frame)
 
 
 async def animate_group_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], player_names: dict[int, str], state: dict) -> None:
-    for now_row in range(row):
-        await asyncio.sleep(0.2)
-        try:
-            await message.edit_text(
-                render_group_status_text(lang, state, player_names),
-                reply_markup=drop_keyboard(session_id, board, sign, row, now_row, col),
-            )
-        except TelegramBadRequest:
-            pass
-
-    try:
-        await message.edit_text(
+    await _run_drop_animation(
+        message,
+        lambda now_row: (
             render_group_status_text(lang, state, player_names),
-            reply_markup=drop_keyboard(session_id, board, sign, row, row, col),
-        )
-    except TelegramBadRequest:
-        pass
+            drop_keyboard(session_id, board, sign, row, now_row, col),
+        ),
+        row,
+    )
 
 
 async def render_duel_message_for_user(session, user_id: int) -> tuple[str, object]:
