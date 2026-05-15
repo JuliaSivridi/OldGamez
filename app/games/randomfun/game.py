@@ -162,8 +162,12 @@ class RandomFunGame:
         )
 
     def draw_card_text(self, card: dict[str, str], lang: dict[str, str]) -> str:
+        if lang.get('card-order') == 'suit rank':
+            name = f"{card['text_suit']} {card['text_rank']}"
+        else:
+            name = f"{card['text_rank']} {card['text_suit']}"
         return (
-            f"{lang['card-ttl']}\n{card['text_rank']} {card['text_suit']}"
+            f"{lang['card-ttl']}\n{name}"
             f"{self.draw_card_art(card)}"
         )
 
