@@ -42,6 +42,7 @@ async def redraw(callback_message: Message, session_id: int, lang: dict[str, str
             is_active=state["current_turn"] == "user" and not is_game_over,
             is_game_over=is_game_over,
         ),
+        parse_mode=None,
     )
 
 
@@ -73,6 +74,7 @@ async def start_battleship_game(message: Message, user, lang: dict[str, str]) ->
     game_message = await message.answer(
         render_game_text(lang, session.state),
         reply_markup=board_keyboard(session.id, session.state["bot_cover"], session.state["bot_board"], session.state["current_turn"] == "user", False),
+        parse_mode=None,
     )
     state = dict(session.state)
     if state["current_turn"] == "bot":
