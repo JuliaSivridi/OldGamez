@@ -133,15 +133,6 @@ async def cmd_games_command(message: Message) -> None:
     await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
 
 
-@router.message(Command("group"))
-async def cmd_group_games(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
-
-
 @router.message(Command("lang"))
 async def cmd_lang_command(message: Message) -> None:
     if message.from_user is None:
@@ -179,18 +170,24 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stats_map = await get_game_stats_bulk(user.id, game_codes)
 
     stats_lines = [
-        f"{'🕹':<5}{'🥇':<5}{'💀':<5}{'🤝':<5}{lang['menu-games']:<10}",
+        f"{'🕹':<8}{'🥇':<8}{'💀':<8}{'🤝':<8}",
     ]
+    total_played = total_wins = total_losses = total_draws = 0
     for game_code, label_key in GAME_STATS_ORDER:
         stat = stats_map.get(game_code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
         losses = stat.losses if stat is not None else 0
         draws = stat.draws if stat is not None else 0
-        stats_lines.append(
-            f"`{played:<4}{wins:<4}{losses:<4}{draws:<4}{emoji_only(lang[label_key]):<10}`"
-        )
+        total_played += played
+        total_wins += wins
+        total_losses += losses
+        total_draws += draws
+        stats_lines.append(f"`{lang[label_key]}`")
+        stats_lines.append(f"`{played:<6}{wins:<5}{losses:<5}{draws:<5}`")
 
+    stats_lines.append(f"\n`{lang['stat-sum']}`")
+    stats_lines.append(f"`{total_played:<6}{total_wins:<5}{total_losses:<5}{total_draws:<5}`")
     stats_text = f"*{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
     await safe_edit(
         callback.message,
