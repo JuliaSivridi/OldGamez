@@ -1,5 +1,5 @@
 LANGUAGE_CHOICES = {
-    "🇬🇧 en": "en",
-    "🇫🇮 fi": "fi",
-    "🇷🇺 ru": "ru",
+    "🇬🇧 English": "en",
+    "🇫🇮 Finnish": "fi",
+    "🇷🇺 Russian": "ru",
 }
