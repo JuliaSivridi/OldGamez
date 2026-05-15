@@ -8,13 +8,15 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 
 | Game | Solo | Private duel | Group |
 |------|:----:|:------------:|:-----:|
-| 🔴🟡 Four in a Row | ✅ | ✅ | ✅ |
 | ❌⭕ Tic-Tac-Toe | ✅ | ✅ | ✅ |
+| 🔴🟡 Four in a Row | ✅ | ✅ | ✅ |
 | 🚢 Battleship | ✅ | | |
 | 💣 Minesweeper | ✅ | | |
-| 🃏 Blackjack | ✅ | | |
+| 🔆 Lights Out | ✅ | | |
 | 🧩 15-Puzzle | ✅ | | |
+| 🃏 Blackjack | ✅ | | |
 | 🪨 Rock Paper Scissors | ✅ | | |
+| 🪨 Rock Paper Scissors Spock Lizard | ✅ | | |
 | 😵 Hangman | ✅ | | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 
@@ -46,6 +48,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | Telegram framework | aiogram 3.x (async) |
 | Database | PostgreSQL 16 |
 | ORM | SQLAlchemy 2.0 async + asyncpg |
+| Migrations | Alembic (async) |
 | Config | pydantic-settings |
 | Deployment | Docker Compose |
 
@@ -72,7 +75,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
    docker compose up -d --build
    ```
 
-The database schema is created automatically on first start.
+Database migrations run automatically on startup via `alembic upgrade head`.
 
 To stop and remove all data:
 ```bash
@@ -102,14 +105,15 @@ app/
 |---|---|
 | `/start` | Main menu |
 | `/games` | List of all games |
-| `/group` | List of group-compatible games |
 | `/lang` | Change interface language |
-| `/fourinrow` | Open Four in a Row |
 | `/tictactoe` `/xo` | Open Tic-Tac-Toe |
+| `/fourinrow` | Open Four in a Row |
 | `/battleship` | Open Battleship |
 | `/minesweeper` | Open Minesweeper |
-| `/blackjack` | Open Blackjack |
+| `/lightsout` | Open Lights Out |
 | `/npuzzle` | Open 15-Puzzle |
+| `/blackjack` | Open Blackjack |
 | `/rps` | Open Rock Paper Scissors |
+| `/rpssl` | Open Rock Paper Scissors Spock Lizard |
 | `/hangman` | Open Hangman |
 | `/random` | Random fun tools |

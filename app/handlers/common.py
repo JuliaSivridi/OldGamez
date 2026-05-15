@@ -16,26 +16,26 @@ from app.services.users import get_user_setting, update_user_language, update_us
 
 router = Router()
 
-GAME_CODE_FOURINROW = "four_in_row"
 GAME_CODE_TICTACTOE = "tic_tac_toe"
+GAME_CODE_FOURINROW = "four_in_row"
 GAME_CODE_BATTLESHIP = "battleship"
 GAME_CODE_MINESWEEPER = "minesweeper"
-GAME_CODE_BLACKJACK = "blackjack"
+GAME_CODE_LIGHTSOUT = "lightsout"
 GAME_CODE_NPUZZLE = "npuzzle"
+GAME_CODE_BLACKJACK = "blackjack"
 GAME_CODE_RPS = "ropasci"
 GAME_CODE_RPSSL = "rpssl"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_HANGMAN = "hangman"
-GAME_CODE_LIGHTSOUT = "lightsout"
 
 # random does not have per-game stats (it's a collection of utilities, not a scored game)
 GAME_STATS_ORDER: list[tuple[str, str]] = [
-    (GAME_CODE_FOURINROW, "menu-four"),
     (GAME_CODE_TICTACTOE, "menu-xo"),
+    (GAME_CODE_FOURINROW, "menu-four"),
     (GAME_CODE_BATTLESHIP, "menu-sea"),
     (GAME_CODE_MINESWEEPER, "menu-mines"),
-    (GAME_CODE_NPUZZLE, "menu-npuzzle"),
     (GAME_CODE_LIGHTSOUT, "menu-lightsout"),
+    (GAME_CODE_NPUZZLE, "menu-npuzzle"),
     (GAME_CODE_BLACKJACK, "menu-bj"),
     (GAME_CODE_RPS, "menu-rps"),
     (GAME_CODE_RPSSL, "menu-rpssl"),
@@ -45,13 +45,13 @@ GAME_STATS_ORDER: list[tuple[str, str]] = [
 # Registry: game_code -> "module:function" for the open_X_menu function.
 # Add a new entry here when a new game is added.
 GAME_MENU_REGISTRY: dict[str, str] = {
-    GAME_CODE_FOURINROW: "app.handlers.fourinrow:open_four_menu",
     GAME_CODE_TICTACTOE: "app.handlers.tictactoe:open_tictactoe_menu",
+    GAME_CODE_FOURINROW: "app.handlers.fourinrow:open_four_menu",
     GAME_CODE_BATTLESHIP: "app.handlers.battleship:open_battleship_menu",
     GAME_CODE_MINESWEEPER: "app.handlers.minesweeper:open_minesweeper_menu",
-    GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
-    GAME_CODE_NPUZZLE: "app.handlers.npuzzle:open_npuzzle_menu",
     GAME_CODE_LIGHTSOUT: "app.handlers.lightsout:open_lightsout_menu",
+    GAME_CODE_NPUZZLE: "app.handlers.npuzzle:open_npuzzle_menu",
+    GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
     GAME_CODE_RPS: "app.handlers.ropasci:open_ropasci_menu",
     GAME_CODE_RPSSL: "app.handlers.ropasci:open_rpssl_menu",
     GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",

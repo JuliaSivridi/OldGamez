@@ -1,7 +1,7 @@
 {
   "en": {
     "hi1": "Hello, ", "hi2": " 😋", 
-    "commands": "\n\nCommands:\n/games - List of games\n/fourinrow - 🔴🟡 4 in row\n/tictactoe /xo - ❌⭕️ TicTacToe\n/battleship - 🚢 Battle Ship\n/minesweeper - 💣 Minesweeper\n/blackjack - 🃏 Blackjack\n/npuzzle - 🧩 N-puzzle\n/lightsout - 💡 Lights Out\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors\n/rpssl - 🪨 Rock 📄 Paper ✂️ Scissors 🖖 Spock 🦎 Lizard\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman\n/lang - Change language\n/start - Show main menu",
+    "commands": "\n\nCommands:\n/games - List of games\n/tictactoe /xo - ❌⭕️ TicTacToe\n/fourinrow - 🔴🟡 4 in row\n/battleship - 🚢 Battle Ship\n/minesweeper - 💣 Minesweeper\n/lightsout - 🔆 Lights Out\n/npuzzle - 🧩 N-puzzle\n/blackjack - 🃏 Blackjack\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors\n/rpssl - 🪨 Rock 📄 Paper ✂️ Scissors 🖖 Spock 🦎 Lizard\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman\n/lang - Change language\n/start - Show main menu",
     "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
     "main-back": "⬅️ Back", "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-sum": "Summary: ", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n🤝 Draw: ",
@@ -46,8 +46,8 @@
     "menu-npuzzle": "🧩 N-puzzle", "game-npuzzle": "🧩 N-puzzle game ",
     "help-npuzzle": "ℹ️ *Goal of the game* - arrange the tiles in the correct order: left -> right, top -> bottom, with the empty space in the bottom-right corner \n\nMove the tiles using the empty space to restore the correct order of numbers",
 
-    "menu-lightsout": "💡 Lights Out", "game-lightsout": "💡 Lights Out ",
-    "help-lightsout": "ℹ️ *Goal of the game* - turn off all the lights 🔆\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)\n\nChoose board size in ⚙️ Settings: 4×4, 5×5, or 6×6",
+    "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
+    "help-lightsout": "ℹ️ *Goal of the game* - turn off all the lights 🟨\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)\n\nChoose board size in ⚙️ Settings: 4×4, 5×5, or 6×6",
 
     "menu-xo": "❌⭕️ TicTacToe", "game-xo": "❌⭕️ TicTacToe ", "xo-win-need": "\nTo win, make a line of length ",
     "xo-not-yours": "This game doesn't belong to you.", "xo-not-your-turn": "It's not your turn now.",
@@ -64,7 +64,7 @@
   },
   "fi": {
     "hi1": "Hei, ", "hi2": " 😋", 
-    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/fourinrow - 🔴🟡 4 peräkkäin\n/tictactoe /xo - ❌⭕️ Ristinolla\n/battleship - 🚢 Laivanupotus\n/minesweeper - 💣 Miinaharava\n/blackjack - 🃏 Blackjack\n/npuzzle - 🧩 N-pulmapeli\n/lightsout - 💡 Lights Out\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset\n/rpssl - 🪨 Kivi 📄 Paperi ✂️ Sakset 🦎 Lisko 🖖 Spock\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
+    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/tictactoe /xo - ❌⭕️ Ristinolla\n/fourinrow - 🔴🟡 4 peräkkäin\n/battleship - 🚢 Laivanupotus\n/minesweeper - 💣 Miinaharava\n/lightsout - 🔆 Lights Out\n/npuzzle - 🧩 N-pulmapeli\n/blackjack - 🃏 Blackjack\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset\n/rpssl - 🪨 Kivi 📄 Paperi ✂️ Sakset 🦎 Lisko 🖖 Spock\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
     "choose-game": "\n\nValitse peli", "menu-games": "🕹 Pelit", "game-ttl": "🕹 Valitse peli", 
     "main-back": "⬅️ Takaisin", "main-ttl": "👾 Päävalikko",
     "menu-stat": "📊 Tilastot", "stat-ttl": "📊 Tilastot", "stat-sum": "Yhteensä: ", "stat-all": "\n🕹 Pelejä pelattu: ", "stat-win": "\n🥇 Voitot: ", "stat-lose": "\n💀 Häviöt: ", "stat-draw": "\n🤝 Tasapelit: ",
@@ -109,8 +109,8 @@
     "menu-npuzzle": "🧩 N-pulmapeli", "game-npuzzle": "🧩 N-pulmapeli ",
     "help-npuzzle": "ℹ️ *Tavoite* - järjestää palat oikeaan järjestykseen: vasemmalta oikealle, ylhäältä alas, tyhjä ruutu oikeassa alakulmassa \n\nSiirrä paloja tyhjän ruudun avulla ja palauta numeroiden oikea järjestys",
 
-    "menu-lightsout": "💡 Lights Out", "game-lightsout": "💡 Lights Out ",
-    "help-lightsout": "ℹ️ *Tavoite* - sammuta kaikki valot 🔆\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila\n\nValitse laudan koko ⚙️ Asetuksissa: 4×4, 5×5 tai 6×6",
+    "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
+    "help-lightsout": "ℹ️ *Tavoite* - sammuta kaikki valot 🟨\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila\n\nValitse laudan koko ⚙️ Asetuksissa: 4×4, 5×5 tai 6×6",
 
     "menu-xo": "❌⭕️ Ristinolla", "game-xo": "❌⭕️ Ristinolla ", "xo-win-need": "\nVoittaaksesi muodosta rivi, jonka pituus on ",
     "xo-not-yours": "Tämä peli ei kuulu sinulle.", "xo-not-your-turn": "Ei ole sinun vuorosi.",
@@ -127,7 +127,7 @@
     },
   "ru": {
     "hi1": "Привет, ", "hi2": " 😋", 
-    "commands": "\n\nКоманды:\n/games - Список игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/lightsout - 💡 Гаси огни\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/rpssl - 🪨 Камень ✂️ Ножницы 📄 Бумага 🦎 Ящерица 🖖 Спок\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
+    "commands": "\n\nКоманды:\n/games - Список игр\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/fourinrow - 🔴🟡 4 в ряд\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/lightsout - 🔆 Гаси огни\n/npuzzle - 🧩 Пятнашки\n/blackjack - 🃏 Блэкджек\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/rpssl - 🪨 Камень ✂️ Ножницы 📄 Бумага 🦎 Ящерица 🖖 Спок\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
     "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Игры", "game-ttl": "🕹 Выберите игру", 
     "main-back": "⬅️ Назад", "main-ttl": "👾 Главное меню",
     "menu-stat": "📊 Статистика", "stat-ttl": "📊 Статистика", "stat-sum": "Итого: ", "stat-all": "\n🕹 Игр сыграно: ", "stat-win": "\n🥇 Побед: ", "stat-lose": "\n💀 Поражений: ", "stat-draw": "\n🤝 Ничьих: ",
@@ -172,8 +172,8 @@
     "menu-npuzzle": "🧩 Пятнашки", "game-npuzzle": "🧩 Пятнашки ",
     "help-npuzzle": "ℹ️ *Цель игры* - расположить тайлы в правильном порядке: слева -> направо, сверху -> вниз, с пустым местом в правом нижнем углу \n\nПеремещайте тайлы, используя пустое место, чтобы восстановить правильный порядок цифр",
 
-    "menu-lightsout": "💡 Гаси огни", "game-lightsout": "💡 Гаси огни ",
-    "help-lightsout": "ℹ️ *Цель игры* - погасить все лампочки 🔆\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)\n\nВыберите размер поля в ⚙️ Настройках: 4×4, 5×5 или 6×6",
+    "menu-lightsout": "🔆 Гаси огни", "game-lightsout": "🔆 Гаси огни ",
+    "help-lightsout": "ℹ️ *Цель игры* - погасить все лампочки 🟨\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)\n\nВыберите размер поля в ⚙️ Настройках: 4×4, 5×5 или 6×6",
 
     "menu-xo": "❌⭕️ Крестики-нолики", "game-xo": "❌⭕️ Крестики-нолики ", "xo-win-need": "\nДля победы сделайте линию длиной  ",
     "xo-not-yours": "Эта игра тебе не принадлежит.", "xo-not-your-turn": "Сейчас не твой ход.",

@@ -6,26 +6,26 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     if chat_type in ("group", "supergroup"):
-        builder.button(text=lang["menu-four"], callback_data="game:four")
         builder.button(text=lang["menu-xo"], callback_data="game:xo")
+        builder.button(text=lang["menu-four"], callback_data="game:four")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats")
         builder.button(text=lang["menu-lang"], callback_data="menu:lang")
         builder.adjust(2, 2)
     else:
-        builder.button(text=lang["menu-four"], callback_data="game:four")
-        builder.button(text=lang["menu-sea"], callback_data="game:sea")
         builder.button(text=lang["menu-xo"], callback_data="game:xo")
+        builder.button(text=lang["menu-sea"], callback_data="game:sea")
+        builder.button(text=lang["menu-four"], callback_data="game:four")
         builder.button(text=lang["menu-mines"], callback_data="game:mines")
-        builder.button(text=lang["menu-bj"], callback_data="game:bj")
-        builder.button(text=lang["menu-npuzzle"], callback_data="game:npuzzle")
         builder.button(text=lang["menu-lightsout"], callback_data="game:lightsout")
+        builder.button(text=lang["menu-npuzzle"], callback_data="game:npuzzle")
+        builder.button(text=lang["menu-bj"], callback_data="game:bj")
         builder.button(text=lang["menu-rps"], callback_data="game:rps")
         builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
         builder.button(text=lang["menu-hang"], callback_data="game:hang")
         builder.button(text=lang["menu-rand"], callback_data="game:rand")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats")
         builder.button(text=lang["menu-lang"], callback_data="menu:lang")
-        builder.adjust(2, 2, 2, 2, 2, 2, 2)
+        builder.adjust(2, 2, 2, 3, 2, 2)
     return builder.as_markup()
 
 
