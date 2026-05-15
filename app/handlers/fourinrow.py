@@ -11,6 +11,7 @@ from app.db.models import SessionMode, SessionStatus
 from app.games.fourinrow import game
 from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard, drop_keyboard
 from app.handlers.filters import GameCallbackFilter
+from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
@@ -368,7 +369,7 @@ async def open_four_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await callback.message.edit_text(lang["game-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, lang["game-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -393,13 +394,13 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_four_stats_text(user.id, lang)
-    await callback.message.edit_text(text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.edit_text(lang["help-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, lang["help-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

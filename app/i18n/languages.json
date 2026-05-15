@@ -1,7 +1,7 @@
 {
   "en": {
     "hi1": "Hello, ", "hi2": " 😋", 
-    "commands": "\n\nCommands:\n/games - List of games\n/fourinrow - 🔴🟡 4 in row game\n/tictactoe /xo - ❌⭕️ TicTacToe game\n/battleship - 🚢 Battle Ship game\n/minesweeper - 💣 Minesweeper game\n/blackjack - 🃏 Blackjack game\n/npuzzle - 🧩 N-puzzle game\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors game\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman game\n/lang - Change language\n/start - Show main menu",
+    "commands": "\n\nCommands:\n/games - List of games\n/fourinrow - 🔴🟡 4 in row\n/tictactoe /xo - ❌⭕️ TicTacToe\n/battleship - 🚢 Battle Ship\n/minesweeper - 💣 Minesweeper\n/blackjack - 🃏 Blackjack\n/npuzzle - 🧩 N-puzzle\n/rps - 🪨 Rock 📄 Paper ✂️ Scissors\n/rpssl - 🪨 Rock 📄 Paper ✂️ Scissors 🖖 Spock 🦎 Lizard\n/random - choose from 🎲 Random games\n/coin - flip a 🟡 Coin\n/card - show a random 🃏 Card\n/hangman - 😵 Hangman\n/lang - Change language\n/start - Show main menu",
     "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
     "main-back": "⬅️ Back", "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n🤝 Draw: ",
@@ -61,7 +61,7 @@
   },
   "fi": {
     "hi1": "Hei, ", "hi2": " 😋", 
-    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/fourinrow - 🔴🟡 4 peräkkäin -peli\n/tictactoe /xo - ❌⭕️ Ristinolla-peli\n/battleship - 🚢 Laivanupotus-peli\n/minesweeper - 💣 Miinaharava-peli\n/blackjack - 🃏 Blackjack-peli\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset -peli\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
+    "commands": "\n\nKomennot:\n/games - Listaa pelit\n/fourinrow - 🔴🟡 4 peräkkäin\n/tictactoe /xo - ❌⭕️ Ristinolla\n/battleship - 🚢 Laivanupotus\n/minesweeper - 💣 Miinaharava\n/blackjack - 🃏 Blackjack\n/npuzzle - 🧩 N-pulmapeli\n/rps - 🪨 Kivi 📄 Paperi ✂️ Sakset\n/rpssl - 🪨 Kivi 📄 Paperi ✂️ Sakset 🦎 Lisko 🖖 Spock\n/random - valitse 🎲 Satunnaispeleistä\n/coin - heitä 🟡 Kolikko\n/card - näytä satunnainen 🃏 Kortti\n/hangman - 😵 Hirttopeli\n/lang - Vaihda kieli\n/start - Näytä päävalikko",
     "choose-game": "\n\nValitse peli", "menu-games": "🕹 Pelit", "game-ttl": "🕹 Valitse peli", 
     "main-back": "⬅️ Takaisin", "main-ttl": "👾 Päävalikko",
     "menu-stat": "📊 Tilastot", "stat-ttl": "📊 Tilastot", "stat-all": "\n🕹 Pelejä pelattu: ", "stat-win": "\n🥇 Voitot: ", "stat-lose": "\n💀 Häviöt: ", "stat-draw": "\n🤝 Tasapelit: ",
@@ -90,7 +90,7 @@
     "menu-rps": "🪨 📄 ✂️", "game-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "menu-rpssl": "🪨 📄 ✂️ 🦎 🖖", "game-rpssl": "🪨 Kivi 📄 Paperi ✂️ Sakset 🦎 Lisko 🖖 Spock", 
     "rps-stone": "🪨 Kivi", "rps-scissors": "✂️ Sakset", "rps-paper": "📄 Paperi", "rps-lizard": "🦎 Lisko", "rps-spock": "🖖 Spock","rps-user": "Sinun valinta: ", "rps-comp": "Tietokoneen valinta: ",
     "help-rps": "ℹ️ Klassinen kahden pelaajan peli. Valitse yksi vaihtoehdoista: 🪨 Kivi, ✂️ Sakset tai 📄 Paperi \n\n• 🪨 Kivi voittaa ✂️ Sakset \n• ✂️ Sakset voittavat 📄 Paperin \n• 📄 Paperi voittaa 🪨 Kiven \n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
-    "help-rpssl": "ℹ️ Valitse yksi viidestä vaihtoehdosta: 🪨 Kivi, ✂️ Sakset, 📄 Paperi, 🦎 Lisko tai 🖖 Spock \n\n• ✂️ Sakset leikkaavat 📄 Paperin \n• 📄 Paperi peittää 🪨 Kiven \n• 🪨 Kivi murskaavat 🦎 Liston \n• 🦎 Lisko myrkyttää 🖖 Spockin \n• 🖖 Spock rikkoo ✂️ Sakset \n• ✂️ Sakset katkaavat 🦎 Liston pään \n• 🦎 Lisko syö 📄 Paperin \n• 📄 Paperi kumoaa 🖖 Spockin \n• 🖖 Spock höyrystää 🪨 Kiven \n• 🪨 Kivi tylsistyttää ✂️ Sakset",
+    "help-rpssl": "ℹ️ Valitse yksi viidestä vaihtoehdosta: 🪨 Kivi, ✂️ Sakset, 📄 Paperi, 🦎 Lisko tai 🖖 Spock \n\n• ✂️ Sakset leikkaavat 📄 Paperin \n• 📄 Paperi peittää 🪨 Kiven \n• 🪨 Kivi murskaavat 🦎 Liskon \n• 🦎 Lisko myrkyttää 🖖 Spockin \n• 🖖 Spock rikkoo ✂️ Sakset \n• ✂️ Sakset katkaavat 🦎 Liskon pään \n• 🦎 Lisko syö 📄 Paperin \n• 📄 Paperi kumoaa 🖖 Spockin \n• 🖖 Spock höyrystää 🪨 Kiven \n• 🪨 Kivi tylsistyttää ✂️ Sakset",
 
     "menu-hang": "😵 Hirttopeli", "game-hang": "😵 Hirttopeli", "hang-lives": "Elämät: ", "hang-cmplx": "\n\n🥱 Helppo - 15 elämää \n🙂 Normaali - 10 elämää \n😳 Vaikea - 5 elämää ", "hang-one": "👀 Avaa yksi kirjain",
     "help-hang": "ℹ️ *Hirttopelin säännöt* \n\n*Tavoite* – arvaa sana annetussa yritysmäärässä \n\n• Piilotettu sana näytetään väliviivoina, esim.: \\_ \\_ \\_ \\_ \n• Valitset kirjaimia yksi kerrallaan \n• Jos kirjain on sanassa, se ilmestyy oikeille paikoilleen \n• Jos kirjainta ei ole sanassa, menetät yhden yrityksen \n• Jos et arvaa sanaa yrityksissä, peli päättyy \n• Vihjeitä voi käyttää rajattomasti 😎 Vinkin käyttäminen ei tilastoidu voittona\n\nPeli käyttää yleisimpiä sanalistoja",
@@ -121,7 +121,7 @@
     },
   "ru": {
     "hi1": "Привет, ", "hi2": " 😋", 
-    "commands": "\n\nКоманды:\n/games - Список игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
+    "commands": "\n\nКоманды:\n/games - Список игр\n/fourinrow - 🔴🟡 4 в ряд\n/tictactoe /xo - ❌⭕️ Крестики-нолики\n/battleship - 🚢 Морской бой\n/minesweeper - 💣 Сапёр\n/blackjack - 🃏 Блэкджек\n/npuzzle - 🧩 Пятнашки\n/rps - 🪨 Камень ✂️ Ножницы 📄 Бумага\n/rpssl - 🪨 Камень ✂️ Ножницы 📄 Бумага 🦎 Ящерица 🖖 Спок\n/random - выбрать из 🎲 Случайных игр\n/coin - подбросить 🟡 Монету\n/card - показать случайную 🃏 Карту\n/hangman - 😵 Виселица\n/lang - Сменить язык\n/start - Показать главное меню",
     "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Игры", "game-ttl": "🕹 Выберите игру", 
     "main-back": "⬅️ Назад", "main-ttl": "👾 Главное меню",
     "menu-stat": "📊 Статистика", "stat-ttl": "📊 Статистика", "stat-all": "\n🕹 Игр сыграно: ", "stat-win": "\n🥇 Побед: ", "stat-lose": "\n💀 Поражений: ", "stat-draw": "\n🤝 Ничьих: ",

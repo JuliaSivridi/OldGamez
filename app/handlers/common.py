@@ -7,6 +7,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.handlers.duels import handle_private_duel_start
+from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
 from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
@@ -159,7 +160,8 @@ async def callback_menu_lang(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await callback.message.edit_text(
+    await safe_edit(
+        callback.message,
         lang["lang-ask"],
         reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -190,7 +192,8 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         )
 
     stats_text = f"*{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
-    await callback.message.edit_text(
+    await safe_edit(
+        callback.message,
         stats_text,
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -205,7 +208,8 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     await update_user_language(user.id, lang_code)
     lang = get_language_pack(lang_code)
-    await callback.message.edit_text(
+    await safe_edit(
+        callback.message,
         lang["lang-ok"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
@@ -219,7 +223,8 @@ async def callback_menu_back(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": None})
-    await callback.message.edit_text(
+    await safe_edit(
+        callback.message,
         lang["main-ttl"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )

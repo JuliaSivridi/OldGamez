@@ -6,6 +6,7 @@ from app.db.models import SessionStatus
 from app.games.blackjack import game
 from app.games.blackjack.keyboards import game_keyboard
 from app.handlers.filters import GameCallbackFilter
+from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
@@ -111,7 +112,7 @@ async def open_blackjack_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await callback.message.edit_text(lang["game-bj"], reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, lang["game-bj"], reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -124,7 +125,7 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_blackjack_stats_text(user.id, lang)
-    await callback.message.edit_text(text,
+    await safe_edit(callback.message, text,
         reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
         parse_mode="Markdown")
     await callback.answer()
@@ -132,7 +133,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.edit_text(lang["help-bj"],
+    await safe_edit(callback.message, lang["help-bj"],
         reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
         parse_mode="Markdown")
     await callback.answer()
