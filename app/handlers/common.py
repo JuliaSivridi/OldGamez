@@ -195,7 +195,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stats_map = await get_game_stats_bulk(user.id, game_codes)
 
     stats_lines = [
-        f"{'🕹':<5}{'🥇':<5}{'💀':<5}{'⚖️':<5}{lang['menu-games']:<10}",
+        f"{'🕹':<5}{'🥇':<5}{'💀':<5}{'🤝':<5}{lang['menu-games']:<10}",
     ]
     for game_code, label_key in GAME_STATS_ORDER:
         stat = stats_map.get(game_code)
