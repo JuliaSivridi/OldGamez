@@ -33,8 +33,8 @@ class User(Base):
     last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10), default="ru")
     settings: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     sessions_created: Mapped[list[GameSession]] = relationship(
         back_populates="created_by",
@@ -50,16 +50,16 @@ class GameSession(Base):
     mode: Mapped[SessionMode] = mapped_column(SqlEnum(SessionMode), index=True)
     status: Mapped[SessionStatus] = mapped_column(SqlEnum(SessionStatus), default=SessionStatus.active, index=True)
     join_code: Mapped[str | None] = mapped_column(String(32), unique=True, nullable=True, index=True)
-    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    invite_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     current_turn_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     state: Mapped[dict] = mapped_column(JSON, default=dict)
     winner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_by: Mapped[User] = relationship(
         back_populates="sessions_created",
@@ -77,7 +77,7 @@ class SessionPlayer(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     seat_no: Mapped[int] = mapped_column(Integer)
     role: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    joined_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     session: Mapped[GameSession] = relationship(back_populates="players")
 
