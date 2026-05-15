@@ -1,37 +1,17 @@
 ﻿import asyncio
 
 from aiogram import F, Router
-from aiogram.filters import BaseFilter, Command
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
+from app.db.models import SessionStatus
 from app.games.battleship import game
 from app.games.battleship.keyboards import SYMBOLS, board_keyboard
+from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
-
-
-class GameCallbackFilter(BaseFilter):
-    def __init__(self, action: str, game_code: str):
-        self.action = action
-        self.game_code = game_code
-
-    async def __call__(self, callback: CallbackQuery):
-        if (callback.from_user is None 
-            or callback.data is None
-            or callback.message is None
-        ):
-            return False
-
-        expected = f"game:{self.action}:{self.game_code}"
-        if callback.data != expected:
-            return False
-
-        user = await upsert_user(callback.from_user)
-        lang = get_language_pack(user.language_code)
-
-        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -149,7 +129,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_battleship_stats_text(user.id, lang)
     await callback.message.answer(text, 
         reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+        )
     await callback.answer()
 
 
@@ -157,7 +137,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
     await callback.message.answer(lang["help-sea"], 
         reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+        )
     await callback.answer()
 
 
@@ -180,7 +160,7 @@ async def callback_shot(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status.value != "active":
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
         return
 
     state = dict(session.state)
@@ -194,7 +174,7 @@ async def callback_shot(callback: CallbackQuery) -> None:
         await finish_session(session.id, state, winner_user_id=user.id)
         await record_game_result(user.id, game.code, "win")
         await redraw(callback.message, session.id, lang, state, is_game_over=True, is_win=True)
-        await open_battleship_menu(message, user, lang)
+        await open_battleship_menu(callback.message, user, lang)
         return
 
     await redraw(callback.message, session.id, lang, state)

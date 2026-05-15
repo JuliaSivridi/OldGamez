@@ -1,7 +1,9 @@
 import re
+from importlib import import_module
+from typing import Callable
 
 from aiogram import F, Router
-from aiogram.filters import BaseFilter, Command, CommandStart
+from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
 from app.handlers.duels import handle_private_duel_start
@@ -10,7 +12,7 @@ from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard, games_keyboard, group_games_keyboard
 from app.keyboards.language import language_keyboard
 from app.keyboards.main_menu import main_menu_keyboard
-from app.services.sessions import get_game_stat
+from app.services.sessions import get_game_stats_bulk
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
 router = Router()
@@ -25,6 +27,7 @@ GAME_CODE_RPS = "ropasci"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_HANGMAN = "hangman"
 
+# random does not have per-game stats (it's a collection of utilities, not a scored game)
 GAME_STATS_ORDER: list[tuple[str, str]] = [
     (GAME_CODE_FOURINROW, "menu-four"),
     (GAME_CODE_TICTACTOE, "menu-xo"),
@@ -35,6 +38,30 @@ GAME_STATS_ORDER: list[tuple[str, str]] = [
     (GAME_CODE_RPS, "menu-rps"),
     (GAME_CODE_HANGMAN, "menu-hang"),
 ]
+
+# Registry: game_code -> "module:function" for the open_X_menu function.
+# Add a new entry here when a new game is added.
+GAME_MENU_REGISTRY: dict[str, str] = {
+    GAME_CODE_FOURINROW: "app.handlers.fourinrow:open_four_menu",
+    GAME_CODE_TICTACTOE: "app.handlers.tictactoe:open_tictactoe_menu",
+    GAME_CODE_BATTLESHIP: "app.handlers.battleship:open_battleship_menu",
+    GAME_CODE_MINESWEEPER: "app.handlers.minesweeper:open_minesweeper_menu",
+    GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
+    GAME_CODE_NPUZZLE: "app.handlers.npuzzle:open_npuzzle_menu",
+    GAME_CODE_RPS: "app.handlers.ropasci:open_ropasci_menu",
+    GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",
+    GAME_CODE_HANGMAN: "app.handlers.hangman:open_hangman_menu",
+}
+
+
+def _get_menu_handler(game_code: str) -> Callable | None:
+    path = GAME_MENU_REGISTRY.get(game_code)
+    if path is None:
+        return None
+    module_path, func_name = path.split(":", 1)
+    module = import_module(module_path)
+    handler = getattr(module, func_name, None)
+    return handler if callable(handler) else None
 
 
 def emoji_only(text: str) -> str:
@@ -56,106 +83,14 @@ def extract_start_argument(message: Message) -> str | None:
 async def send_current_game_menu(message: Message, user) -> None:
     lang = get_language_pack(user.language_code)
     current_game = get_current_game(user)
-    if current_game == GAME_CODE_FOURINROW:
+    handler = _get_menu_handler(current_game) if current_game else None
+    if handler is not None:
+        await handler(message, user, lang)
+    else:
         await message.answer(
-            lang["game-four"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_FOURINROW,
-                extra_duel_key="duel",
-                extra_group_key="group",
-                chat_type=message.chat.type,
-            ),
+            lang["main-ttl"],
+            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
         )
-        return
-    if current_game == GAME_CODE_TICTACTOE:
-        await message.answer(
-            lang["game-xo"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_TICTACTOE,
-                extra_setting_key="size",
-                extra_duel_key="duel",
-                extra_group_key="group",
-                chat_type=message.chat.type,
-            ),
-        )
-        return
-    if current_game == GAME_CODE_BATTLESHIP:
-        await message.answer(
-            lang["game-sea"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_BATTLESHIP,
-                chat_type=message.chat.type
-            ),
-        )
-        return
-    if current_game == GAME_CODE_MINESWEEPER:
-        await message.answer(
-            lang["game-mines"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_MINESWEEPER,
-                extra_setting_key="cmplx",
-                chat_type=message.chat.type,
-            ),
-        )
-        return
-    if current_game == GAME_CODE_BLACKJACK:
-        await message.answer(
-            lang["game-bj"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_BLACKJACK,
-                chat_type=message.chat.type
-            ),
-        )
-        return
-    if current_game == GAME_CODE_NPUZZLE:
-        await message.answer(
-            lang["game-npuzzle"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_NPUZZLE,
-                extra_setting_key="size",
-                chat_type=message.chat.type,
-            ),
-        )
-        return
-    if current_game == GAME_CODE_RPS:
-        from app.games.ropasci.keyboards import game_keyboard # TODO
-
-        await message.answer(
-            lang["game-rps"],
-            game_code=GAME_CODE_RPS,
-            reply_markup=game_keyboard(lang),
-        )
-        return
-    if current_game == GAME_CODE_RANDOM:
-        from app.games.randomfun.keyboards import game_keyboard # TODO
-
-        await message.answer(
-            lang["game-rand"],
-            game_code=GAME_CODE_RANDOM,
-            reply_markup=game_keyboard(lang),
-        )
-        return
-    if current_game == GAME_CODE_HANGMAN:
-        await message.answer(
-            lang["game-hang"],
-            reply_markup=game_menu_keyboard(
-                lang,
-                game_code=GAME_CODE_HANGMAN,
-                extra_setting_key="cmplx",
-                chat_type=message.chat.type,
-            ),
-        )
-        return
-    await message.answer(
-        lang["main-ttl"],
-        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
-    )
 
 
 @router.message(CommandStart())
@@ -257,11 +192,14 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
 
+    game_codes = [code for code, _ in GAME_STATS_ORDER]
+    stats_map = await get_game_stats_bulk(user.id, game_codes)
+
     stats_lines = [
         f"{'🕹':<5}{'🥇':<5}{'💀':<5}{'⚖️':<5}{lang['menu-games']:<10}",
     ]
     for game_code, label_key in GAME_STATS_ORDER:
-        stat = await get_game_stat(user.id, game_code)
+        stat = stats_map.get(game_code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
         losses = stat.losses if stat is not None else 0
@@ -273,7 +211,6 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stats_text = f"*{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
     await callback.message.answer(
         stats_text,
-        parse_mode="Markdown",
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await callback.answer()

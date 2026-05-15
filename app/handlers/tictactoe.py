@@ -4,11 +4,14 @@ import asyncio
 
 from aiogram import F, Router
 from aiogram.enums import ChatType
-from aiogram.filters import BaseFilter, Command
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
+from app.db.models import SessionMode, SessionStatus
 from app.games.tictactoe import game
 from app.games.tictactoe.keyboards import board_keyboard, size_keyboard
+from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.keyboards.games import game_menu_keyboard
@@ -32,30 +35,7 @@ from app.services.sessions import (
     record_game_result,
     update_session_state,
 )
-from app.services.users import get_user_by_id, update_user_settings, upsert_user
-
-
-
-class GameCallbackFilter(BaseFilter):
-    def __init__(self, action: str, game_code: str):
-        self.action = action
-        self.game_code = game_code
-
-    async def __call__(self, callback: CallbackQuery):
-        if (callback.from_user is None 
-            or callback.data is None
-            or callback.message is None
-        ):
-            return False
-
-        expected = f"game:{self.action}:{self.game_code}"
-        if callback.data != expected:
-            return False
-
-        user = await upsert_user(callback.from_user)
-        lang = get_language_pack(user.language_code)
-
-        return {"user": user, "lang": lang}
+from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 
 
 router = Router()
@@ -78,12 +58,6 @@ def get_duel_player_ids(state: dict) -> list[int | None]:
 
 def get_player_symbol(state: dict, user_id: int) -> str:
     return "x" if state.get("player_x_id") == user_id else "o"
-
-
-def format_player_name(user) -> str:
-    if user is None:
-        return "Player"
-    return user.first_name or user.username or str(user.id)
 
 
 def render_group_status_text(
@@ -162,7 +136,7 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
         raise ValueError("User not found")
     lang = get_language_pack(user.language_code)
     state = dict(session.state or {})
-    if session.mode.value == "group_match":
+    if session.mode == SessionMode.group_match:
         player_names: dict[int, str] = {}
         for player_id in get_duel_player_ids(state):
             if player_id is None:
@@ -170,10 +144,10 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
             player = await get_user_by_id(player_id)
             player_names[player_id] = format_player_name(player)
         text = render_group_status_text(state, lang, player_names)
-        is_active = session.status.value == "active"
+        is_active = session.status == SessionStatus.active
     else:
         text = render_status_text(state, lang, viewer_user_id=user_id)
-        is_active = session.status.value == "active" and session.current_turn_user_id == user_id
+        is_active = session.status == SessionStatus.active and session.current_turn_user_id == user_id
 
     markup = board_keyboard(
         session_id=session.id,
@@ -401,17 +375,13 @@ async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_tictactoe_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+    await callback.message.answer(text, reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-xo"], 
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+    await callback.message.answer(lang["help-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -440,13 +410,13 @@ async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
-    if session is None or session.mode.value != "group_match":
+    if session is None or session.mode != SessionMode.group_match:
         await callback.answer(lang["duel-missing"], show_alert=True)
         return
     if session.created_by_user_id == user.id:
         await callback.answer(lang["duel-self"], show_alert=True)
         return
-    if session.status.value != "pending":
+    if session.status != SessionStatus.pending:
         await callback.answer(lang["duel-full"], show_alert=True)
         return
 
@@ -514,12 +484,12 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         return
 
     state = dict(session.state or {})
-    if session.mode.value == "group_match":
+    if session.mode == SessionMode.group_match:
         player_ids = {player.user_id for player in session.players}
         if user.id not in player_ids:
             await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
-        if session.status.value != "active":
+        if session.status != SessionStatus.active:
             await callback.answer(lang["xo-already-finished"], show_alert=True)
             return
         if session.current_turn_user_id != user.id:
@@ -595,12 +565,12 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         await callback.answer()
         return
 
-    if session.mode.value == "duel_private":
+    if session.mode == SessionMode.duel_private:
         player_ids = set(get_duel_player_ids(state))
         if user.id not in player_ids:
             await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
-        if session.status.value != "active":
+        if session.status != SessionStatus.active:
             await callback.answer(lang["xo-already-finished"], show_alert=True)
             return
         if session.current_turn_user_id != user.id:
@@ -664,7 +634,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     if session.created_by_user_id != user.id:
         await callback.answer(lang["xo-not-yours"], show_alert=True)
         return
-    if session.status.value != "active":
+    if session.status != SessionStatus.active:
         await callback.answer(lang["xo-already-finished"], show_alert=True)
         return
     if state["current_turn"] != "user":

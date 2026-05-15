@@ -50,6 +50,20 @@ async def start_healthcheck_server(host: str, port: int) -> asyncio.AbstractServ
     return server
 
 
+DUEL_CLEANUP_INTERVAL = 24 * 60 * 60  # seconds
+
+
+async def cleanup_loop() -> None:
+    log = logging.getLogger(__name__)
+    while True:
+        await asyncio.sleep(DUEL_CLEANUP_INTERVAL)
+        try:
+            await expire_stale_private_duels()
+            log.info("Stale duel invites cleaned up")
+        except Exception:
+            log.exception("Error during stale duel cleanup")
+
+
 async def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -68,12 +82,16 @@ async def main() -> None:
 
         bot = Bot(
             token=settings.bot_token,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN),
         )
         dp = Dispatcher()
         register_routers(dp)
 
-        await dp.start_polling(bot)
+        cleanup_task = asyncio.create_task(cleanup_loop())
+        try:
+            await dp.start_polling(bot)
+        finally:
+            cleanup_task.cancel()
     finally:
         healthcheck_server.close()
         await healthcheck_server.wait_closed()

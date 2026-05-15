@@ -1,43 +1,24 @@
 from aiogram import F, Router
-from aiogram.filters import BaseFilter, Command
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from app.db.models import SessionStatus
 from app.games.minesweeper import game
 from app.games.minesweeper.keyboards import field_keyboard
+from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
+    get_active_solo_session,
     get_game_stat,
     get_session_by_id,
     record_game_result,
     update_session_state,
 )
 from app.services.users import get_user_setting, update_user_settings, upsert_user
-
-
-class GameCallbackFilter(BaseFilter):
-    def __init__(self, action: str, game_code: str):
-        self.action = action
-        self.game_code = game_code
-
-    async def __call__(self, callback: CallbackQuery):
-        if (callback.from_user is None 
-            or callback.data is None
-            or callback.message is None
-        ):
-            return False
-
-        expected = f"game:{self.action}:{self.game_code}"
-        if callback.data != expected:
-            return False
-
-        user = await upsert_user(callback.from_user)
-        lang = get_language_pack(user.language_code)
-
-        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -140,7 +121,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_minesweeper_stats_text(user.id, lang)
     await callback.message.answer(text, 
         reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+        )
     await callback.answer()
 
 
@@ -148,7 +129,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
     await callback.message.answer(lang["help-mines"], 
         reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+        )
     await callback.answer()
 
 
@@ -182,8 +163,6 @@ async def callback_switch_mode(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
 
     session_id = None
-    # parse from message markup is messy, so use active session by current game
-    from app.services.sessions import get_active_solo_session
     session = await get_active_solo_session(user.id, game.code)
     if session is None:
         return
@@ -214,7 +193,7 @@ async def callback_move(callback: CallbackQuery) -> None:
     if session is None or session.created_by_user_id != user.id:
         return
     state = dict(session.state)
-    if session.status.value != "active":
+    if session.status != SessionStatus.active:
         return
 
     if action == "dig":

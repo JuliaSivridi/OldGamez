@@ -1,35 +1,15 @@
 ﻿from aiogram import F, Router
-from aiogram.filters import BaseFilter, Command
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
+from app.db.models import SessionStatus
 from app.games.blackjack import game
 from app.games.blackjack.keyboards import game_keyboard
+from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
-
-
-class GameCallbackFilter(BaseFilter):
-    def __init__(self, action: str, game_code: str):
-        self.action = action
-        self.game_code = game_code
-
-    async def __call__(self, callback: CallbackQuery):
-        if (callback.from_user is None 
-            or callback.data is None
-            or callback.message is None
-        ):
-            return False
-
-        expected = f"game:{self.action}:{self.game_code}"
-        if callback.data != expected:
-            return False
-
-        user = await upsert_user(callback.from_user)
-        lang = get_language_pack(user.language_code)
-
-        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -161,7 +141,7 @@ async def callback_game(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status.value != "active":
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
         return
 
     state = dict(session.state)

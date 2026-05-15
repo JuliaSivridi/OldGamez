@@ -3,6 +3,13 @@ from sqlalchemy import select
 
 from app.db.models import User
 from app.db.session import SessionLocal
+from app.i18n.translator import DEFAULT_LANGUAGE
+
+
+def format_player_name(user: User | None) -> str:
+    if user is None:
+        return "Player"
+    return user.first_name or user.username or str(user.id)
 
 
 async def upsert_user(tg_user: TgUser) -> User:
@@ -11,7 +18,7 @@ async def upsert_user(tg_user: TgUser) -> User:
             select(User).where(User.telegram_user_id == tg_user.id)
         )
         user = result.scalar_one_or_none()
-        telegram_language = tg_user.language_code or "ru"
+        telegram_language = tg_user.language_code or DEFAULT_LANGUAGE
 
         if user is None:
             user = User(

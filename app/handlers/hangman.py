@@ -1,36 +1,16 @@
-﻿from aiogram import F, Router
-from aiogram.filters import BaseFilter, Command
+from aiogram import F, Router
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from app.db.models import SessionStatus
 from app.games.hangman import game
 from app.games.hangman.keyboards import letters_keyboard
+from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.games import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
-
-
-class GameCallbackFilter(BaseFilter):
-    def __init__(self, action: str, game_code: str):
-        self.action = action
-        self.game_code = game_code
-
-    async def __call__(self, callback: CallbackQuery):
-        if (callback.from_user is None 
-            or callback.data is None
-            or callback.message is None
-        ):
-            return False
-
-        expected = f"game:{self.action}:{self.game_code}"
-        if callback.data != expected:
-            return False
-
-        user = await upsert_user(callback.from_user)
-        lang = get_language_pack(user.language_code)
-
-        return {"user": user, "lang": lang}
 
 
 router = Router()
@@ -50,9 +30,9 @@ def cmplx_keyboard(lang: dict[str, str]):
 
 def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> str:
     if final == 'win':
-        return f"{lang['game-win']}\n<b>{state['word']}</b>"
+        return f"{lang['game-win']}\n*{state['word']}*"
     if final == 'loss':
-        return f"{game.hang_art(state['lives_total'], state['lives'])}\n{lang['game-lose']}\n<b>{state['word']}</b>"
+        return f"{game.hang_art(state['lives_total'], state['lives'])}\n{lang['game-lose']}\n*{state['word']}*"
     return (
         f"{game.hang_art(state['lives_total'], state['lives'])}\n"
         f"{lang['game-hang']} | {lang['hang-lives']}{state['lives']}\n"
@@ -61,7 +41,7 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
 
 
 async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int) -> None:
-    lang_code = 'en' if (user.language_code or 'ru').startswith('en') else 'ru'
+    lang_code = 'en' if (user.language_code or 'en').startswith('en') else 'ru'
     state = game.new_game_state(lang_code=lang_code, lives=lives)
     session = await create_solo_session(
         user_id=user.id,
@@ -71,7 +51,6 @@ async def start_hangman_game(message: Message, user, lang: dict[str, str], lives
     )
     await message.answer(
         render_text(lang, session.state),
-        parse_mode='HTML',
         reply_markup=letters_keyboard(session.id, session.state['letters'], lang, True),
     )
 
@@ -102,7 +81,6 @@ async def cmd_hangman_command(message: Message) -> None:
     await open_hangman_menu(message, user, lang)
 
 
-
 @router.callback_query(F.data == "game:hang")
 async def open_hangman_callback(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -129,17 +107,13 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     text = await get_hangman_stats_text(user.id, lang)
-    await callback.message.answer(text, 
-        reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+    await callback.message.answer(text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await callback.message.answer(lang["help-hang"], 
-        reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
+    await callback.message.answer(lang["help-hang"], reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -177,7 +151,7 @@ async def callback_play(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status.value != 'active':
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
         return
 
     state = dict(session.state)
@@ -198,7 +172,6 @@ async def callback_play(callback: CallbackQuery) -> None:
             await record_game_result(user.id, game.code, 'win')
         await callback.message.edit_text(
             render_text(lang, state, final='win'),
-            parse_mode='HTML',
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
         )
         await open_hangman_menu(callback.message, user, lang)
@@ -209,7 +182,6 @@ async def callback_play(callback: CallbackQuery) -> None:
         await record_game_result(user.id, game.code, 'loss')
         await callback.message.edit_text(
             render_text(lang, state, final='loss'),
-            parse_mode='HTML',
             reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
         )
         await open_hangman_menu(callback.message, user, lang)
@@ -218,7 +190,6 @@ async def callback_play(callback: CallbackQuery) -> None:
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
         render_text(lang, state),
-        parse_mode='HTML',
         reply_markup=letters_keyboard(session.id, state['letters'], lang, True),
     )
 

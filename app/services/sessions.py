@@ -1,9 +1,9 @@
 ﻿from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus
@@ -41,7 +41,7 @@ async def create_solo_session(
             created_by_user_id=user_id,
             current_turn_user_id=user_id,
             state=initial_state,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
         session.add(game_session)
         await session.flush()
@@ -77,14 +77,14 @@ async def create_private_duel_invite(
         )
         for existing_session in result.scalars().all():
             existing_session.status = SessionStatus.abandoned
-            existing_session.finished_at = datetime.utcnow()
+            existing_session.finished_at = datetime.now(timezone.utc)
 
         game_session = GameSession(
             game_code=game_code,
             mode=SessionMode.duel_private,
             status=SessionStatus.pending,
             join_code=generate_join_code(),
-            invite_expires_at=datetime.utcnow() + timedelta(days=INVITE_TTL_DAYS),
+            invite_expires_at=datetime.now(timezone.utc) + timedelta(days=INVITE_TTL_DAYS),
             telegram_chat_id=telegram_chat_id,
             created_by_user_id=user_id,
             current_turn_user_id=None,
@@ -124,7 +124,7 @@ async def create_group_match_session(
         )
         for existing_session in result.scalars().all():
             existing_session.status = SessionStatus.abandoned
-            existing_session.finished_at = datetime.utcnow()
+            existing_session.finished_at = datetime.now(timezone.utc)
 
         game_session = GameSession(
             game_code=game_code,
@@ -184,14 +184,13 @@ async def activate_group_match_session(
         game_session.status = SessionStatus.active
         game_session.state = state
         game_session.current_turn_user_id = current_turn_user_id
-        game_session.started_at = datetime.utcnow()
+        game_session.started_at = datetime.now(timezone.utc)
         await session.commit()
         await session.refresh(game_session)
         return game_session
 
 
 async def get_joinable_private_duel(join_code: str) -> GameSession | None:
-    await expire_stale_private_duels()
     async with SessionLocal() as session:
         result = await session.execute(
             select(GameSession).where(
@@ -237,7 +236,7 @@ async def activate_private_duel_session(
         game_session.invite_expires_at = None
         game_session.state = state
         game_session.current_turn_user_id = current_turn_user_id
-        game_session.started_at = datetime.utcnow()
+        game_session.started_at = datetime.now(timezone.utc)
         await session.commit()
         await session.refresh(game_session)
         return game_session
@@ -250,13 +249,13 @@ async def expire_stale_private_duels() -> None:
                 GameSession.mode == SessionMode.duel_private,
                 GameSession.status == SessionStatus.pending,
                 GameSession.invite_expires_at.is_not(None),
-                GameSession.invite_expires_at < datetime.utcnow(),
+                GameSession.invite_expires_at < datetime.now(timezone.utc),
             )
         )
         expired_sessions = result.scalars().all()
         for game_session in expired_sessions:
             game_session.status = SessionStatus.expired
-            game_session.finished_at = datetime.utcnow()
+            game_session.finished_at = datetime.now(timezone.utc)
             game_session.join_code = None
         if expired_sessions:
             await session.commit()
@@ -317,7 +316,7 @@ async def finish_session(
         game_session.state = state
         game_session.status = SessionStatus.finished
         game_session.winner_user_id = winner_user_id
-        game_session.finished_at = datetime.utcnow()
+        game_session.finished_at = datetime.now(timezone.utc)
         game_session.current_turn_user_id = None
         game_session.join_code = None
         game_session.invite_expires_at = None
@@ -328,33 +327,39 @@ async def finish_session(
 
 async def record_game_result(user_id: int, game_code: str, result: str) -> None:
     async with SessionLocal() as session:
-        query = await session.execute(
+        existing = await session.execute(
             select(GameStat).where(
                 GameStat.user_id == user_id,
                 GameStat.game_code == game_code,
+            ).with_for_update()
+        )
+        stat = existing.scalar_one_or_none()
+        if stat is None:
+            session.add(GameStat(user_id=user_id, game_code=game_code, wins=0, losses=0, draws=0, played=0))
+            await session.flush()
+
+        await session.execute(
+            update(GameStat)
+            .where(GameStat.user_id == user_id, GameStat.game_code == game_code)
+            .values(
+                played=GameStat.played + 1,
+                wins=GameStat.wins + (1 if result == "win" else 0),
+                losses=GameStat.losses + (1 if result == "loss" else 0),
+                draws=GameStat.draws + (1 if result == "draw" else 0),
             )
         )
-        stat = query.scalar_one_or_none()
-        if stat is None:
-            stat = GameStat(
-                user_id=user_id,
-                game_code=game_code,
-                wins=0,
-                losses=0,
-                draws=0,
-                played=0,
-            )
-            session.add(stat)
-
-        stat.played += 1
-        if result == "win":
-            stat.wins += 1
-        elif result == "loss":
-            stat.losses += 1
-        elif result == "draw":
-            stat.draws += 1
-
         await session.commit()
+
+
+async def get_game_stats_bulk(user_id: int, game_codes: list[str]) -> dict[str, GameStat]:
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(GameStat).where(
+                GameStat.user_id == user_id,
+                GameStat.game_code.in_(game_codes),
+            )
+        )
+        return {stat.game_code: stat for stat in result.scalars()}
 
 
 async def get_game_stat(user_id: int, game_code: str) -> GameStat | None:

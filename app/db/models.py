@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from sqlalchemy import JSON, BigInteger, DateTime, Enum as SqlEnum, ForeignKey, Integer, String, UniqueConstraint
@@ -33,8 +33,8 @@ class User(Base):
     last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10), default="ru")
     settings: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     sessions_created: Mapped[list[GameSession]] = relationship(
         back_populates="created_by",
@@ -56,8 +56,8 @@ class GameSession(Base):
     current_turn_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     state: Mapped[dict] = mapped_column(JSON, default=dict)
     winner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
@@ -77,7 +77,7 @@ class SessionPlayer(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     seat_no: Mapped[int] = mapped_column(Integer)
     role: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     session: Mapped[GameSession] = relationship(back_populates="players")
 
