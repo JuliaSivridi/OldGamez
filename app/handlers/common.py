@@ -22,6 +22,7 @@ GAME_CODE_MINESWEEPER = "minesweeper"
 GAME_CODE_BLACKJACK = "blackjack"
 GAME_CODE_NPUZZLE = "npuzzle"
 GAME_CODE_RPS = "ropasci"
+GAME_CODE_RPSSL = "rpssl"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_HANGMAN = "hangman"
 
@@ -34,6 +35,7 @@ GAME_STATS_ORDER: list[tuple[str, str]] = [
     (GAME_CODE_NPUZZLE, "menu-npuzzle"),
     (GAME_CODE_BLACKJACK, "menu-bj"),
     (GAME_CODE_RPS, "menu-rps"),
+    (GAME_CODE_RPSSL, "menu-rpssl"),
     (GAME_CODE_HANGMAN, "menu-hang"),
 ]
 
@@ -47,6 +49,7 @@ GAME_MENU_REGISTRY: dict[str, str] = {
     GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
     GAME_CODE_NPUZZLE: "app.handlers.npuzzle:open_npuzzle_menu",
     GAME_CODE_RPS: "app.handlers.ropasci:open_ropasci_menu",
+    GAME_CODE_RPSSL: "app.handlers.ropasci:open_rpssl_menu",
     GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",
     GAME_CODE_HANGMAN: "app.handlers.hangman:open_hangman_menu",
 }
