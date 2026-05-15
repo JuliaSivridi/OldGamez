@@ -9,7 +9,7 @@ from app.games.battleship import game
 from app.games.battleship.keyboards import SYMBOLS, board_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
-from app.keyboards.games import game_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 

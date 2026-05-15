@@ -13,8 +13,7 @@ from app.games.fourinrow.keyboards import SYMBOLS, board_keyboard, drop_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
-from app.keyboards.games import game_menu_keyboard
-from app.keyboards.main_menu import main_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,

@@ -8,7 +8,7 @@ from app.games.minesweeper import game
 from app.games.minesweeper.keyboards import field_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
-from app.keyboards.games import game_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,

@@ -8,9 +8,8 @@ from aiogram.types import CallbackQuery, Message
 
 from app.handlers.duels import handle_private_duel_start
 from app.i18n.translator import get_language_pack
-from app.keyboards.games import game_menu_keyboard, games_keyboard, group_games_keyboard
 from app.keyboards.language import language_keyboard
-from app.keyboards.main_menu import main_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.sessions import get_game_stats_bulk
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
@@ -127,17 +126,7 @@ async def cmd_games_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], reply_markup=games_keyboard(lang))
-
-
-@router.callback_query(F.data == "menu:games")
-async def callback_menu_games(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await callback.message.answer(lang["game-ttl"], reply_markup=games_keyboard(lang))
-    await callback.answer()
+    await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 @router.message(Command("group"))
@@ -146,17 +135,7 @@ async def cmd_group_games(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], reply_markup=group_games_keyboard(lang))
-
-
-@router.callback_query(F.data == "menu:group-games")
-async def callback_menu_group_games(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await callback.message.answer(lang["game-ttl"], reply_markup=group_games_keyboard(lang))
-    await callback.answer()
+    await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 @router.message(Command("lang"))
