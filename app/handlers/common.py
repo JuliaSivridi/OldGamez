@@ -27,6 +27,9 @@ GAME_CODE_RPS = "ropasci"
 GAME_CODE_RPSSL = "rpssl"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_HANGMAN = "hangman"
+GAME_CODE_MASTERMIND = "mastermind"
+GAME_CODE_BULLSCOWS = "bullscows"
+GAME_CODE_WORDLE = "wordle"
 
 # random does not have per-game stats (it's a collection of utilities, not a scored game)
 GAME_STATS_ORDER: list[tuple[str, str]] = [
@@ -40,6 +43,9 @@ GAME_STATS_ORDER: list[tuple[str, str]] = [
     (GAME_CODE_RPS, "menu-rps"),
     (GAME_CODE_RPSSL, "menu-rpssl"),
     (GAME_CODE_HANGMAN, "menu-hang"),
+    (GAME_CODE_MASTERMIND, "menu-mastermind"),
+    (GAME_CODE_BULLSCOWS, "menu-bullscows"),
+    (GAME_CODE_WORDLE, "menu-wordle"),
 ]
 
 # Registry: game_code -> "module:function" for the open_X_menu function.
@@ -56,6 +62,9 @@ GAME_MENU_REGISTRY: dict[str, str] = {
     GAME_CODE_RPSSL: "app.handlers.ropasci:open_rpssl_menu",
     GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",
     GAME_CODE_HANGMAN: "app.handlers.hangman:open_hangman_menu",
+    GAME_CODE_MASTERMIND: "app.handlers.mastermind:open_mastermind_menu",
+    GAME_CODE_BULLSCOWS: "app.handlers.bullscows:open_bullscows_menu",
+    GAME_CODE_WORDLE: "app.handlers.wordle:open_wordle_menu",
 }
 
 

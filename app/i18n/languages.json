@@ -50,6 +50,20 @@
     "help-lightsout": "ℹ️ *Goal of the game* - turn off all the lights 🟨\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)\n\nChoose board size in ⚙️ Settings: 4×4, 5×5, or 6×6",
     "lto-solve": "⚡️ Solve", "lto-give-up": "🏳️ Give up",
 
+    "btn-delete": "⬅️ Delete", "btn-submit": "✅ Ready",
+
+    "menu-mastermind": "🎯 Mastermind", "game-mastermind": "🎯 Mastermind",
+    "mm-positions": "positions", "mm-colors": "colors", "mm-attempt": "Attempt", "mm-secret": "The secret was:",
+    "help-mastermind": "ℹ️ *Mastermind*\n\nGuess the secret sequence of colored pegs\n\n• Tap a color to add it to your guess\n• ⬅️ to remove the last color, ✅ to submit\n• ⚫ right color, right position\n• ⚪ right color, wrong position\n• Repeats are allowed in the secret\n• 10 attempts\n\nChoose difficulty in ⚙️ Settings:\n🥱 Easy — 4 positions, 6 colors\n🙂 Normal — 5 positions, 6 colors\n😳 Hard — 5 positions, 8 colors",
+
+    "menu-bullscows": "🐂 Bulls & Cows", "game-bullscows": "🐂 Bulls and Cows",
+    "bc-digits": "digits", "bc-attempt": "Attempt", "bc-secret": "The secret was:",
+    "help-bullscows": "ℹ️ *Bulls and Cows*\n\nGuess the secret sequence of unique digits (0–9)\n\n• Tap digits to build your guess (no repeats)\n• ⬅️ to remove the last digit, ✅ to submit\n• 🐂 right digit, right position\n• 🐄 right digit, wrong position\n• 10 attempts\n\nChoose sequence length in ⚙️ Settings: 4, 5, or 6",
+
+    "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
+    "wrd-letters": "letters", "wrd-attempt": "Attempt", "wrd-secret": "The word was:",
+    "help-wordle": "ℹ️ *Wordle*\n\nGuess the hidden word!\n\n• Tap letters to build your guess\n• ⬅️ to remove the last letter, ✅ to submit\n• 🟩 right letter, right position\n• 🟨 right letter, wrong position\n• ⬛ letter not in the word\n• Attempts = word length + 2\n\nWord language matches your interface language",
+
     "menu-xo": "❌⭕️ TicTacToe", "game-xo": "❌⭕️ TicTacToe ", "xo-win-need": "\nTo win, make a line of length ",
     "xo-not-yours": "This game doesn't belong to you.", "xo-not-your-turn": "It's not your turn now.",
     "xo-already-finished": "This game is already finished.", "xo-cell-busy": "This cell is already occupied.",
@@ -114,6 +128,20 @@
     "help-lightsout": "ℹ️ *Tavoite* - sammuta kaikki valot 🟨\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila\n\nValitse laudan koko ⚙️ Asetuksissa: 4×4, 5×5 tai 6×6",
     "lto-solve": "⚡️ Ratkaise", "lto-give-up": "🏳️ Luovutan",
 
+    "btn-delete": "⬅️ Poista", "btn-submit": "✅ Valmis",
+
+    "menu-mastermind": "🎯 Mastermind", "game-mastermind": "🎯 Mastermind",
+    "mm-positions": "paikkaa", "mm-colors": "väriä", "mm-attempt": "Yritys", "mm-secret": "Salainen koodi oli:",
+    "help-mastermind": "ℹ️ *Mastermind*\n\nArvaa salainen värijärjestys\n\n• Napauta väriä lisätäksesi sen arvaukseen\n• ⬅️ poistaa viimeisen värin, ✅ lähettää arvauksen\n• ⚫ oikea väri, oikea paikka\n• ⚪ oikea väri, väärä paikka\n• Toistot ovat sallittuja salaisessa koodissa\n• 10 yritystä\n\nValitse vaikeustaso ⚙️ Asetuksissa:\n🥱 Helppo — 4 paikkaa, 6 väriä\n🙂 Normaali — 5 paikkaa, 6 väriä\n😳 Vaikea — 5 paikkaa, 8 väriä",
+
+    "menu-bullscows": "🐂 Härät ja lehmät", "game-bullscows": "🐂 Härät ja lehmät",
+    "bc-digits": "numeroa", "bc-attempt": "Yritys", "bc-secret": "Salainen koodi oli:",
+    "help-bullscows": "ℹ️ *Härät ja lehmät*\n\nArvaa salainen numerojärjestys (0–9, ei toistoja)\n\n• Napauta numeroita rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen numeron, ✅ lähettää arvauksen\n• 🐂 oikea numero, oikea paikka\n• 🐄 oikea numero, väärä paikka\n• 10 yritystä\n\nValitse pituus ⚙️ Asetuksissa: 4, 5 tai 6",
+
+    "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
+    "wrd-letters": "kirjainta", "wrd-attempt": "Yritys", "wrd-secret": "Sana oli:",
+    "help-wordle": "ℹ️ *Wordle*\n\nArvaa piilotettu sana!\n\n• Napauta kirjaimia rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen kirjaimen, ✅ lähettää arvauksen\n• 🟩 oikea kirjain, oikea paikka\n• 🟨 oikea kirjain, väärä paikka\n• ⬛ kirjainta ei ole sanassa\n• Yrityksiä = sanan pituus + 2\n\nSanan kieli vastaa käyttöliittymäsi kieltä",
+
     "menu-xo": "❌⭕️ Ristinolla", "game-xo": "❌⭕️ Ristinolla ", "xo-win-need": "\nVoittaaksesi muodosta rivi, jonka pituus on ",
     "xo-not-yours": "Tämä peli ei kuulu sinulle.", "xo-not-your-turn": "Ei ole sinun vuorosi.",
     "xo-already-finished": "Tämä peli on jo päättynyt.", "xo-cell-busy": "Tämä ruutu on jo käytössä.",
@@ -177,6 +205,20 @@
     "menu-lightsout": "🔆 Гаси огни", "game-lightsout": "🔆 Гаси огни ",
     "help-lightsout": "ℹ️ *Цель игры* - погасить все лампочки 🟨\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)\n\nВыберите размер поля в ⚙️ Настройках: 4×4, 5×5 или 6×6",
     "lto-solve": "⚡️ Решить", "lto-give-up": "🏳️ Сдаться",
+
+    "btn-delete": "⬅️ Удалить", "btn-submit": "✅ Готово",
+
+    "menu-mastermind": "🎯 Мастермайнд", "game-mastermind": "🎯 Мастермайнд",
+    "mm-positions": "позиций", "mm-colors": "цветов", "mm-attempt": "Попытка", "mm-secret": "Загадано было:",
+    "help-mastermind": "ℹ️ *Мастермайнд*\n\nУгадай секретную комбинацию цветных фишек\n\n• Нажимай цвета, чтобы составить догадку\n• ⬅️ удаляет последний цвет, ✅ отправляет догадку\n• ⚫ правильный цвет, правильная позиция\n• ⚪ правильный цвет, неправильная позиция\n• Повторы разрешены\n• 10 попыток\n\nВыбери сложность в ⚙️ Настройках:\n🥱 Легко — 4 позиции, 6 цветов\n🙂 Нормально — 5 позиций, 6 цветов\n😳 Сложно — 5 позиций, 8 цветов",
+
+    "menu-bullscows": "🐂 Быки и коровы", "game-bullscows": "🐂 Быки и коровы",
+    "bc-digits": "цифры", "bc-attempt": "Попытка", "bc-secret": "Загадано было:",
+    "help-bullscows": "ℹ️ *Быки и коровы*\n\nУгадай секретную последовательность цифр (0–9, без повторов)\n\n• Нажимай цифры, чтобы составить догадку\n• ⬅️ удаляет последнюю цифру, ✅ отправляет догадку\n• 🐂 правильная цифра, правильная позиция\n• 🐄 правильная цифра, неправильная позиция\n• 10 попыток\n\nВыбери длину в ⚙️ Настройках: 4, 5 или 6",
+
+    "menu-wordle": "📝 Вордл", "game-wordle": "📝 Вордл",
+    "wrd-letters": "букв", "wrd-attempt": "Попытка", "wrd-secret": "Загадано было:",
+    "help-wordle": "ℹ️ *Вордл*\n\nУгадай загаданное слово!\n\n• Нажимай буквы, чтобы составить догадку\n• ⬅️ удаляет последнюю букву, ✅ отправляет догадку\n• 🟩 правильная буква, правильная позиция\n• 🟨 правильная буква, неправильная позиция\n• ⬛ буквы нет в слове\n• Попыток = длина слова + 2\n\nЯзык слова соответствует языку интерфейса",
 
     "menu-xo": "❌⭕️ Крестики-нолики", "game-xo": "❌⭕️ Крестики-нолики ", "xo-win-need": "\nДля победы сделайте линию длиной  ",
     "xo-not-yours": "Эта игра тебе не принадлежит.", "xo-not-your-turn": "Сейчас не твой ход.",
