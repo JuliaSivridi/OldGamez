@@ -53,7 +53,7 @@
 
     "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
     "wrd-letters": "letters", "wrd-attempt": "Attempt", "wrd-secret": "The word was:", "wrd-invalid": "⚠️ No such word, try again", "wrd-hint": "💡 Hint",
-    "help-wordle": "ℹ️ *Wordle*\n\nGuess the hidden word!\n\n• Tap letters to build your guess\n• ⬅️ to remove the last letter, ✅ to submit\n• 🟩 right letter, right position\n• 🟨 right letter, wrong position\n• ⬛ letter not in the word\n• Attempts = word length + 2\n\nThe game uses frequently used word lists",
+    "help-wordle": "ℹ️ *Wordle*\n\nGuess the hidden word!\n\n• Tap letters to build your guess\n• ⬅️ to remove the last letter, ✅ to submit\n• 🟩 right letter, right position\n• 🟨 right letter, wrong position\n• ⬛ letter not in the word\n• Attempts = word length + 2\n\n😎 When using a hint, the victory is not counted in the statistics\n\nThe game uses frequently used word lists",
 
     "menu-hang": "😵 Hangman", "game-hang": "😵 Hangman", "hang-lives": "Lives: ", "hang-cmplx": "\n\n🥱 Easy - 15 lives \n🙂 Normal - 10 lives \n😳 Hard - 5 lives ", "hang-one": "👀 Open one letter",
     "help-hang": "ℹ️ *How to Play Hangman* \n\n*Goal of the game* – guess the word within the allotted number of attempts \n\n• The hidden word is shown as blank spaces, e.g.: \\_ \\_ \\_ \\_ \n• You select letters one by one \n• If the letter is in the word, it appears in the correct positions \n• If the letter is not in the word, you lose an attempt \n• If you fail to guess the word within these attempts, the game ends\n\nYou have an unlimited number of hints 😎 When using a hint, the victory is not counted in the statistics\n\nThe game uses frequently used word lists",
@@ -130,7 +130,7 @@
 
     "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
     "wrd-letters": "kirjainta", "wrd-attempt": "Yritys", "wrd-secret": "Sana oli:", "wrd-invalid": "⚠️ Tällaista sanaa ei ole, yritä uudelleen", "wrd-hint": "💡 Vihje",
-    "help-wordle": "ℹ️ *Wordle*\n\nArvaa piilotettu sana!\n\n• Napauta kirjaimia rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen kirjaimen, ✅ lähettää arvauksen\n• 🟩 oikea kirjain, oikea paikka\n• 🟨 oikea kirjain, väärä paikka\n• ⬛ kirjainta ei ole sanassa\n• Yrityksiä = sanan pituus + 2\n\nPeli käyttää yleisimpiä sanalistoja",
+    "help-wordle": "ℹ️ *Wordle*\n\nArvaa piilotettu sana!\n\n• Napauta kirjaimia rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen kirjaimen, ✅ lähettää arvauksen\n• 🟩 oikea kirjain, oikea paikka\n• 🟨 oikea kirjain, väärä paikka\n• ⬛ kirjainta ei ole sanassa\n• Yrityksiä = sanan pituus + 2\n\n😎 Vinkin käyttäminen ei tilastoidu voittona\n\nPeli käyttää yleisimpiä sanalistoja",
 
     "menu-hang": "😵 Hirttopeli", "game-hang": "😵 Hirttopeli", "hang-lives": "Elämät: ", "hang-cmplx": "\n\n🥱 Helppo - 15 elämää \n🙂 Normaali - 10 elämää \n😳 Vaikea - 5 elämää ", "hang-one": "👀 Avaa yksi kirjain",
     "help-hang": "ℹ️ *Hirttopelin säännöt* \n\n*Tavoite* – arvaa sana annetussa yritysmäärässä \n\n• Piilotettu sana näytetään väliviivoina, esim.: \\_ \\_ \\_ \\_ \n• Valitset kirjaimia yksi kerrallaan \n• Jos kirjain on sanassa, se ilmestyy oikeille paikoilleen \n• Jos kirjainta ei ole sanassa, menetät yhden yrityksen \n• Jos et arvaa sanaa yrityksissä, peli päättyy\n\nVihjeitä voi käyttää rajattomasti 😎 Vinkin käyttäminen ei tilastoidu voittona\n\nPeli käyttää yleisimpiä sanalistoja",
@@ -207,7 +207,7 @@
 
     "menu-wordle": "📝 Вордл", "game-wordle": "📝 Вордл",
     "wrd-letters": "букв", "wrd-attempt": "Попытка", "wrd-secret": "Загадано было:", "wrd-invalid": "⚠️ Такого слова нет, попробуйте ещё раз", "wrd-hint": "💡 Подсказка",
-    "help-wordle": "ℹ️ *Вордл*\n\nУгадай загаданное слово!\n\n• Нажимай буквы, чтобы составить догадку\n• ⬅️ удаляет последнюю букву, ✅ отправляет догадку\n• 🟩 правильная буква, правильная позиция\n• 🟨 правильная буква, неправильная позиция\n• ⬛ буквы нет в слове\n• Попыток = длина слова + 2\n\nДля игры используются списки самых часто употребляемых слов",
+    "help-wordle": "ℹ️ *Вордл*\n\nУгадай загаданное слово!\n\n• Нажимай буквы, чтобы составить догадку\n• ⬅️ удаляет последнюю букву, ✅ отправляет догадку\n• 🟩 правильная буква, правильная позиция\n• 🟨 правильная буква, неправильная позиция\n• ⬛ буквы нет в слове\n• Попыток = длина слова + 2\n\n😎 При использовании подсказки победа не засчитывается в статистике\n\nДля игры используются списки самых часто употребляемых слов",
 
     "menu-hang": "😵 Виселица", "game-hang": "😵 Виселица", "hang-lives": "Жизней: ", "hang-cmplx": "\n\n🥱 Легко - 15 жизней \n🙂 Нормально - 10 жизней \n😳 Сложно - 5 жизней ", "hang-one": "👀 Открыть одну букву",
     "help-hang": "ℹ️ *Виселица* \n\n*Цель игры* – угадать слово за отведенное количество попыток \n\n• Загаданное слово отображается в виде пустых ячеек, например: \\_ \\_ \\_ \\_ \n• Вы выбираете буквы по одной \n• Если буква есть в слове, она появляется в соответствующих местах \n• Если буквы нет в слове, вы теряете попытку \n• Если попытки закончились - игра заканчивается\n\nУ вас есть неограниченное число подсказок 😎 При использовании подсказки победа не засчитывается в статистике\n\nДля игры используются списки самых часто употребляемых слов",
