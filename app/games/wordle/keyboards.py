@@ -11,12 +11,18 @@ def game_keyboard(session_id: int, state: dict, active: bool, lang: dict) -> Inl
     letters = LANGUAGE_LETTERS.get(state["lang"], LANGUAGE_LETTERS["en"])
     current = state["current"]
 
+    present_letters = {
+        letter
+        for entry in state["history"]
+        for letter, mark in zip(entry["guess"], entry["marks"])
+        if mark != "grey"
+    }
     grey_letters = {
         letter
         for entry in state["history"]
         for letter, mark in zip(entry["guess"], entry["marks"])
         if mark == "grey"
-    }
+    } - present_letters
 
     can_add = active and None in current
     for letter in letters:
