@@ -43,7 +43,8 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
 
 
 async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int, menu_message_id: int | None = None) -> None:
-    lang_code = 'en' if (user.language_code or 'en').startswith('en') else 'ru'
+    raw = user.language_code or 'en'
+    lang_code = next((code for code in ('ru', 'fi') if raw.startswith(code)), 'en')
     state = game.new_game_state(lang_code=lang_code, lives=lives)
     if menu_message_id:
         state["menu_message_id"] = menu_message_id
