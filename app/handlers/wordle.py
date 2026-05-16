@@ -28,7 +28,7 @@ def wordle_menu_keyboard(lang, chat_type=None):
     return game_menu_keyboard(lang, game_code=game.code, chat_type=chat_type)
 
 
-def render_text(lang: dict, state: dict, final: str | None = None) -> str:
+def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool = False) -> str:
     size = state["size"]
     title = f"{lang['game-wordle']} · {size} {lang['wrd-letters']}"
 
@@ -50,6 +50,8 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
         attempt = len(state["history"]) + 1
         lines.append(f"`{current_str}`")
         lines.append(f"{lang['wrd-attempt']} {attempt} / {state['max_attempts']}")
+        if invalid:
+            lines.append(lang["wrd-invalid"])
 
     return "\n".join(lines)
 
@@ -171,6 +173,10 @@ async def callback_submit(callback: CallbackQuery) -> None:
     state = dict(session.state)
     result = game.submit_guess(state)
     state = result["game_state"]
+    if result["state"] == "invalid":
+        await update_session_state(session.id, state, current_turn_user_id=user.id)
+        await safe_edit(callback.message, render_text(lang, state, invalid=True), reply_markup=game_keyboard(session.id, state, True, lang))
+        return
     if result["state"] in ("win", "loss"):
         await finish_session(session.id, state, winner_user_id=user.id if result["state"] == "win" else None)
         await record_game_result(user.id, game.code, result["state"])

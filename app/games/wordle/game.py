@@ -47,10 +47,18 @@ class WordleGame:
         state["current"] = state["current"][:-1]
         return state
 
+    def is_valid_word(self, state: dict) -> bool:
+        guess = "".join(state["current"])
+        lang = state["lang"]
+        return guess in self.words.get(lang, self.words["en"])
+
     def submit_guess(self, state: dict) -> dict:
         current = state["current"]
         if len(current) != state["size"]:
             return {"state": "play", "game_state": state}
+        if not self.is_valid_word(state):
+            state["current"] = []
+            return {"state": "invalid", "game_state": state}
         marks = self._compute_marks(state["word"], current)
         state["history"] = state["history"] + [{"guess": current, "marks": marks}]
         state["current"] = []
