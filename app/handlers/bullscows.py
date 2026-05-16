@@ -48,7 +48,7 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
         slots = [str(d) for d in current] + ["_"] * (size - len(current))
         current_str = " ".join(slots)
         attempt = len(state["history"]) + 1
-        lines.append(current_str)
+        lines.append(f"`{current_str}`")
         lines.append(f"{lang['bc-attempt']} {attempt} / {state['max_attempts']}")
 
     return "\n".join(lines)
