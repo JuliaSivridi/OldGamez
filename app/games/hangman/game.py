@@ -7,7 +7,7 @@ from pathlib import Path
 from app.i18n.languages import LANGUAGE_LETTERS
 
 
-WORDS_PATH = Path(__file__).with_name('words.json')
+WORDS_PATH = Path(__file__).parent.parent.parent / "i18n" / "words.json"
 HANG_FRAMES = {
     0: "<code>  ________   \n  | /    |   \n  |/    (_)  \n  |     _|_  \n  |    / | \\ \n  |      |   \n  |     / \\  \n  |    /   \\ \n__|__________\n|           |</code>",
     1: "<code>  ________   \n  | /    |   \n  |/    (_)  \n  |     _|_  \n  |    / | \\ \n  |      |   \n  |     /    \n  |    /     \n__|__________\n|           |</code>",

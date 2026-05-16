@@ -4,7 +4,7 @@ import json
 import random
 from pathlib import Path
 
-WORDS_PATH = Path(__file__).with_name("words.json")
+WORDS_PATH = Path(__file__).parent.parent.parent / "i18n" / "words.json"
 
 MARK_GREEN = "green"
 MARK_YELLOW = "yellow"
