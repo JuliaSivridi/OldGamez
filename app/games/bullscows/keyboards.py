@@ -12,7 +12,7 @@ def game_keyboard(session_id: int, state: dict, active: bool, lang: dict) -> Inl
         already_chosen = digit in current
         can_press = active and len(current) < size and not already_chosen
         cb = f"bc:digit:{session_id}:{digit}" if can_press else "bc:noop"
-        builder.button(text=str(digit), callback_data=cb)
+        builder.button(text="*" if already_chosen else str(digit), callback_data=cb)
     builder.adjust(5, 5)
 
     # Delete / Submit row

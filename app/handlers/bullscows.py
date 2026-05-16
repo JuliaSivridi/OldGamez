@@ -45,9 +45,10 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
         lines.append(f"{lang['bc-secret']} {' '.join(str(d) for d in state['secret'])}")
     else:
         current = state["current"]
-        current_str = " ".join(str(d) for d in current) + (" " if current else "") + "_ " * (size - len(current))
+        slots = [str(d) for d in current] + ["_"] * (size - len(current))
+        current_str = " ".join(slots)
         attempt = len(state["history"]) + 1
-        lines.append(current_str.rstrip())
+        lines.append(current_str)
         lines.append(f"{lang['bc-attempt']} {attempt} / {state['max_attempts']}")
 
     return "\n".join(lines)
@@ -151,7 +152,7 @@ async def callback_digit(callback: CallbackQuery) -> None:
     state = dict(session.state)
     state = game.add_digit(state, digit)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
+    await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
 
 @router.callback_query(F.data.startswith("bc:back:"))
@@ -168,7 +169,7 @@ async def callback_back(callback: CallbackQuery) -> None:
     state = dict(session.state)
     state = game.backspace(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
+    await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
 
 @router.callback_query(F.data.startswith("bc:submit:"))
@@ -201,4 +202,4 @@ async def callback_submit(callback: CallbackQuery) -> None:
         await open_bullscows_menu(callback.message, user, lang)
         return
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
+    await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
