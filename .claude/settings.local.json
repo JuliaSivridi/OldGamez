@@ -10,7 +10,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git rm *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(New-Item -ItemType Directory -Path \"D:\\\\Projects\\\\Telegram_bots\\\\OldGamez\\\\app\\\\games\\\\lightsout\" -Force)",
+      "Bash(python -c \"import ast, sys, pathlib; errors=[]; [errors.append\\(\\(f, e\\)\\) for f in pathlib.Path\\('app/handlers'\\).glob\\('*.py'\\) for e in [None] if \\(lambda: \\(ast.parse\\(f.read_text\\(encoding='utf-8'\\)\\), None\\)\\)\\(\\)[1] is not None]; print\\('Parse errors:', errors if errors else 'none'\\)\")"
     ]
   }
 }
