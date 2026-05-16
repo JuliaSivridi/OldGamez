@@ -21,7 +21,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 🃏 Blackjack | ✅ | | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 | ✊ Rock Paper Scissors | ✅ | | |
-| ✊🖖🦎 Rock Paper Scissors Spock Lizard | ✅ | | |
+| ✊ Rock Paper Scissors Lizard Spock 🖖 | ✅ | | |
 
 ---
 
@@ -122,4 +122,4 @@ app/
 | `/blackjack` | 🃏 Blackjack |
 | `/random` | 🎲 Random fun (coin, card, dice) |
 | `/rps` | ✊ Rock Paper Scissors |
-| `/rpssl` | ✊🖖🦎 Rock Paper Scissors Spock Lizard |
+| `/rpssl` | ✊ Rock Paper Scissors Lizard Spock 🖖 |
