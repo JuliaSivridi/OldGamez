@@ -15,9 +15,12 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 🔆 Lights Out | ✅ | | |
 | 🧩 15-Puzzle | ✅ | | |
 | 🃏 Blackjack | ✅ | | |
-| 🪨 Rock Paper Scissors | ✅ | | |
-| 🪨 Rock Paper Scissors Spock Lizard | ✅ | | |
+| ✊ Rock Paper Scissors | ✅ | | |
+| ✊ Rock Paper Scissors Spock Lizard | ✅ | | |
 | 😵 Hangman | ✅ | | |
+| 🎯 Mastermind | ✅ | | |
+| 🐂 Bulls and Cows | ✅ | | |
+| 📝 Wordle | ✅ | | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 
 ---
@@ -93,7 +96,7 @@ app/
 ├── services/       # Database logic (sessions, users, stats, duels)
 ├── db/             # SQLAlchemy models and async engine
 ├── keyboards/      # Shared keyboards (main menu, game menu, language)
-├── i18n/           # Translation JSON and language pack loader
+├── i18n/           # Translation JSON, language pack loader, shared word lists
 └── main.py         # Entry point: bot + healthcheck server
 ```
 
@@ -116,4 +119,7 @@ app/
 | `/rps` | Open Rock Paper Scissors |
 | `/rpssl` | Open Rock Paper Scissors Spock Lizard |
 | `/hangman` | Open Hangman |
+| `/mastermind` | Open Mastermind |
+| `/bullscows` | Open Bulls and Cows |
+| `/wordle` | Open Wordle |
 | `/random` | Random fun tools |
