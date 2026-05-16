@@ -5,7 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.db.models import SessionStatus
 from app.games.ropasci import game, rpssl_game
-from app.games.ropasci.game import MODE_LABEL, MOVE_EMOJI, RESULT_EMOJI
+from app.games.ropasci.game import MODE_LABEL
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
@@ -57,10 +57,10 @@ def render_text(title: str, state: dict, lang: dict, final: str | None = None) -
     mode = MODE_LABEL.get(state["wins_needed"], "?")
     lines = [f"{title} · {mode}", ""]
     for entry in state["history"]:
-        u = MOVE_EMOJI[entry["user"]]
-        c = MOVE_EMOJI[entry["comp"]]
-        r = RESULT_EMOJI[entry["result"]]
-        lines.append(f"{u} — {c}  {r}")
+        u = lang[f"rps-{entry['user']}"]
+        c = lang[f"rps-{entry['comp']}"]
+        r = lang[f"rps-{entry['result']}"]
+        lines.append(f"{r}  {u} — {c}")
     lines.append("")
     lines.append(f"👤 {state['user_wins']}  :  {state['comp_wins']} 🤖")
     if final == "win":

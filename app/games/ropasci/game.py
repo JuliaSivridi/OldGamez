@@ -2,20 +2,6 @@ from __future__ import annotations
 
 import random
 
-MOVE_EMOJI: dict[str, str] = {
-    "stone": "✊",
-    "scissors": "✌️",
-    "paper": "🖐",
-    "lizard": "🦎",
-    "spock": "🖖",
-}
-
-RESULT_EMOJI: dict[str, str] = {
-    "win": "🏆",
-    "loss": "💀",
-    "draw": "🤝",
-}
-
 MODE_LABEL: dict[int, str] = {1: "1/1", 2: "2/3", 3: "3/5"}
 
 
