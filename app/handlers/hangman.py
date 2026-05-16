@@ -9,7 +9,7 @@ from app.games.hangman import game
 from app.games.hangman.keyboards import letters_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
-from app.i18n.translator import get_language_pack
+from app.i18n.translator import get_language_pack, normalize_language_code
 from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
@@ -43,8 +43,7 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
 
 
 async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int, menu_message_id: int | None = None) -> None:
-    raw = user.language_code or 'en'
-    lang_code = next((code for code in ('ru', 'fi') if raw.startswith(code)), 'en')
+    lang_code = normalize_language_code(user.language_code)
     state = game.new_game_state(lang_code=lang_code, lives=lives)
     if menu_message_id:
         state["menu_message_id"] = menu_message_id
