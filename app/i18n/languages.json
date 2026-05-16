@@ -52,7 +52,7 @@
     "help-bullscows": "ℹ️ *Bulls and Cows*\n\nGuess the secret sequence of unique digits (0–9)\n\n• Tap digits to build your guess (no repeats)\n• ⬅️ to remove the last digit, ✅ to submit\n• 🐂 right digit, right position\n• 🐄 right digit, wrong position\n• Attempts = Easy → 10, Normal → 12, Hard → 16",
 
     "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
-    "wrd-letters": "letters", "wrd-attempt": "Attempt", "wrd-secret": "The word was:", "wrd-invalid": "⚠️ No such word, try again",
+    "wrd-letters": "letters", "wrd-attempt": "Attempt", "wrd-secret": "The word was:", "wrd-invalid": "⚠️ No such word, try again", "wrd-hint": "💡 Hint",
     "help-wordle": "ℹ️ *Wordle*\n\nGuess the hidden word!\n\n• Tap letters to build your guess\n• ⬅️ to remove the last letter, ✅ to submit\n• 🟩 right letter, right position\n• 🟨 right letter, wrong position\n• ⬛ letter not in the word\n• Attempts = word length + 2\n\nThe game uses frequently used word lists",
 
     "menu-hang": "😵 Hangman", "game-hang": "😵 Hangman", "hang-lives": "Lives: ", "hang-cmplx": "\n\n🥱 Easy - 15 lives \n🙂 Normal - 10 lives \n😳 Hard - 5 lives ", "hang-one": "👀 Open one letter",
@@ -129,7 +129,7 @@
     "help-bullscows": "ℹ️ *Härät ja lehmät*\n\nArvaa salainen numerojärjestys (0–9, ei toistoja)\n\n• Napauta numeroita rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen numeron, ✅ lähettää arvauksen\n• 🐂 oikea numero, oikea paikka\n• 🐄 oikea numero, väärä paikka\n• Yrityksiä = Helppo → 10, Normaali → 12, Vaikea → 16",
 
     "menu-wordle": "📝 Wordle", "game-wordle": "📝 Wordle",
-    "wrd-letters": "kirjainta", "wrd-attempt": "Yritys", "wrd-secret": "Sana oli:", "wrd-invalid": "⚠️ Tällaista sanaa ei ole, yritä uudelleen",
+    "wrd-letters": "kirjainta", "wrd-attempt": "Yritys", "wrd-secret": "Sana oli:", "wrd-invalid": "⚠️ Tällaista sanaa ei ole, yritä uudelleen", "wrd-hint": "💡 Vihje",
     "help-wordle": "ℹ️ *Wordle*\n\nArvaa piilotettu sana!\n\n• Napauta kirjaimia rakentaaksesi arvauksesi\n• ⬅️ poistaa viimeisen kirjaimen, ✅ lähettää arvauksen\n• 🟩 oikea kirjain, oikea paikka\n• 🟨 oikea kirjain, väärä paikka\n• ⬛ kirjainta ei ole sanassa\n• Yrityksiä = sanan pituus + 2\n\nPeli käyttää yleisimpiä sanalistoja",
 
     "menu-hang": "😵 Hirttopeli", "game-hang": "😵 Hirttopeli", "hang-lives": "Elämät: ", "hang-cmplx": "\n\n🥱 Helppo - 15 elämää \n🙂 Normaali - 10 elämää \n😳 Vaikea - 5 elämää ", "hang-one": "👀 Avaa yksi kirjain",
@@ -206,7 +206,7 @@
     "help-bullscows": "ℹ️ *Быки и коровы*\n\nУгадай секретную последовательность цифр (0–9, без повторов)\n\n• Нажимай цифры, чтобы составить догадку\n• ⬅️ удаляет последнюю цифру, ✅ отправляет догадку\n• 🐂 правильная цифра, правильная позиция\n• 🐄 правильная цифра, неправильная позиция\n• Попыток = Легко → 10, Нормально → 12, Сложно → 16",
 
     "menu-wordle": "📝 Вордл", "game-wordle": "📝 Вордл",
-    "wrd-letters": "букв", "wrd-attempt": "Попытка", "wrd-secret": "Загадано было:", "wrd-invalid": "⚠️ Такого слова нет, попробуйте ещё раз",
+    "wrd-letters": "букв", "wrd-attempt": "Попытка", "wrd-secret": "Загадано было:", "wrd-invalid": "⚠️ Такого слова нет, попробуйте ещё раз", "wrd-hint": "💡 Подсказка",
     "help-wordle": "ℹ️ *Вордл*\n\nУгадай загаданное слово!\n\n• Нажимай буквы, чтобы составить догадку\n• ⬅️ удаляет последнюю букву, ✅ отправляет догадку\n• 🟩 правильная буква, правильная позиция\n• 🟨 правильная буква, неправильная позиция\n• ⬛ буквы нет в слове\n• Попыток = длина слова + 2\n\nДля игры используются списки самых часто употребляемых слов",
 
     "menu-hang": "😵 Виселица", "game-hang": "😵 Виселица", "hang-lives": "Жизней: ", "hang-cmplx": "\n\n🥱 Легко - 15 жизней \n🙂 Нормально - 10 жизней \n😳 Сложно - 5 жизней ", "hang-one": "👀 Открыть одну букву",

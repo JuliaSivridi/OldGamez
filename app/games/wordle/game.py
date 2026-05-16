@@ -33,35 +33,63 @@ class WordleGame:
             "size": size,
             "max_attempts": size + 2,
             "history": [],
-            "current": [],
+            "current": [None] * size,
+            "hint_positions": [],
             "status": "active",
         }
 
     def add_letter(self, state: dict, letter: str) -> dict:
         letter = letter.upper()
-        if len(state["current"]) < state["size"]:
-            state["current"] = state["current"] + [letter]
+        current = list(state["current"])
+        for i, v in enumerate(current):
+            if v is None:
+                current[i] = letter
+                break
+        state["current"] = current
         return state
 
     def backspace(self, state: dict) -> dict:
-        state["current"] = state["current"][:-1]
+        current = list(state["current"])
+        hint_set = set(state.get("hint_positions", []))
+        for i in range(len(current) - 1, -1, -1):
+            if current[i] is not None and i not in hint_set:
+                current[i] = None
+                break
+        state["current"] = current
+        return state
+
+    def apply_hint(self, state: dict) -> dict:
+        current = list(state["current"])
+        hint_positions = list(state.get("hint_positions", []))
+        available = [i for i, v in enumerate(current) if v is None]
+        if not available:
+            return state
+        pos = random.choice(available)
+        current[pos] = state["word"][pos]
+        hint_positions.append(pos)
+        state["current"] = current
+        state["hint_positions"] = hint_positions
         return state
 
     def is_valid_word(self, state: dict) -> bool:
+        if None in state["current"]:
+            return False
         guess = "".join(state["current"])
         lang = state["lang"]
         return guess in self.words.get(lang, self.words["en"])
 
     def submit_guess(self, state: dict) -> dict:
         current = state["current"]
-        if len(current) != state["size"]:
+        if None in current:
             return {"state": "play", "game_state": state}
         if not self.is_valid_word(state):
-            state["current"] = []
+            hint_set = set(state.get("hint_positions", []))
+            state["current"] = [v if i in hint_set else None for i, v in enumerate(current)]
             return {"state": "invalid", "game_state": state}
         marks = self._compute_marks(state["word"], current)
         state["history"] = state["history"] + [{"guess": current, "marks": marks}]
-        state["current"] = []
+        state["current"] = [None] * state["size"]
+        state["hint_positions"] = []
         if all(m == MARK_GREEN for m in marks):
             state["status"] = "finished"
             return {"state": "win", "game_state": state}
@@ -73,12 +101,10 @@ class WordleGame:
     def _compute_marks(self, word: str, guess: list[str]) -> list[str]:
         marks = [MARK_GREY] * len(guess)
         word_chars = list(word)
-        # First pass: greens
         for i, (w, g) in enumerate(zip(word_chars, guess)):
             if w == g:
                 marks[i] = MARK_GREEN
                 word_chars[i] = None
-        # Second pass: yellows
         for i, g in enumerate(guess):
             if marks[i] == MARK_GREEN:
                 continue

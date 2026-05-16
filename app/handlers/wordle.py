@@ -45,8 +45,7 @@ def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool
         lines.append(f"{lang['wrd-secret']} {' '.join(state['word'])}")
     else:
         current = state["current"]
-        slots = list(current) + ["_"] * (size - len(current))
-        current_str = " ".join(slots)
+        current_str = " ".join(s if s is not None else "_" for s in current)
         attempt = len(state["history"]) + 1
         lines.append(f"`{current_str}`")
         lines.append(f"{lang['wrd-attempt']} {attempt} / {state['max_attempts']}")
@@ -140,6 +139,23 @@ async def callback_letter(callback: CallbackQuery) -> None:
     state = game.add_letter(state, letter)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
+
+
+@router.callback_query(F.data.startswith("wrd:hint:"))
+async def callback_hint(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    await callback.answer()
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+        return
+    state = dict(session.state)
+    state = game.apply_hint(state)
+    await update_session_state(session.id, state, current_turn_user_id=user.id)
+    await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
 
 @router.callback_query(F.data.startswith("wrd:back:"))
