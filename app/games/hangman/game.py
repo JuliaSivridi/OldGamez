@@ -31,7 +31,10 @@ class HangmanGame:
     def _letters_for_lang(self, lang_code: str) -> list[str]:
         if lang_code == 'ru':
             return list('абвгдежзийклмнопрстуфхцчшщъыьэюя')
-        return [chr(i) for i in range(ord('a'), ord('z') + 1)]
+        letters = [chr(i) for i in range(ord('a'), ord('z') + 1)]
+        if lang_code == 'fi':
+            letters += ['å', 'ä', 'ö']
+        return letters
 
     def new_game_state(self, lang_code: str, lives: int = 10) -> dict:
         words = self.words.get(lang_code, self.words['ru'])
