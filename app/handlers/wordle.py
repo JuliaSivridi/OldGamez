@@ -1,5 +1,4 @@
 from aiogram import F, Router
-from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
@@ -35,23 +34,21 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
 
     lines = [title, ""]
     for entry in state["history"]:
-        guess_line = "  ".join(entry["guess"])
-        marks_line = " ".join(MARK_EMOJI[m] for m in entry["marks"])
-        lines.append(f"<code>{guess_line}</code>")
-        lines.append(marks_line)
+        pairs = " ".join(f"{l}{MARK_EMOJI[m]}" for l, m in zip(entry["guess"], entry["marks"]))
+        lines.append(pairs)
         lines.append("")
 
     if final == "win":
         lines.append(lang["game-win"])
     elif final == "loss":
         lines.append(lang["game-lose"])
-        lines.append(f"{lang['wrd-secret']} <code>{'  '.join(state['word'])}</code>")
+        lines.append(f"{lang['wrd-secret']} {' '.join(state['word'])}")
     else:
         current = state["current"]
         slots = list(current) + ["_"] * (size - len(current))
         current_str = " ".join(slots)
         attempt = len(state["history"]) + 1
-        lines.append(f"<code>{current_str}</code>")
+        lines.append(current_str)
         lines.append(f"{lang['wrd-attempt']} {attempt} / {state['max_attempts']}")
 
     return "\n".join(lines)
@@ -75,7 +72,6 @@ async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_m
     await message.answer(
         render_text(lang, session.state),
         reply_markup=game_keyboard(session.id, session.state, True, lang),
-        parse_mode=ParseMode.HTML,
     )
 
 
@@ -141,7 +137,7 @@ async def callback_letter(callback: CallbackQuery) -> None:
     state = dict(session.state)
     state = game.add_letter(state, letter)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang), parse_mode=ParseMode.HTML)
+    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
 
 @router.callback_query(F.data.startswith("wrd:back:"))
@@ -158,7 +154,7 @@ async def callback_back(callback: CallbackQuery) -> None:
     state = dict(session.state)
     state = game.backspace(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang), parse_mode=ParseMode.HTML)
+    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
 
 @router.callback_query(F.data.startswith("wrd:submit:"))
@@ -182,7 +178,6 @@ async def callback_submit(callback: CallbackQuery) -> None:
         await callback.message.edit_text(
             render_text(lang, state, final=result["state"]),
             reply_markup=game_keyboard(session.id, state, False, lang),
-            parse_mode=ParseMode.HTML,
         )
         if menu_msg_id:
             try:
@@ -192,4 +187,4 @@ async def callback_submit(callback: CallbackQuery) -> None:
         await open_wordle_menu(callback.message, user, lang)
         return
     await update_session_state(session.id, state, current_turn_user_id=user.id)
-    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang), parse_mode=ParseMode.HTML)
+    await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
