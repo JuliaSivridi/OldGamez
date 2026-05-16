@@ -8,9 +8,9 @@ COLORS_6 = ["❤️", "🧡", "💛", "💚", "💙", "💜"]
 COLORS_8 = ["❤️", "🧡", "💛", "💚", "💙", "🩵", "💜", "🩷"]
 
 DIFFICULTY = {
-    "easy": {"size": 4, "colors": COLORS_6},
-    "norm": {"size": 5, "colors": COLORS_6},
-    "hard": {"size": 5, "colors": COLORS_8},
+    "easy": {"size": 4, "colors": COLORS_6, "max_attempts": 10},
+    "norm": {"size": 5, "colors": COLORS_6, "max_attempts": 12},
+    "hard": {"size": 5, "colors": COLORS_8, "max_attempts": 18},
 }
 
 
@@ -26,7 +26,7 @@ class MastermindGame:
             "secret": secret,
             "colors": colors,
             "size": size,
-            "max_attempts": 10,
+            "max_attempts": cfg["max_attempts"],
             "history": [],
             "current": [],
             "status": "active",

@@ -7,6 +7,9 @@ from app.games.common.scoring import score_guess
 DIGITS = list(range(10))
 
 
+MAX_ATTEMPTS = {4: 10, 5: 12, 6: 16}
+
+
 class BullsCowsGame:
     code = "bullscows"
 
@@ -15,7 +18,7 @@ class BullsCowsGame:
         return {
             "secret": secret,
             "size": size,
-            "max_attempts": 10,
+            "max_attempts": MAX_ATTEMPTS.get(size, 10),
             "history": [],
             "current": [],
             "status": "active",
