@@ -378,7 +378,8 @@ async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    text = await get_tictactoe_stats_text(user.id, lang)
+    stat = await get_game_stat(user.id, game.code)
+    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text, reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -753,8 +754,3 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         ),
     )
     await callback.answer()
-
-
-async def get_tictactoe_stats_text(user_id: int, lang: dict[str, str]) -> str:
-    stat = await get_game_stat(user_id, game.code)
-    return format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])

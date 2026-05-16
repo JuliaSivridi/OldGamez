@@ -85,7 +85,8 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    text = await get_npuzzle_stats_text(user.id, lang)
+    stat = await get_game_stat(user.id, game.code)
+    text = format_game_stats_text(stat, lang, ["wins"])
     await safe_edit(callback.message, text, reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -153,8 +154,3 @@ async def callback_move(callback: CallbackQuery) -> None:
         f"{lang['game-npuzzle']}{state['size']}x{state['size']}",
         reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"]),
     )
-
-
-async def get_npuzzle_stats_text(user_id: int, lang: dict[str, str]) -> str:
-    stat = await get_game_stat(user_id, game.code)
-    return format_game_stats_text(stat, lang, ["wins"])

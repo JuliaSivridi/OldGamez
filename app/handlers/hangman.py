@@ -112,7 +112,8 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    text = await get_hangman_stats_text(user.id, lang)
+    stat = await get_game_stat(user.id, game.code)
+    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -213,8 +214,3 @@ async def callback_play(callback: CallbackQuery) -> None:
         reply_markup=letters_keyboard(session.id, state['letters'], lang, True),
         parse_mode=ParseMode.HTML,
     )
-
-
-async def get_hangman_stats_text(user_id: int, lang: dict[str, str]) -> str:
-    stat = await get_game_stat(user_id, game.code)
-    return format_game_stats_text(stat, lang, ["played", "wins", "losses"])
