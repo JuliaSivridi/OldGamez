@@ -13,7 +13,8 @@
       "Bash(git push *)",
       "PowerShell(New-Item -ItemType Directory -Path \"D:\\\\Projects\\\\Telegram_bots\\\\OldGamez\\\\app\\\\games\\\\lightsout\" -Force)",
       "Bash(python -c \"import ast, sys, pathlib; errors=[]; [errors.append\\(\\(f, e\\)\\) for f in pathlib.Path\\('app/handlers'\\).glob\\('*.py'\\) for e in [None] if \\(lambda: \\(ast.parse\\(f.read_text\\(encoding='utf-8'\\)\\), None\\)\\)\\(\\)[1] is not None]; print\\('Parse errors:', errors if errors else 'none'\\)\")",
-      "Bash(python -c \"import json; words=json.loads\\(open\\('D:/Projects/Telegram_bots/OldGamez/app/games/hangman/words.json', encoding='utf-8'\\).read\\(\\)\\); fi=words.get\\('fi',[]\\); print\\(len\\(fi\\),'words'\\); print\\([w for w in fi if any\\(c in w for c in 'åäö'\\)][:10]\\)\")"
+      "Bash(python -c \"import json; words=json.loads\\(open\\('D:/Projects/Telegram_bots/OldGamez/app/games/hangman/words.json', encoding='utf-8'\\).read\\(\\)\\); fi=words.get\\('fi',[]\\); print\\(len\\(fi\\),'words'\\); print\\([w for w in fi if any\\(c in w for c in 'åäö'\\)][:10]\\)\")",
+      "Bash(python -m py_compile app/games/mastermind/game.py app/games/bullscows/game.py)"
     ]
   }
 }

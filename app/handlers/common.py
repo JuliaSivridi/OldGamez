@@ -1,4 +1,3 @@
-import re
 from importlib import import_module
 from typing import Callable
 
@@ -78,10 +77,6 @@ def _get_menu_handler(game_code: str) -> Callable | None:
     return handler if callable(handler) else None
 
 
-def emoji_only(text: str) -> str:
-    return re.sub(r"[A-Za-zÅÄÖåäöА-Яа-яЁё0-9\-\s]", "", text)
-
-
 def get_current_game(user) -> str | None:
     return get_user_setting(user, "current_game")
 
@@ -144,32 +139,6 @@ async def cmd_games_command(message: Message) -> None:
     await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
 
 
-@router.message(Command("lang"))
-async def cmd_lang_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(
-        lang["lang-ask"],
-        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
-    )
-
-
-@router.callback_query(F.data == "menu:lang")
-async def callback_menu_lang(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["lang-ask"],
-        reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
 @router.callback_query(F.data == "menu:stats")
 async def callback_menu_stats(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -204,6 +173,32 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         callback.message,
         stats_text,
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.message(Command("lang"))
+async def cmd_lang_command(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
+    )
+
+
+@router.callback_query(F.data == "menu:lang")
+async def callback_menu_lang(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await callback.answer()
 
