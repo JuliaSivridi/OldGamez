@@ -9,6 +9,7 @@
     "menu-set": "⚙️ Settings", "set-back": "🔙 Settings menu", "set-ttl": "⚙️ Settings menu",
     "menu-lang": "🔤 Language", "lang-ask": "🔤 Choose a language", "lang-ok": "✅ Language chosen",
 
+    "menu-mode": "🔄 Mode", "chus-mode": "🔄 Select game mode",
     "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-saved": "✅ Difficulty set", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
     "menu-size": "🔢 Size", "chus-size": "🔢 Set board size", "size-saved": "✅ Size set", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
@@ -86,6 +87,7 @@
     "menu-set": "⚙️ Asetukset", "set-back": "🔙 Asetusvalikko", "set-ttl": "⚙️ Asetusvalikko",
     "menu-lang": "🔤 Kieli", "lang-ask": "🔤 Valitse kieli", "lang-ok": "✅ Kieli valittu",
 
+    "menu-mode": "🔄 Tila", "chus-mode": "🔄 Valitse pelitila",
     "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-saved": "✅ Vaikeustaso asetettu", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
     "menu-size": "🔢 Koko", "chus-size": "🔢 Aseta laudan koko", "size-saved": "✅ Koko asetettu", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
@@ -163,6 +165,7 @@
     "menu-set": "⚙️ Настройки", "set-back": "🔙 Меню настроек", "set-ttl": "⚙️ Меню настроек",
     "menu-lang": "🔤 Язык", "lang-ask": "🔤 Выбери язык", "lang-ok": "✅ Язык выбран",
 
+    "menu-mode": "🔄 Режим", "chus-mode": "🔄 Выбери режим игры",
     "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-saved": "✅ Сложность установлена", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
     "menu-size": "🔢 Размер", "chus-size": "🔢 Установить размер поля", "size-saved": "✅ Размер установлен", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
