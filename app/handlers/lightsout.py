@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
@@ -45,7 +47,7 @@ async def start_lightsout_game(message: Message, user, lang: dict[str, str], siz
     )
     await message.answer(
         f"{lang['game-lightsout']}{size}×{size}",
-        reply_markup=board_keyboard(session.id, session.state["cells"], size, True),
+        reply_markup=board_keyboard(session.id, session.state["cells"], size, True, lang),
     )
 
 
@@ -160,5 +162,67 @@ async def callback_press(callback: CallbackQuery) -> None:
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
         f"{lang['game-lightsout']}{size}×{size}",
-        reply_markup=board_keyboard(session.id, state["cells"], size, True),
+        reply_markup=board_keyboard(session.id, state["cells"], size, True, lang),
     )
+
+
+@router.callback_query(F.data.startswith("lto:give_up:"))
+async def callback_give_up(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    await callback.answer()
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+        return
+    state = dict(session.state)
+    menu_msg_id = state.get("menu_message_id")
+    await finish_session(session.id, state, winner_user_id=None)
+    await record_game_result(user.id, game.code, "loss")
+    await callback.message.edit_text(
+        lang["game-lose"],
+        reply_markup=board_keyboard(session.id, state["cells"], state["size"], False),
+    )
+    if menu_msg_id:
+        try:
+            await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+        except Exception:
+            pass
+    await open_lightsout_menu(callback.message, user, lang)
+
+
+@router.callback_query(F.data.startswith("lto:solve:"))
+async def callback_solve(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    await callback.answer()
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+        return
+    state = dict(session.state)
+    size = state["size"]
+    menu_msg_id = state.get("menu_message_id")
+    solution = game.solve(state)
+
+    for idx in solution:
+        await asyncio.sleep(1)
+        result = game.press(state, idx)
+        state = result["game_state"]
+        await callback.message.edit_text(
+            f"{lang['game-lightsout']}{size}×{size}",
+            reply_markup=board_keyboard(session.id, state["cells"], size, False),
+        )
+
+    await finish_session(session.id, state, winner_user_id=None)
+    # No stat recorded — solver was used
+    if menu_msg_id:
+        try:
+            await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+        except Exception:
+            pass
+    await open_lightsout_menu(callback.message, user, lang)

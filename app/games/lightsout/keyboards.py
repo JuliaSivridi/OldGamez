@@ -13,11 +13,26 @@ def size_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def board_keyboard(session_id: int, cells: list[bool], size: int, active: bool) -> InlineKeyboardMarkup:
+def board_keyboard(
+    session_id: int,
+    cells: list[bool],
+    size: int,
+    active: bool,
+    lang: dict[str, str] | None = None,
+) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
+    row_sizes = []
+
+    if active and lang is not None:
+        builder.button(text=lang["lto-solve"], callback_data=f"lto:solve:{session_id}")
+        builder.button(text=lang["lto-give-up"], callback_data=f"lto:give_up:{session_id}")
+        row_sizes.append(2)
+
     for idx, lit in enumerate(cells):
         text = ON if lit else OFF
         callback_data = f"lto:press:{session_id}:{idx}" if active else "lto:noop"
         builder.button(text=text, callback_data=callback_data)
-    builder.adjust(*([size] * size))
+    row_sizes.extend([size] * size)
+
+    builder.adjust(*row_sizes)
     return builder.as_markup()

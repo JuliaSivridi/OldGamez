@@ -48,6 +48,7 @@
 
     "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
     "help-lightsout": "ℹ️ *Goal of the game* - turn off all the lights 🟨\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)\n\nChoose board size in ⚙️ Settings: 4×4, 5×5, or 6×6",
+    "lto-solve": "🤖 Solve", "lto-give-up": "🏳️ Give up",
 
     "menu-xo": "❌⭕️ TicTacToe", "game-xo": "❌⭕️ TicTacToe ", "xo-win-need": "\nTo win, make a line of length ",
     "xo-not-yours": "This game doesn't belong to you.", "xo-not-your-turn": "It's not your turn now.",
@@ -111,6 +112,7 @@
 
     "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
     "help-lightsout": "ℹ️ *Tavoite* - sammuta kaikki valot 🟨\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila\n\nValitse laudan koko ⚙️ Asetuksissa: 4×4, 5×5 tai 6×6",
+    "lto-solve": "🤖 Ratkaise", "lto-give-up": "🏳️ Luovutan",
 
     "menu-xo": "❌⭕️ Ristinolla", "game-xo": "❌⭕️ Ristinolla ", "xo-win-need": "\nVoittaaksesi muodosta rivi, jonka pituus on ",
     "xo-not-yours": "Tämä peli ei kuulu sinulle.", "xo-not-your-turn": "Ei ole sinun vuorosi.",
@@ -174,6 +176,7 @@
 
     "menu-lightsout": "🔆 Гаси огни", "game-lightsout": "🔆 Гаси огни ",
     "help-lightsout": "ℹ️ *Цель игры* - погасить все лампочки 🟨\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)\n\nВыберите размер поля в ⚙️ Настройках: 4×4, 5×5 или 6×6",
+    "lto-solve": "🤖 Решить", "lto-give-up": "🏳️ Сдаться",
 
     "menu-xo": "❌⭕️ Крестики-нолики", "game-xo": "❌⭕️ Крестики-нолики ", "xo-win-need": "\nДля победы сделайте линию длиной  ",
     "xo-not-yours": "Эта игра тебе не принадлежит.", "xo-not-your-turn": "Сейчас не твой ход.",
