@@ -4,6 +4,8 @@ import json
 import random
 from pathlib import Path
 
+from app.i18n.languages import LANGUAGE_LETTERS
+
 
 WORDS_PATH = Path(__file__).with_name('words.json')
 HANG_FRAMES = {
@@ -29,12 +31,7 @@ class HangmanGame:
         self.words = json.loads(WORDS_PATH.read_text(encoding='utf-8'))
 
     def _letters_for_lang(self, lang_code: str) -> list[str]:
-        if lang_code == 'ru':
-            return list('абвгдежзийклмнопрстуфхцчшщъыьэюя')
-        letters = [chr(i) for i in range(ord('a'), ord('z') + 1)]
-        if lang_code == 'fi':
-            letters += ['å', 'ä', 'ö']
-        return letters
+        return list(LANGUAGE_LETTERS.get(lang_code, LANGUAGE_LETTERS["en"]))
 
     def new_game_state(self, lang_code: str, lives: int = 10) -> dict:
         words = self.words.get(lang_code, self.words['ru'])
