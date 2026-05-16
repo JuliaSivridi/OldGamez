@@ -4,9 +4,12 @@ from pathlib import Path
 
 from aiogram.types import User as TgUser
 
+from app.i18n.languages import LANGUAGE_CHOICES
+
 
 I18N_PATH = Path(__file__).with_name("languages.json")
 DEFAULT_LANGUAGE = "en"
+SUPPORTED_LANGUAGES: frozenset[str] = frozenset(LANGUAGE_CHOICES.values())
 
 
 @lru_cache
@@ -19,8 +22,7 @@ def normalize_language_code(language_code: str | None) -> str:
     if not language_code:
         return DEFAULT_LANGUAGE
     short_code = language_code.split("-")[0].lower()
-    translations = load_translations()
-    return short_code if short_code in translations else DEFAULT_LANGUAGE
+    return short_code if short_code in SUPPORTED_LANGUAGES else DEFAULT_LANGUAGE
 
 
 def get_language_pack(language_code: str | None) -> dict[str, str]:
