@@ -14,14 +14,14 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 💣 Minesweeper | ✅ | | |
 | 🔆 Lights Out | ✅ | | |
 | 🧩 15-Puzzle | ✅ | | |
-| 🃏 Blackjack | ✅ | | |
-| ✊ Rock Paper Scissors | ✅ | | |
-| ✊ Rock Paper Scissors Spock Lizard | ✅ | | |
-| 😵 Hangman | ✅ | | |
 | 🎯 Mastermind | ✅ | | |
 | 🐂 Bulls and Cows | ✅ | | |
 | 📝 Wordle | ✅ | | |
+| 😵 Hangman | ✅ | | |
+| 🃏 Blackjack | ✅ | | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
+| 🪨📄✂️ Rock Paper Scissors | ✅ | | |
+| 🪨📄✂️🖖🦎 Rock Paper Scissors Spock Lizard | ✅ | | |
 
 ---
 
@@ -109,17 +109,17 @@ app/
 | `/start` | Main menu |
 | `/games` | List of all games |
 | `/lang` | Change interface language |
-| `/tictactoe` `/xo` | Open Tic-Tac-Toe |
-| `/fourinrow` | Open Four in a Row |
-| `/battleship` | Open Battleship |
-| `/minesweeper` | Open Minesweeper |
-| `/lightsout` | Open Lights Out |
-| `/npuzzle` | Open 15-Puzzle |
-| `/blackjack` | Open Blackjack |
-| `/rps` | Open Rock Paper Scissors |
-| `/rpssl` | Open Rock Paper Scissors Spock Lizard |
-| `/hangman` | Open Hangman |
-| `/mastermind` | Open Mastermind |
-| `/bullscows` | Open Bulls and Cows |
-| `/wordle` | Open Wordle |
-| `/random` | Random fun tools |
+| `/tictactoe` `/xo` | ❌⭕️ Tic-Tac-Toe |
+| `/fourinrow` | 🔴🟡 Four in a Row |
+| `/battleship` | 🚢 Battleship |
+| `/minesweeper` | 💣 Minesweeper |
+| `/lightsout` | 🔆 Lights Out |
+| `/npuzzle` | 🧩 15-Puzzle |
+| `/mastermind` | 🎯 Mastermind |
+| `/bullscows` | 🐂 Bulls and Cows |
+| `/wordle` | 📝 Wordle |
+| `/hangman` | 😵 Hangman |
+| `/blackjack` | 🃏 Blackjack |
+| `/random` | 🎲 Random fun (coin, card, dice) |
+| `/rps` | 🪨📄✂️ Rock Paper Scissors |
+| `/rpssl` | 🪨📄✂️🖖🦎 Rock Paper Scissors Spock Lizard |
