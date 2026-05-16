@@ -35,8 +35,8 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
 
     lines = [title, ""]
     for entry in state["history"]:
-        guess_line = "   ".join(entry["guess"])
-        marks_line = "  ".join(MARK_EMOJI[m] for m in entry["marks"])
+        guess_line = "  ".join(entry["guess"])
+        marks_line = " ".join(MARK_EMOJI[m] for m in entry["marks"])
         lines.append(f"<code>{guess_line}</code>")
         lines.append(marks_line)
         lines.append("")
@@ -45,11 +45,11 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
         lines.append(lang["game-win"])
     elif final == "loss":
         lines.append(lang["game-lose"])
-        lines.append(f"{lang['wrd-secret']} <code>{'   '.join(state['word'])}</code>")
+        lines.append(f"{lang['wrd-secret']} <code>{'  '.join(state['word'])}</code>")
     else:
         current = state["current"]
         slots = list(current) + ["_"] * (size - len(current))
-        current_str = "   ".join(slots)
+        current_str = " ".join(slots)
         attempt = len(state["history"]) + 1
         lines.append(f"<code>{current_str}</code>")
         lines.append(f"{lang['wrd-attempt']} {attempt} / {state['max_attempts']}")
