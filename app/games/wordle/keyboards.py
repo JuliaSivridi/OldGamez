@@ -12,10 +12,18 @@ def game_keyboard(session_id: int, state: dict, active: bool, lang: dict) -> Inl
     current = state["current"]
     size = state["size"]
 
+    grey_letters = {
+        letter
+        for entry in state["history"]
+        for letter, mark in zip(entry["guess"], entry["marks"])
+        if mark == "grey"
+    }
+
     can_add = active and len(current) < size
     for letter in letters:
-        cb = f"wrd:letter:{session_id}:{letter}" if can_add else "wrd:noop"
-        builder.button(text=letter, callback_data=cb)
+        is_grey = letter.upper() in grey_letters
+        cb = f"wrd:letter:{session_id}:{letter}" if (can_add and not is_grey) else "wrd:noop"
+        builder.button(text="*" if is_grey else letter, callback_data=cb)
 
     full_rows = len(letters) // ROW_SIZE
     remainder = len(letters) % ROW_SIZE
