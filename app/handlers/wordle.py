@@ -195,7 +195,8 @@ async def callback_submit(callback: CallbackQuery) -> None:
         return
     if result["state"] in ("win", "loss"):
         await finish_session(session.id, state, winner_user_id=user.id if result["state"] == "win" else None)
-        await record_game_result(user.id, game.code, result["state"])
+        if not state.get("hint_used", False):
+            await record_game_result(user.id, game.code, result["state"])
         menu_msg_id = state.get("menu_message_id")
         await callback.message.edit_text(
             render_text(lang, state, final=result["state"]),

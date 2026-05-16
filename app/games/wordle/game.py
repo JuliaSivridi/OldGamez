@@ -35,6 +35,7 @@ class WordleGame:
             "history": [],
             "current": [None] * size,
             "hint_positions": [],
+            "hint_used": False,
             "status": "active",
         }
 
@@ -69,6 +70,7 @@ class WordleGame:
         hint_positions.append(pos)
         state["current"] = current
         state["hint_positions"] = hint_positions
+        state["hint_used"] = True
         return state
 
     def is_valid_word(self, state: dict) -> bool:
