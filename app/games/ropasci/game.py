@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-MODE_LABEL: dict[int, str] = {1: "1/1", 2: "2/3", 3: "3/5"}
+MODE_LABEL: dict[int, str] = {1: "1 / 1", 2: "2 / 3", 3: "3 / 5"}
 
 
 class _BaseRPS:

@@ -11,7 +11,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.keyboards.menus import game_menu_keyboard
-from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, get_duel_message_map, set_duel_message_ref
+from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
@@ -168,6 +168,7 @@ async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_mess
     refreshed = await get_session_by_id(session_id)
     if refreshed:
         await _sync_bj_duel_messages(bot, refreshed)
+    await delete_guest_join_msg(bot, state)
     await open_blackjack_menu(current_message, current_user, current_lang)
     other_id = p2_id if current_user.id == p1_id else p1_id
     other_user = await get_user_by_id(other_id)
@@ -200,7 +201,8 @@ async def join_blackjack_duel(message: Message, user, lang: dict, session) -> No
         return
 
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["duel-join-ok"], reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type))
+    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type))
+    duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
     both_done = duel_state["p1_done"] and duel_state["p2_done"]
     is_p2_done = duel_state["p2_done"]

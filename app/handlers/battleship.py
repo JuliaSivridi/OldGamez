@@ -13,7 +13,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.keyboards.menus import game_menu_keyboard
-from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, get_duel_message_map, set_duel_message_ref
+from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
@@ -162,7 +162,8 @@ async def join_battleship_duel(message: Message, user, lang, session) -> None:
         return
 
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["duel-join-ok"], reply_markup=battleship_menu_keyboard(lang, chat_type=message.chat.type))
+    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=battleship_menu_keyboard(lang, chat_type=message.chat.type))
+    duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
     is_p1 = user.id == duel_state["p1_id"]
     opp_board = duel_state["p2_board"] if is_p1 else duel_state["p1_board"]
@@ -203,6 +204,7 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
         refreshed = await get_session_by_id(session.id)
         if refreshed:
             await _sync_battleship_duel_messages(callback.bot, refreshed)
+        await delete_guest_join_msg(callback.bot, state)
         await open_battleship_menu(callback.message, user, lang)
         other_id = state["p2_id"] if is_p1 else state["p1_id"]
         other_user = await get_user_by_id(other_id)

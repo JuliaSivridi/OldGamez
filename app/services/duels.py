@@ -56,6 +56,16 @@ def get_duel_highlight(state: dict) -> list[list[int]]:
     return []
 
 
+async def delete_guest_join_msg(bot, state: dict) -> None:
+    info = state.get("guest_join_msg")
+    if not info:
+        return
+    try:
+        await bot.delete_message(info["chat_id"], info["message_id"])
+    except Exception:
+        pass
+
+
 async def broadcast_private_duel_update(
     bot,
     player_ids: Iterable[int | None],

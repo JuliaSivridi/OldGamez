@@ -19,6 +19,7 @@ from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,
+    delete_guest_join_msg,
     get_duel_highlight,
     get_duel_message_map,
     set_duel_message_ref,
@@ -300,10 +301,11 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         )
         return
 
-    await message.answer(
+    join_ok_msg = await message.answer(
         lang["duel-join-ok"],
         reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
     )
+    duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
     guest_message = await message.answer(
         render_status_text(duel_state, lang, viewer_user_id=user.id),
         reply_markup=board_keyboard(
@@ -320,10 +322,15 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         await sync_duel_messages(message.bot, session)
 
 
+def _xo_menu_text(lang: dict, user_settings: dict | None) -> str:
+    size = int((user_settings or {}).get("tictactoe_size", 3))
+    return f"{lang['game-xo']}\n{lang['setting-size']}: {size} × {size}"
+
+
 async def open_tictactoe_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-xo"],
+        _xo_menu_text(lang, user.settings),
         reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -345,7 +352,7 @@ async def open_tictactoe_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _xo_menu_text(lang, user.settings), reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -400,9 +407,11 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"tictactoe_size": size, "current_game": game.code})
+    updated_settings = dict(user.settings or {})
+    updated_settings["tictactoe_size"] = size
     await safe_edit(
         callback.message,
-        lang["size-saved"],
+        _xo_menu_text(lang, updated_settings),
         reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
 
@@ -547,7 +556,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                     highlight=duel_turn.highlight,
                 ),
             )
-            await open_tictactoe_menu(callback.message, user, lang)
             await callback.answer()
             return
 
@@ -618,6 +626,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             refreshed_session = await get_session_by_id(session.id)
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
+            await delete_guest_join_msg(callback.bot, state)
             await open_tictactoe_menu(callback.message, user, lang)
             await send_tictactoe_menu_to_other_duel_players(
                 callback.bot,

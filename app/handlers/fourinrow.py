@@ -18,6 +18,7 @@ from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,
+    delete_guest_join_msg,
     get_duel_highlight,
     get_duel_message_map,
     set_duel_message_ref,
@@ -123,7 +124,7 @@ async def _run_drop_animation(
         try:
             text, markup = get_frame(now_row)
             await message.edit_text(text, reply_markup=markup)
-        except TelegramBadRequest:
+        except Exception:
             pass
 
 
@@ -326,10 +327,11 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         )
         return
 
-    await message.answer(
+    join_ok_msg = await message.answer(
         lang["duel-join-ok"],
         reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
     )
+    duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
     guest_message = await message.answer(
         render_text(lang, duel_state, viewer_user_id=user.id),
         reply_markup=board_keyboard(
@@ -521,14 +523,6 @@ async def callback_col(callback: CallbackQuery) -> None:
                 render_group_status_text(lang, state, player_names),
                 reply_markup=board_keyboard(session.id, state["board"], False, duel_result["line"]),
             )
-            await open_four_menu(callback.message, user, lang)
-            await send_four_menu_to_other_duel_players(
-                callback.bot,
-                state,
-                excluded_user_id=user.id,
-                current_chat_id=callback.message.chat.id,
-                current_chat_type=callback.message.chat.type,
-            )
             return
 
         next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
@@ -575,6 +569,7 @@ async def callback_col(callback: CallbackQuery) -> None:
             refreshed_session = await get_session_by_id(session.id)
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
+            await delete_guest_join_msg(callback.bot, state)
             await open_four_menu(callback.message, user, lang)
             await send_four_menu_to_other_duel_players(
                 callback.bot,
