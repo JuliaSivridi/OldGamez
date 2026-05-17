@@ -54,30 +54,30 @@ def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, final: 
     opp_cost = state["p2_cost"] if is_p1 else state["p1_cost"]
     opp_done = state["p2_done"] if is_p1 else state["p1_done"]
 
-    text = (
-        f"{lang['cards-user']}{_write_cards(my_cards, lang)}"
-        f"{lang['bj-my-total']}{my_cost}"
-        f"{lang['bj-opp-cards']}"
-    )
-
+    text = lang["bj-opp-cards"]
     if final:
         text += _write_cards(opp_cards, lang)
-        text += f"{lang['bj-opp-total']}{opp_cost}"
+    else:
+        for _ in opp_cards:
+            text += lang["card-closed"]
+
+    text += f"{lang['cards-user']}{_write_cards(my_cards, lang)}"
+
+    if final:
+        text += f"{lang['bj-vs-opp']}{opp_cost}{lang['cost-user']}{my_cost}"
         result = state.get("result")
         is_win = (result == "p1_wins" and is_p1) or (result == "p2_wins" and not is_p1)
         is_draw = result == "draw"
         if is_draw:
-            verdict = "\n" + lang["game-draw"]
+            text += "\n" + lang["game-draw"]
         elif is_win:
-            verdict = "\n" + lang["game-win"]
+            text += "\n" + lang["game-win"]
             if game.is_blackjack(my_cards, my_cost):
-                verdict += lang["bj-user"] + lang["bj-blackjack"]
+                text += lang["bj-user"] + lang["bj-blackjack"]
         else:
-            verdict = "\n" + lang["game-lose"]
-        text += verdict
+            text += "\n" + lang["game-lose"]
     else:
-        for _ in opp_cards:
-            text += lang["card-closed"]
+        text += f"{lang['bj-my-total']}{my_cost}"
         if my_done and not opp_done:
             text += f"\n\n{lang['rps-waiting']}"
 

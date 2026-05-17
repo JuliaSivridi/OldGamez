@@ -459,8 +459,10 @@ async def callback_four_group_join(callback: CallbackQuery) -> None:
         for player_id in get_duel_player_ids(duel_state)
         if player_id is not None
     }
+    initiator = await get_user_by_id(session.created_by_user_id)
+    group_lang = get_language_pack(initiator.language_code if initiator else user.language_code)
     await callback.message.edit_text(
-        render_group_status_text(lang, duel_state, player_names),
+        render_group_status_text(group_lang, duel_state, player_names),
         reply_markup=board_keyboard(
             session.id,
             duel_state["board"],
@@ -506,6 +508,8 @@ async def callback_col(callback: CallbackQuery) -> None:
             state["player_red_id"]: format_player_name(await get_user_by_id(state["player_red_id"])),
             state["player_yellow_id"]: format_player_name(await get_user_by_id(state["player_yellow_id"])),
         }
+        initiator = await get_user_by_id(session.created_by_user_id)
+        group_lang = get_language_pack(initiator.language_code if initiator else user.language_code)
 
         if duel_result["state"] in {"win", "draw"}:
             state["result"] = duel_result["state"]
@@ -520,20 +524,22 @@ async def callback_col(callback: CallbackQuery) -> None:
                 await record_game_result(user.id, game.code, "win")
                 await record_game_result(other_user_id, game.code, "loss")
             await callback.message.edit_text(
-                render_group_status_text(lang, state, player_names),
+                render_group_status_text(group_lang, state, player_names),
                 reply_markup=board_keyboard(session.id, state["board"], False, duel_result["line"]),
             )
             return
 
         next_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
         state["current_turn_user_id"] = next_user_id
-        await animate_group_drop(callback.message, session.id, state["board"], player_sign, move_row, move_col, lang, player_names, state)
-        updated_session = await update_session_state(session.id, state, next_user_id)
-        if updated_session is not None:
+        await animate_group_drop(callback.message, session.id, state["board"], player_sign, move_row, move_col, group_lang, player_names, state)
+        await update_session_state(session.id, state, next_user_id)
+        try:
             await callback.message.edit_text(
-                render_group_status_text(lang, state, player_names),
+                render_group_status_text(group_lang, state, player_names),
                 reply_markup=board_keyboard(session.id, state["board"], True, duel_result["line"]),
             )
+        except Exception:
+            pass
         return
 
     if session.mode == SessionMode.duel_private:

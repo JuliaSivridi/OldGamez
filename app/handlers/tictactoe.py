@@ -464,8 +464,10 @@ async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:
         for player_id in get_duel_player_ids(duel_state)
         if player_id is not None
     }
+    initiator = await get_user_by_id(session.created_by_user_id)
+    group_lang = get_language_pack(initiator.language_code if initiator else user.language_code)
     await callback.message.edit_text(
-        render_group_status_text(duel_state, lang, player_names),
+        render_group_status_text(duel_state, group_lang, player_names),
         reply_markup=board_keyboard(
             session_id=session.id,
             board=duel_state["board"],
@@ -526,6 +528,9 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         state["last_move"] = duel_turn.highlight[0] if duel_turn.highlight else None
         state["highlight_line"] = duel_turn.highlight
 
+        initiator = await get_user_by_id(session.created_by_user_id)
+        group_lang = get_language_pack(initiator.language_code if initiator else user.language_code)
+
         if duel_turn.game_over:
             state["status"] = "finished"
             state["result"] = duel_turn.state
@@ -544,7 +549,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 await record_game_result(user.id, game.code, "win")
                 await record_game_result(other_user_id, game.code, "loss")
             await callback.message.edit_text(
-                render_group_status_text(state, lang, {
+                render_group_status_text(state, group_lang, {
                     state["player_x_id"]: format_player_name(await get_user_by_id(state["player_x_id"])),
                     state["player_o_id"]: format_player_name(await get_user_by_id(state["player_o_id"])),
                 }),
@@ -561,10 +566,10 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
 
         next_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
         state["current_turn_user_id"] = next_user_id
-        updated_session = await update_session_state(session.id, state, next_user_id)
-        if updated_session is not None:
+        await update_session_state(session.id, state, next_user_id)
+        try:
             await callback.message.edit_text(
-                render_group_status_text(state, lang, {
+                render_group_status_text(state, group_lang, {
                     state["player_x_id"]: format_player_name(await get_user_by_id(state["player_x_id"])),
                     state["player_o_id"]: format_player_name(await get_user_by_id(state["player_o_id"])),
                 }),
@@ -576,6 +581,8 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                     highlight=duel_turn.highlight,
                 ),
             )
+        except Exception:
+            pass
         await callback.answer()
         return
 

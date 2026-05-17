@@ -61,7 +61,7 @@
 
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Dealer cards*", "card-closed": "\n❓🃏 Closed card", "cards-user": "\n\n👤 *Your cards*",
     "cost-comp": "\n\nDealer = ", "cost-user": " | You = ", "menu-more": "🃏 Hit", "menu-stop": "✋ Stand", "bj-comp": " Dealer has", "bj-user": " You have", "bj-blackjack": " Blackjack!",
-    "bj-my-total": "\n\nYour total: ", "bj-opp-cards": "\n\n👤 *Opponent cards*", "bj-opp-total": "\n\nOpponent total: ",
+    "bj-my-total": "\n\nYour total: ", "bj-opp-cards": "\n\n👤 *Opponent cards*", "bj-opp-total": "\n\nOpponent total: ", "bj-vs-opp": "\n\nOpponent = ",
     "help-bj": "ℹ️ *Blackjack*\n\n*Goal of the game* - score more points than the dealer without exceeding 21\n\n• Number cards score their face value \n• Face cards (Jack, Queen, King) score 10 points each \n• An Ace scores 11 points, but if the total exceeds 21, the Ace counts as 1 point \n\n*Combinations:* \n• Ace + 10-point card = Blackjack \n• Blackjack beats any other combination worth 21 points \n\nThe game uses 8 decks of cards, so repeated cards are possible",
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
@@ -75,7 +75,7 @@
     "rps-stone": "🪨 Rock", "rps-scissors": "✂️ Scissors", "rps-paper": "📄 Paper", "rps-lizard": "🦎 Lizard", "rps-spock": "🖖 Spock",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
     "rps-chosen": "✅ Choice made", "rps-waiting": "⏳ Waiting...",
-    "rps-make-choice": "Make your choice", "rps-my-chosen": "You chose", "rps-opp-waiting": "Waiting for opponent",
+    "rps-make-choice": "❓ Make your choice", "rps-my-chosen": "You chose", "rps-opp-waiting": "Waiting for opponent",
     "setting-mode": "Mode", "setting-size": "Size", "setting-cmplx": "Difficulty",
     "help-rps": "ℹ️ Choose one of the options: 🪨 Rock, ✂️ Scissors, or 📄 Paper \n\n• 🪨 Rock beats ✂️ Scissors \n• ✂️ Scissors beat 📄 Paper \n• 📄 Paper beats 🪨 Rock \n\nIf you and your opponent make the same choice, it's a draw",
     "help-rpssl": "ℹ️ Choose one of five options: 🪨 Rock, ✂️ Scissors, 📄 Paper, 🦎 Lizard or 🖖 Spock \n\n• ✂️ Scissors cut 📄 Paper \n• 📄 Paper covers 🪨 Rock \n• 🪨 Rock crushes 🦎 Lizard \n• 🦎 Lizard poisons 🖖 Spock \n• 🖖 Spock smashes ✂️ Scissors \n• ✂️ Scissors decapitate 🦎 Lizard \n• 🦎 Lizard eats 📄 Paper \n• 📄 Paper disproves 🖖 Spock \n• 🖖 Spock vaporizes 🪨 Rock \n• 🪨 Rock crushes ✂️ Scissors\n\nIf you and your opponent make the same choice, it's a draw",
@@ -144,7 +144,7 @@
 
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Jakajan kortit*", "card-closed": "\n❓🃏 Suljettu kortti", "cards-user": "\n\n👤 *Sinun korttisi*",
     "cost-comp": "\n\nJakaja = ", "cost-user": " | Sinä = ", "menu-more": "🃏 Nosta", "menu-stop": "✋ Jää", "bj-comp": " Jakajalla on", "bj-user": " Sinulla on", "bj-blackjack": " Blackjack!",
-    "bj-my-total": "\n\nSinun pisteet: ", "bj-opp-cards": "\n\n👤 *Vastustajan kortit*", "bj-opp-total": "\n\nVastustajan pisteet: ",
+    "bj-my-total": "\n\nSinun pisteet: ", "bj-opp-cards": "\n\n👤 *Vastustajan kortit*", "bj-opp-total": "\n\nVastustajan pisteet: ", "bj-vs-opp": "\n\nVastustaja = ",
     "help-bj": "ℹ️ *Blackjack*\n\n*Tavoite* - saada enemmän pisteitä kuin jakaja ylittämättä 21:tä\n\n• Numerokortit lasketaan nimellisarvon mukaan \n• Kuvakorteilla (Jätkä, Kuningatar, Kuningas) on 10 pistettä \n• Ässä on 11 pistettä, mutta jos summa ylittää 21, ässä lasketaan 1 pisteeksi \n\n*Yhdistelmät:* \n• Ässä + 10 pisteen kortti = Blackjack \n• Blackjack voittaa minkä tahansa muun 21 pisteen yhdistelmän \n\nPelissä käytetään 8 korttipakkaa, joten samat kortit voivat toistua",
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
@@ -158,7 +158,7 @@
     "rps-stone": "🪨 Kivi", "rps-scissors": "✂️ Sakset", "rps-paper": "📄 Paperi", "rps-lizard": "🦎 Lisko", "rps-spock": "🖖 Spock",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
     "rps-chosen": "✅ Valittu", "rps-waiting": "⏳ Odotetaan...",
-    "rps-make-choice": "Tee valintasi", "rps-my-chosen": "Valitsit", "rps-opp-waiting": "Odotetaan vastustajaa",
+    "rps-make-choice": "❓ Tee valintasi", "rps-my-chosen": "Valitsit", "rps-opp-waiting": "Odotetaan vastustajaa",
     "setting-mode": "Tila", "setting-size": "Koko", "setting-cmplx": "Vaikeustaso",
     "help-rps": "ℹ️ Valitse yksi vaihtoehdoista: 🪨 Kivi, ✂️ Sakset tai 📄 Paperi \n\n• 🪨 Kivi voittaa ✂️ Sakset \n• ✂️ Sakset voittavat 📄 Paperin \n• 📄 Paperi voittaa 🪨 Kiven \n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
     "help-rpssl": "ℹ️ Valitse yksi viidestä vaihtoehdosta: 🪨 Kivi, ✂️ Sakset, 📄 Paperi, 🦎 Lisko tai 🖖 Spock \n\n• ✂️ Sakset leikkaavat 📄 Paperin \n• 📄 Paperi peittää 🪨 Kiven \n• 🪨 Kivi murskaavat 🦎 Liskon \n• 🦎 Lisko myrkyttää 🖖 Spockin \n• 🖖 Spock rikkoo ✂️ Sakset \n• ✂️ Sakset katkaavat 🦎 Liskon pään \n• 🦎 Lisko syö 📄 Paperin \n• 📄 Paperi kumoaa 🖖 Spockin \n• 🖖 Spock höyrystää 🪨 Kiven \n• 🪨 Kivi tylsistyttää ✂️ Sakset\n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
@@ -227,7 +227,7 @@
 
     "menu-bj": "🃏 Блэкджек", "game-bj": "🃏 Блэкджек", "cards-comp": "🎰 *Карты дилера*", "card-closed": "\n❓🃏 Закрытая карта", "cards-user": "\n\n👤 *Ваши карты*",
     "cost-comp": "\n\nДилер = ", "cost-user": " | Вы = ", "menu-more": "🃏 Еще", "menu-stop": "✋ Хватит", "bj-comp": "\nУ дилера", "bj-user": "\nУ вас", "bj-blackjack": " Блэкджек!",
-    "bj-my-total": "\n\nВаш итог: ", "bj-opp-cards": "\n\n👤 *Карты соперника*", "bj-opp-total": "\n\nИтог соперника: ",
+    "bj-my-total": "\n\nВаш итог: ", "bj-opp-cards": "\n\n👤 *Карты соперника*", "bj-opp-total": "\n\nИтог соперника: ", "bj-vs-opp": "\n\nПротивник = ",
     "help-bj": "ℹ️ *Блэкджек* \n\n*Цель игры* - набрать очков больше дилера, не превысив 21\n\n• Карты с числами дают очков по своему номеру \n• Картинки (валет, дама, король) - по 10 очков \n• Туз дает 11 очков, но если сумма превышает 21, то Туз дает 1 очко \n\n*Комбинации:* \n• Туз + Карта с 10 очками = Блэкджек \n• Блэкджек бьет любую другую комбинацию с 21 очком \n\nВ игре используется 8 колод, так что возможны повторы карт",
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",
@@ -241,7 +241,7 @@
     "rps-stone": "🪨 Камень", "rps-scissors": "✂️ Ножницы", "rps-paper": "📄 Бумага", "rps-lizard": "🦎 Ящерица", "rps-spock": "🖖 Спок",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
     "rps-chosen": "✅ Выбрано", "rps-waiting": "⏳ Ожидание...",
-    "rps-make-choice": "Сделайте выбор", "rps-my-chosen": "Вы выбрали", "rps-opp-waiting": "Ожидание противника",
+    "rps-make-choice": "❓ Сделайте выбор", "rps-my-chosen": "Вы выбрали", "rps-opp-waiting": "Ожидание противника",
     "setting-mode": "Режим", "setting-size": "Размер", "setting-cmplx": "Сложность",
     "help-rps": "ℹ️ Выберите один из вариантов: 🪨 Камень, ✂️ Ножницы или 📄 Бумага \n\n• 🪨 Камень побеждает ✂️ Ножницы \n• ✂️ Ножницы побеждают 📄 Бумагу \n• 📄 Бумага побеждает 🪨 Камень \n\nЕсли у вас и у соперника один и тот же выбор, то это ничья",
     "help-rpssl": "ℹ️ Выберите один из пяти вариантов: 🪨 Камень, ✂️ Ножницы, 📄 Бумага, 🦎 Ящерица или 🖖 Спок \n\n• ✂️ Ножницы режут 📄 Бумагу \n• 📄 Бумага заворачивает 🪨 Камень \n• 🪨 Камень давит 🦎 Ящерицу \n• 🦎 Ящерица травит 🖖 Спока \n• 🖖 Спок ломает ✂️ Ножницы \n• ✂️ Ножницы отрезают голову 🦎 Ящерице \n• 🦎 Ящерица ест 📄 Бумагу \n• 📄 Бумага опровергает 🖖 Спока \n• 🖖 Спок испаряет 🪨 Камень \n• 🪨 Камень затупляет ✂️ Ножницы \n\nЕсли у вас и у соперника один и тот же выбор, то это ничья",

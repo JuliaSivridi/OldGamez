@@ -143,6 +143,7 @@ def render_duel_text_for_viewer(title: str, state: dict, lang: dict,
     lines.append("")
     my_wins = state["p1_wins"] if is_p1 else state["p2_wins"]
     opp_wins = state["p2_wins"] if is_p1 else state["p1_wins"]
+    lines.append(f"{my_name} {my_wins} : {opp_wins} {opp_name}")
     if final:
         if (final == "p1_wins") == is_p1:
             lines.append(lang["game-win"])
@@ -150,11 +151,10 @@ def render_duel_text_for_viewer(title: str, state: dict, lang: dict,
             lines.append(lang["game-lose"])
     else:
         my_moved = bool(state["current_p1"] if is_p1 else state["current_p2"])
-        if not my_moved:
-            lines.append(lang["rps-make-choice"])
-        else:
-            lines.append(f"{lang['rps-my-chosen']} — {lang['rps-opp-waiting']}")
-    lines.append(f"{my_name} {my_wins} : {opp_wins} {opp_name}")
+        opp_moved = bool(state["current_p2"] if is_p1 else state["current_p1"])
+        my_icon = lang["rps-chosen"] if my_moved else lang["rps-make-choice"]
+        opp_icon = lang["rps-chosen"] if opp_moved else lang["rps-waiting"]
+        lines.append(f"{my_name}: {my_icon}  |  {opp_name}: {opp_icon}")
     return "\n".join(lines)
 
 

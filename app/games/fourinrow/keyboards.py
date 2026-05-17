@@ -26,7 +26,7 @@ def drop_keyboard(session_id: int, board: list[list[int]], sign: int, end_row: i
     for r, row in enumerate(board):
         for c, cell in enumerate(row):
             if r == now_row and c == col:
-                text = SYMBOLS[sign]
+                text = f"({SYMBOLS[sign]})"
             elif r == end_row and c == col:
                 text = SYMBOLS[0]
             else:
