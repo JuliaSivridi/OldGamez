@@ -51,10 +51,15 @@ async def start_lightsout_game(message: Message, user, lang: dict[str, str], siz
     )
 
 
+def _lto_menu_text(lang: dict, user_settings: dict | None) -> str:
+    size = int((user_settings or {}).get("lightsout_size", 5))
+    return f"{lang['game-lightsout']}\n{lang['setting-size']}: {size} × {size}"
+
+
 async def open_lightsout_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-lightsout"],
+        _lto_menu_text(lang, user.settings),
         reply_markup=lightsout_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -75,7 +80,7 @@ async def open_lightsout_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-lightsout"], reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _lto_menu_text(lang, user.settings), reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -120,9 +125,11 @@ async def callback_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"lightsout_size": size, "current_game": game.code})
+    updated = dict(user.settings or {})
+    updated["lightsout_size"] = size
     await safe_edit(
         callback.message,
-        lang["size-saved"],
+        _lto_menu_text(lang, updated),
         reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
 

@@ -41,10 +41,15 @@ def npuzzle_menu_keyboard(lang: dict[str, str], chat_type=None):
     )
 
 
+def _npz_menu_text(lang: dict, user_settings: dict | None) -> str:
+    size = int((user_settings or {}).get("npuzzle_size", 3))
+    return f"{lang['game-npuzzle']}\n{lang['setting-size']}: {size} × {size}"
+
+
 async def open_npuzzle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-npuzzle"],
+        _npz_menu_text(lang, user.settings),
         reply_markup=npuzzle_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -66,7 +71,7 @@ async def open_npuzzle_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-npuzzle"], reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _npz_menu_text(lang, user.settings), reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -111,9 +116,11 @@ async def callback_size(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"npuzzle_size": size, "current_game": game.code})
+    updated = dict(user.settings or {})
+    updated["npuzzle_size"] = size
     await safe_edit(
         callback.message,
-        lang["size-saved"],
+        _npz_menu_text(lang, updated),
         reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
 

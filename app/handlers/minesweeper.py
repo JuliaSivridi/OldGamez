@@ -80,10 +80,19 @@ def minesweeper_menu_keyboard(lang: dict[str, str], chat_type=None):
     )
 
 
+_MINES_TO_CMPLX = {8: "easy", 12: "norm", 16: "hard"}
+
+
+def _mines_menu_text(lang: dict, user_settings: dict | None) -> str:
+    mines = int((user_settings or {}).get("minesweeper_mines", 12))
+    cmplx = _MINES_TO_CMPLX.get(mines, "norm")
+    return f"{lang['game-mines']}\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+
+
 async def open_minesweeper_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-mines"],
+        _mines_menu_text(lang, user.settings),
         reply_markup=minesweeper_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -104,7 +113,7 @@ async def open_minesweeper_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-mines"], reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _mines_menu_text(lang, user.settings), reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -149,9 +158,11 @@ async def callback_cmplx(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"minesweeper_mines": mines_count, "current_game": game.code})
+    updated = dict(user.settings or {})
+    updated["minesweeper_mines"] = mines_count
     await safe_edit(
         callback.message,
-        lang["cmplx-saved"],
+        _mines_menu_text(lang, updated),
         reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
 

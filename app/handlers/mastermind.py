@@ -58,9 +58,14 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
     return "\n".join(lines)
 
 
+def _mm_menu_text(lang: dict, user_settings: dict | None) -> str:
+    cmplx = (user_settings or {}).get("mastermind_cmplx", "easy")
+    return f"{lang['game-mastermind']}\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+
+
 async def open_mastermind_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-mastermind"], reply_markup=mastermind_menu_keyboard(lang, chat_type=message.chat.type))
+    await message.answer(_mm_menu_text(lang, user.settings), reply_markup=mastermind_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 async def start_mastermind_game(message: Message, user, lang, difficulty: str, menu_message_id: int | None = None) -> None:
@@ -92,7 +97,7 @@ async def open_mastermind_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-mastermind"], reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _mm_menu_text(lang, user.settings), reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -139,7 +144,9 @@ async def callback_cmplx(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"mastermind_cmplx": difficulty, "current_game": game.code})
-    await safe_edit(callback.message, lang["cmplx-saved"], reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    updated = dict(user.settings or {})
+    updated["mastermind_cmplx"] = difficulty
+    await safe_edit(callback.message, _mm_menu_text(lang, updated), reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
 
 
 @router.callback_query(F.data.startswith("mm:color:"))
