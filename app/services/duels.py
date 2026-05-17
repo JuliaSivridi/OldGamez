@@ -31,7 +31,7 @@ def build_duel_invite_text(lang: dict[str, str], join_code: str) -> str:
     link = build_duel_link(join_code)
     return "\n\n".join([
         lang["duel-wait"],
-        f"{lang['duel-link']} {link}",
+        f"{lang['duel-link']}\n`{link}`",
     ])
 
 
