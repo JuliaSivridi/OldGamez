@@ -2,6 +2,7 @@ from aiogram import Dispatcher
 
 from app.handlers.battleship import router as battleship_router
 from app.handlers.blackjack import router as blackjack_router
+from app.handlers.donate import router as donate_router
 from app.handlers.bullscows import router as bullscows_router
 from app.handlers.common import router as common_router
 from app.handlers.fourinrow import router as fourinrow_router
@@ -19,6 +20,7 @@ from app.handlers.wordle import router as wordle_router
 
 def register_routers(dispatcher: Dispatcher) -> None:
     dispatcher.include_router(common_router)
+    dispatcher.include_router(donate_router)
     dispatcher.include_router(randomfun_router)
     dispatcher.include_router(hangman_router)
     dispatcher.include_router(ropasci_router)

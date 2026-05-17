@@ -8,6 +8,7 @@
     "contact-dev": "⁉️ Bugs, requests - write to developer", "source-code": "🌐 View source code",
     "menu-set": "⚙️ Settings", "set-back": "🔙 Settings menu", "set-ttl": "⚙️ Settings menu",
     "menu-lang": "🔤 Language", "lang-ask": "🔤 Choose a language", "lang-ok": "✅ Language chosen",
+    "menu-donate": "⭐ Support", "donate-ask": "Choose a donation amount:", "donate-title": "Support OldGamez", "donate-desc": "Thank you for supporting the developer! ☕", "donate-thanks": "Thank you so much! ⭐ Your support means a lot 🙏",
 
     "menu-mode": "🔄 Mode", "chus-mode": "🔄 Select game mode",
     "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
@@ -92,6 +93,7 @@
     "contact-dev": "⁉️ Bugit, toiveet - kirjoita kehittäjälle", "source-code": "🌐 Katso lähdekoodi",
     "menu-set": "⚙️ Asetukset", "set-back": "🔙 Asetusvalikko", "set-ttl": "⚙️ Asetusvalikko",
     "menu-lang": "🔤 Kieli", "lang-ask": "🔤 Valitse kieli", "lang-ok": "✅ Kieli valittu",
+    "menu-donate": "⭐ Tue kehittäjää", "donate-ask": "Valitse lahjoitussumma:", "donate-title": "Tue OldGamez-kehittäjää", "donate-desc": "Kiitos tuestasi! ☕", "donate-thanks": "Suuri kiitos! ⭐ Tukesi merkitsee paljon 🙏",
 
     "menu-mode": "🔄 Tila", "chus-mode": "🔄 Valitse pelitila",
     "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
@@ -176,6 +178,7 @@
     "contact-dev": "⁉️ Ошибки, пожелания - написать разработчику", "source-code": "🌐 Посмотреть исходный код",
     "menu-set": "⚙️ Настройки", "set-back": "🔙 Меню настроек", "set-ttl": "⚙️ Меню настроек",
     "menu-lang": "🔤 Язык", "lang-ask": "🔤 Выбери язык", "lang-ok": "✅ Язык выбран",
+    "menu-donate": "⭐ Поддержать", "donate-ask": "Выбери сумму для доната:", "donate-title": "Поддержать OldGamez", "donate-desc": "Спасибо за поддержку разработчика! ☕", "donate-thanks": "Огромное спасибо! ⭐ Ваша поддержка очень важна 🙏",
 
     "menu-mode": "🔄 Режим", "chus-mode": "🔄 Выбери режим игры",
     "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
