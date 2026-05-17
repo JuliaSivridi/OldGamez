@@ -192,8 +192,8 @@ async def _sync_rps_duel_messages(bot, session, title_key: str, moves: list[str]
 
 # ── Menus ─────────────────────────────────────────────────────────────────────
 
-def _rps_menu_text(lang: dict, user_settings: dict | None, title_key: str) -> str:
-    wins_needed = int((user_settings or {}).get("rps_mode", 1))
+def _rps_menu_text(lang: dict, user_settings: dict | None, title_key: str, settings_key: str = "rps_mode") -> str:
+    wins_needed = int((user_settings or {}).get(settings_key, 1))
     mode_label = MODE_LABEL.get(wins_needed, "?")
     return f"{lang[title_key]}\n{lang['setting-mode']}: {mode_label}"
 
@@ -209,7 +209,7 @@ async def open_ropasci_menu(message: Message, user, lang) -> None:
 async def open_rpssl_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": rpssl_game.code})
     await message.answer(
-        _rps_menu_text(lang, user.settings, "game-rpssl"),
+        _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode"),
         reply_markup=rpssl_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -552,14 +552,14 @@ async def open_rpssl_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": rpssl_game.code})
-    await safe_edit(callback.message, _rps_menu_text(lang, user.settings, "game-rpssl"),
+    await safe_edit(callback.message, _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode"),
                     reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", rpssl_game.code))
 async def menu_new_game_rpssl(callback: CallbackQuery, user, lang) -> None:
-    wins_needed = int((user.settings or {}).get("rps_mode", 1))
+    wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
     state = rpssl_game.new_game_state(wins_needed)
     state["menu_message_id"] = callback.message.message_id
     session = await create_solo_session(user.id, callback.message.chat.id, rpssl_game.code, state)
@@ -572,14 +572,14 @@ async def menu_new_game_rpssl(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("duel", rpssl_game.code))
 async def menu_new_duel_rpssl(callback: CallbackQuery, user, lang) -> None:
-    wins_needed = int((user.settings or {}).get("rps_mode", 1))
+    wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
     await _start_rps_duel(callback.message, user, lang, rpssl_game, wins_needed)
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("group", rpssl_game.code))
 async def menu_new_group_rpssl(callback: CallbackQuery, user, lang) -> None:
-    wins_needed = int((user.settings or {}).get("rps_mode", 1))
+    wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
     await _start_rps_group(callback.message, user, lang, rpssl_game, "rpssl", wins_needed)
     await callback.answer()
 
@@ -664,11 +664,13 @@ async def callback_setmode(callback: CallbackQuery) -> None:
     game_code, wins_needed = parts[2], int(parts[3])
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"rps_mode": wins_needed, "current_game": game_code})
+    is_rpssl = game_code == rpssl_game.code
+    mode_key = "rpssl_mode" if is_rpssl else "rps_mode"
+    await update_user_settings(user.id, {mode_key: wins_needed, "current_game": game_code})
     updated_settings = dict(user.settings or {})
-    updated_settings["rps_mode"] = wins_needed
-    if game_code == rpssl_game.code:
-        await safe_edit(callback.message, _rps_menu_text(lang, updated_settings, "game-rpssl"),
+    updated_settings[mode_key] = wins_needed
+    if is_rpssl:
+        await safe_edit(callback.message, _rps_menu_text(lang, updated_settings, "game-rpssl", "rpssl_mode"),
                         reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     else:
         await safe_edit(callback.message, _rps_menu_text(lang, updated_settings, "game-rps"),
