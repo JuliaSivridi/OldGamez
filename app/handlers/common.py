@@ -9,7 +9,7 @@ from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard, duel_menu_keyboard, main_menu_keyboard
 from app.services.sessions import get_game_stats_bulk
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
@@ -137,6 +137,15 @@ async def cmd_games_command(message: Message) -> None:
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
     await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
+
+
+@router.message(Command("duel"))
+async def cmd_duel_command(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["game-ttl"], reply_markup=duel_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 @router.callback_query(F.data == "menu:stats")
