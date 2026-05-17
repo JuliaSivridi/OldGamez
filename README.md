@@ -18,6 +18,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 🐂 Bulls and Cows | ✅ | | |
 | 📝 Wordle | ✅ | | |
 | 😵 Hangman | ✅ | | |
+| 🧠 Memory | ✅ | | |
 | 🃏 Blackjack | ✅ | ✅ | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 | ✊ Rock Paper Scissors | ✅ | ✅ | ✅ |
@@ -119,6 +120,7 @@ app/
 | `/bullscows` | 🐂 Bulls and Cows |
 | `/wordle` | 📝 Wordle |
 | `/hangman` | 😵 Hangman |
+| `/memory` | 🧠 Memory |
 | `/blackjack` | 🃏 Blackjack |
 | `/random` | 🎲 Random fun (coin, card, dice) |
 | `/rps` | ✊ Rock Paper Scissors |

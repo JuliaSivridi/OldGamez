@@ -337,11 +337,9 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
     if session.mode == SessionMode.group_match:
         player_ids = {p.user_id for p in session.players}
         if user.id not in player_ids:
-            await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
     else:
         if user.id not in {state.get("p1_id"), state.get("p2_id")}:
-            await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
 
     result = g.make_duel_move(state, user.id, move)

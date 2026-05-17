@@ -21,8 +21,6 @@
     "group-already-joined": "You already joined this game.", "group-only": "Group mode is only available in group chats.", 
 
     "menu-xo": "❌⭕️ TicTacToe", "game-xo": "❌⭕️ TicTacToe ", "xo-win-need": "\nTo win, make a line of length ",
-    "xo-not-yours": "This game doesn't belong to you.", "xo-not-your-turn": "It's not your turn now.",
-    "xo-already-finished": "This game is already finished.", "xo-cell-busy": "This cell is already occupied.",
     "help-xo": "ℹ️ *TicTacToe*\n\nThe game starts with the first move made either by the player or the computer (randomly decided) \nThe first move is always made by ❌ \n\n*Goal of the game* - create a continuous line of your symbols ❌ or ⭕: \n↕️ Vertically \n↔️ Horizontally \n↖️↘️ Diagonally ↙️↗️ \nThe length of the line depends on the size of the game board",
 
     "menu-four": "🔴🟡 4 in row", "game-four": "🔴🟡 4 in row ",
@@ -107,8 +105,6 @@
     "group-already-joined": "Olet jo liittynyt tähän peliin.", "group-only": "Ryhmätila on käytettävissä vain ryhmäkeskusteluissa.", 
 
     "menu-xo": "❌⭕️ Ristinolla", "game-xo": "❌⭕️ Ristinolla ", "xo-win-need": "\nVoittaaksesi muodosta rivi, jonka pituus on ",
-    "xo-not-yours": "Tämä peli ei kuulu sinulle.", "xo-not-your-turn": "Ei ole sinun vuorosi.",
-    "xo-already-finished": "Tämä peli on jo päättynyt.", "xo-cell-busy": "Tämä ruutu on jo käytössä.",
     "help-xo": "ℹ️ *Ristinolla*\n\nPeli alkaa joko pelaajan tai tietokoneen siirrolla (arvotaan satunnaisesti) \nEnsimmäinen siirto tehdään aina ❌:llä \n\n*Tavoite* - muodostaa yhtenäinen rivi omista symboleista ❌ tai ⭕: \n↕️ Pystysuunnassa \n↔️ Vaakasuunnassa \n↖️↘️ Vinosuunnassa ↙️↗️ \nRivin pituus riippuu pelilaudan koosta",
 
     "menu-four": "🔴🟡 4 peräkkäin", "game-four": "🔴🟡 4 peräkkäin ",
@@ -193,8 +189,6 @@
     "group-already-joined": "Вы уже присоединились к этой игре.", "group-only": "Групповой режим доступен только в групповых чатах.", 
 
     "menu-xo": "❌⭕️ Крестики-нолики", "game-xo": "❌⭕️ Крестики-нолики ", "xo-win-need": "\nДля победы сделайте линию длиной  ",
-    "xo-not-yours": "Эта игра тебе не принадлежит.", "xo-not-your-turn": "Сейчас не твой ход.",
-    "xo-already-finished": "Эта игра уже завершена.", "xo-cell-busy": "Эта клетка уже занята.",
     "help-xo": "ℹ️ *Крестики-нолики*\n\nИгра начинается с первого хода игрока или компьютера (определяется случайно) \nПервый ход делают крестики ❌ \n\n*Цель игры* - составить из своих символов ❌ или ⭕ непрерывную линию: \n↕️ По вертикали \n↔️ По горизонтали \n↖️↘️ По диагонали ↙️↗️ \nДлина линии зависит от размера игрового поля",
 
     "menu-four": "🔴🟡 Четыре в ряд", "game-four": "🔴🟡 Четыре в ряд ",

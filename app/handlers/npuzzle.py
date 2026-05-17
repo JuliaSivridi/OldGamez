@@ -94,7 +94,7 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["wins"])
+    text = format_game_stats_text(stat, lang, ["played", "wins"])
     await safe_edit(callback.message, text, reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 

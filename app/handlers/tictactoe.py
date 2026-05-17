@@ -491,6 +491,7 @@ async def callback_tictactoe_noop(callback: CallbackQuery) -> None:
 async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
+    await callback.answer()
 
     _, _, session_id_text, position_text = callback.data.split(":")
     session_id = int(session_id_text)
@@ -500,23 +501,18 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     session = await get_session_by_id(session_id)
     if session is None:
-        await callback.answer(lang["duel-missing"], show_alert=True)
         return
 
     state = dict(session.state or {})
     if session.mode == SessionMode.group_match:
         player_ids = {player.user_id for player in session.players}
         if user.id not in player_ids:
-            await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
         if session.status != SessionStatus.active:
-            await callback.answer(lang["xo-already-finished"], show_alert=True)
             return
         if session.current_turn_user_id != user.id:
-            await callback.answer(lang["xo-not-your-turn"], show_alert=True)
             return
         if state["board"][position] != ".":
-            await callback.answer(lang["xo-cell-busy"], show_alert=True)
             return
 
         player_symbol = get_player_symbol(state, user.id)
@@ -564,7 +560,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                     highlight=duel_turn.highlight,
                 ),
             )
-            await callback.answer()
             return
 
         next_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
@@ -586,22 +581,17 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             )
         except Exception:
             pass
-        await callback.answer()
         return
 
     if session.mode == SessionMode.duel_private:
         player_ids = set(get_duel_player_ids(state))
         if user.id not in player_ids:
-            await callback.answer(lang["xo-not-yours"], show_alert=True)
             return
         if session.status != SessionStatus.active:
-            await callback.answer(lang["xo-already-finished"], show_alert=True)
             return
         if session.current_turn_user_id != user.id:
-            await callback.answer(lang["xo-not-your-turn"], show_alert=True)
             return
         if state["board"][position] != ".":
-            await callback.answer(lang["xo-cell-busy"], show_alert=True)
             return
 
         player_symbol = get_player_symbol(state, user.id)
@@ -645,7 +635,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 current_chat_id=callback.message.chat.id,
                 current_chat_type=callback.message.chat.type,
             )
-            await callback.answer()
             return
 
         next_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
@@ -653,20 +642,15 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         updated_session = await update_session_state(session.id, state, next_user_id)
         if updated_session is not None:
             await sync_duel_messages(callback.bot, updated_session)
-        await callback.answer()
         return
 
     if session.created_by_user_id != user.id:
-        await callback.answer(lang["xo-not-yours"], show_alert=True)
         return
     if session.status != SessionStatus.active:
-        await callback.answer(lang["xo-already-finished"], show_alert=True)
         return
     if state["current_turn"] != "user":
-        await callback.answer(lang["xo-not-your-turn"], show_alert=True)
         return
     if state["board"][position] != ".":
-        await callback.answer(lang["xo-cell-busy"], show_alert=True)
         return
 
     menu_msg_id = state.get("menu_message_id")
@@ -702,7 +686,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             except Exception:
                 pass
         await open_tictactoe_menu(callback.message, user, lang)
-        await callback.answer()
         return
 
     state["current_turn"] = "bot"
@@ -716,7 +699,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             highlight=user_turn.highlight,
         ),
     )
-    await callback.answer()
     await asyncio.sleep(1)
 
     bot_position = game.get_smart_move(
@@ -757,7 +739,6 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             except Exception:
                 pass
         await open_tictactoe_menu(callback.message, user, lang)
-        await callback.answer()
         return
 
     state["current_turn"] = "user"
@@ -772,4 +753,3 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             highlight=bot_turn.highlight,
         ),
     )
-    await callback.answer()

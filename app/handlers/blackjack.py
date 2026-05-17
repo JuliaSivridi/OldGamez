@@ -224,7 +224,6 @@ async def join_blackjack_duel(message: Message, user, lang: dict, session) -> No
 async def _handle_duel_action(callback: CallbackQuery, session, user, lang: dict, action: str) -> None:
     state = dict(session.state)
     if user.id not in {state.get("p1_id"), state.get("p2_id")}:
-        await callback.answer(lang["xo-not-yours"], show_alert=True)
         return
 
     is_p1 = user.id == state["p1_id"]
