@@ -29,6 +29,49 @@ class _BaseRPS:
             "status": "active",
         }
 
+    def new_duel_state(self, wins_needed: int, p1_id: int, p2_id: int) -> dict:
+        return {
+            "wins_needed": wins_needed,
+            "history": [],
+            "p1_id": p1_id,
+            "p2_id": p2_id,
+            "p1_wins": 0,
+            "p2_wins": 0,
+            "current_p1": None,
+            "current_p2": None,
+            "status": "active",
+            "message_ids": {},
+        }
+
+    def make_duel_move(self, state: dict, user_id: int, move: str) -> dict:
+        key = "current_p1" if user_id == state["p1_id"] else "current_p2"
+        if state[key] is not None:
+            return {"state": "already_moved", "game_state": state}
+        state[key] = move
+        if state["current_p1"] is None or state["current_p2"] is None:
+            return {"state": "waiting", "game_state": state}
+        p1m, p2m = state["current_p1"], state["current_p2"]
+        if p1m == p2m:
+            r = "draw"
+        elif p2m in self.WINS[p1m]:
+            r = "p1_win"
+        else:
+            r = "p2_win"
+        state["history"] = state["history"] + [{"p1": p1m, "p2": p2m, "result": r}]
+        if r == "p1_win":
+            state["p1_wins"] += 1
+        elif r == "p2_win":
+            state["p2_wins"] += 1
+        state["current_p1"] = None
+        state["current_p2"] = None
+        if state["p1_wins"] >= state["wins_needed"]:
+            state["status"] = "finished"
+            return {"state": "p1_wins", "game_state": state}
+        if state["p2_wins"] >= state["wins_needed"]:
+            state["status"] = "finished"
+            return {"state": "p2_wins", "game_state": state}
+        return {"state": "round_done", "game_state": state}
+
     def make_move(self, state: dict, user_move: str) -> dict:
         result_data = self._resolve(user_move)
         state["history"] = state["history"] + [{

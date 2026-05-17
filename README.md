@@ -10,7 +10,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 |------|:----:|:------------:|:-----:|
 | ❌⭕ Tic-Tac-Toe | ✅ | ✅ | ✅ |
 | 🔴🟡 Four in a Row | ✅ | ✅ | ✅ |
-| 🚢 Battleship | ✅ | | |
+| 🚢 Battleship | ✅ | ✅ | |
 | 💣 Minesweeper | ✅ | | |
 | 🔆 Lights Out | ✅ | | |
 | 🧩 15-Puzzle | ✅ | | |
@@ -20,8 +20,8 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 😵 Hangman | ✅ | | |
 | 🃏 Blackjack | ✅ | | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
-| ✊ Rock Paper Scissors | ✅ | | |
-| ✊ Rock Paper Scissors Lizard Spock 🖖 | ✅ | | |
+| ✊ Rock Paper Scissors | ✅ | ✅ | ✅ |
+| ✊ Rock Paper Scissors Lizard Spock 🖖 | ✅ | ✅ | ✅ |
 
 ---
 

@@ -158,6 +158,62 @@ class BattleShipGame:
                     comp_stack.append([nx, ny])
         return comp_stack
 
+    def new_duel_state(self, p1_id: int, p2_id: int) -> dict:
+        p1_board = self.place_ships(self.size)
+        p2_board = self.place_ships(self.size)
+        empty_cover = lambda: [[False] * self.size for _ in range(self.size)]
+        first = random.choice([p1_id, p2_id])
+        return {
+            "p1_id": p1_id,
+            "p2_id": p2_id,
+            "p1_board": p1_board,
+            "p2_board": p2_board,
+            "p1_cover": empty_cover(),
+            "p2_cover": empty_cover(),
+            "p1_lives": self.count_lives(p1_board),
+            "p2_lives": self.count_lives(p2_board),
+            "current_turn_user_id": first,
+            "status": "active",
+            "result": None,
+            "message_ids": {},
+        }
+
+    def duel_shot(self, state: dict, user_id: int, row: int, col: int) -> dict:
+        is_p1 = user_id == state["p1_id"]
+        board_key = "p2_board" if is_p1 else "p1_board"
+        cover_key = "p2_cover" if is_p1 else "p1_cover"
+        lives_key = "p2_lives" if is_p1 else "p1_lives"
+
+        cover = [r[:] for r in state[cover_key]]
+        board = [r[:] for r in state[board_key]]
+        lives = state[lives_key]
+
+        cover[row][col] = True
+        board[row][col] += 1
+
+        if board[row][col] == 3:
+            dead_check = self.is_ship_dead(board, row, col)
+            if dead_check["dead"]:
+                for sr, sc in dead_check["ship"]:
+                    if board[sr][sc] == 3:
+                        board[sr][sc] = 4
+                        lives -= 1
+                self.open_sea(cover, board, dead_check["ship"])
+            state[cover_key] = cover
+            state[board_key] = board
+            state[lives_key] = lives
+            if lives <= 0:
+                state["status"] = "finished"
+                state["result"] = "p1_wins" if is_p1 else "p2_wins"
+                return {"game_state": state, "hit": True, "game_over": True}
+            state["current_turn_user_id"] = user_id
+            return {"game_state": state, "hit": True, "game_over": False}
+
+        state[cover_key] = cover
+        state[board_key] = board
+        state["current_turn_user_id"] = state["p2_id"] if is_p1 else state["p1_id"]
+        return {"game_state": state, "hit": False, "game_over": False}
+
     def make_move(self, state: dict, row: int, col: int, is_user: bool) -> dict:
         cover_key = "bot_cover" if is_user else "user_cover"
         board_key = "bot_board" if is_user else "user_board"

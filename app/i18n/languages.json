@@ -73,6 +73,7 @@
     "menu-rps": "🪨 📄 ✂️", "game-rps": "🪨 Rock 📄 Paper ✂️ Scissors", "menu-rpssl": "🪨 📄 ✂️ 🖖 🦎", "game-rpssl": "🪨 Rock 📄 Paper ✂️ Scissors 🖖 Spock 🦎 Lizard",
     "rps-stone": "🪨 Rock", "rps-scissors": "✂️ Scissors", "rps-paper": "📄 Paper", "rps-lizard": "🦎 Lizard", "rps-spock": "🖖 Spock",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
+    "rps-chosen": "✅ Choice made", "rps-waiting": "⏳ Waiting...",
     "help-rps": "ℹ️ Choose one of the options: 🪨 Rock, ✂️ Scissors, or 📄 Paper \n\n• 🪨 Rock beats ✂️ Scissors \n• ✂️ Scissors beat 📄 Paper \n• 📄 Paper beats 🪨 Rock \n\nIf you and your opponent make the same choice, it's a draw",
     "help-rpssl": "ℹ️ Choose one of five options: 🪨 Rock, ✂️ Scissors, 📄 Paper, 🦎 Lizard or 🖖 Spock \n\n• ✂️ Scissors cut 📄 Paper \n• 📄 Paper covers 🪨 Rock \n• 🪨 Rock crushes 🦎 Lizard \n• 🦎 Lizard poisons 🖖 Spock \n• 🖖 Spock smashes ✂️ Scissors \n• ✂️ Scissors decapitate 🦎 Lizard \n• 🦎 Lizard eats 📄 Paper \n• 📄 Paper disproves 🖖 Spock \n• 🖖 Spock vaporizes 🪨 Rock \n• 🪨 Rock crushes ✂️ Scissors\n\nIf you and your opponent make the same choice, it's a draw",
 
@@ -152,6 +153,7 @@
     "menu-rps": "🪨 📄 ✂️", "game-rps": "🪨 Kivi 📄 Paperi ✂️ Sakset", "menu-rpssl": "🪨 📄 ✂️ 🦎 🖖", "game-rpssl": "🪨 Kivi 📄 Paperi ✂️ Sakset 🦎 Lisko 🖖 Spock",
     "rps-stone": "🪨 Kivi", "rps-scissors": "✂️ Sakset", "rps-paper": "📄 Paperi", "rps-lizard": "🦎 Lisko", "rps-spock": "🖖 Spock",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
+    "rps-chosen": "✅ Valittu", "rps-waiting": "⏳ Odotetaan...",
     "help-rps": "ℹ️ Valitse yksi vaihtoehdoista: 🪨 Kivi, ✂️ Sakset tai 📄 Paperi \n\n• 🪨 Kivi voittaa ✂️ Sakset \n• ✂️ Sakset voittavat 📄 Paperin \n• 📄 Paperi voittaa 🪨 Kiven \n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
     "help-rpssl": "ℹ️ Valitse yksi viidestä vaihtoehdosta: 🪨 Kivi, ✂️ Sakset, 📄 Paperi, 🦎 Lisko tai 🖖 Spock \n\n• ✂️ Sakset leikkaavat 📄 Paperin \n• 📄 Paperi peittää 🪨 Kiven \n• 🪨 Kivi murskaavat 🦎 Liskon \n• 🦎 Lisko myrkyttää 🖖 Spockin \n• 🖖 Spock rikkoo ✂️ Sakset \n• ✂️ Sakset katkaavat 🦎 Liskon pään \n• 🦎 Lisko syö 📄 Paperin \n• 📄 Paperi kumoaa 🖖 Spockin \n• 🖖 Spock höyrystää 🪨 Kiven \n• 🪨 Kivi tylsistyttää ✂️ Sakset\n\nJos molemmat valitsevat saman, on kyseessä tasapeli",
 
@@ -231,6 +233,7 @@
     "menu-rps": "🪨 ✂️ 📄", "game-rps": "🪨 Камень ✂️ Ножницы 📄 Бумага", "menu-rpssl": "🪨 ✂️ 📄 🦎 🖖", "game-rpssl": "🪨 Камень ✂️ Ножницы 📄 Бумага 🦎 Ящерица 🖖 Спок",
     "rps-stone": "🪨 Камень", "rps-scissors": "✂️ Ножницы", "rps-paper": "📄 Бумага", "rps-lizard": "🦎 Ящерица", "rps-spock": "🖖 Спок",
     "rps-win": "🏆", "rps-loss": "💀", "rps-draw": "🤝",
+    "rps-chosen": "✅ Выбрано", "rps-waiting": "⏳ Ожидание...",
     "help-rps": "ℹ️ Выберите один из вариантов: 🪨 Камень, ✂️ Ножницы или 📄 Бумага \n\n• 🪨 Камень побеждает ✂️ Ножницы \n• ✂️ Ножницы побеждают 📄 Бумагу \n• 📄 Бумага побеждает 🪨 Камень \n\nЕсли у вас и у соперника один и тот же выбор, то это ничья",
     "help-rpssl": "ℹ️ Выберите один из пяти вариантов: 🪨 Камень, ✂️ Ножницы, 📄 Бумага, 🦎 Ящерица или 🖖 Спок \n\n• ✂️ Ножницы режут 📄 Бумагу \n• 📄 Бумага заворачивает 🪨 Камень \n• 🪨 Камень давит 🦎 Ящерицу \n• 🦎 Ящерица травит 🖖 Спока \n• 🖖 Спок ломает ✂️ Ножницы \n• ✂️ Ножницы отрезают голову 🦎 Ящерице \n• 🦎 Ящерица ест 📄 Бумагу \n• 📄 Бумага опровергает 🖖 Спока \n• 🖖 Спок испаряет 🪨 Камень \n• 🪨 Камень затупляет ✂️ Ножницы \n\nЕсли у вас и у соперника один и тот же выбор, то это ничья",
 

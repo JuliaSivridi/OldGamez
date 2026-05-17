@@ -11,6 +11,9 @@ JoinHandler = Callable[[Message, object, dict[str, str], object], Awaitable[None
 PRIVATE_DUEL_HANDLERS: dict[str, str] = {
     "tic_tac_toe": "app.handlers.tictactoe:join_private_duel",
     "four_in_row": "app.handlers.fourinrow:join_private_duel",
+    "ropasci": "app.handlers.ropasci:join_rps_private_duel",
+    "rpssl": "app.handlers.ropasci:join_rpssl_private_duel",
+    "battleship": "app.handlers.battleship:join_battleship_duel",
 }
 
 
