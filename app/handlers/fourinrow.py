@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from aiogram import F, Router
 from aiogram.enums import ChatType
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramRetryAfter
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
@@ -126,6 +126,7 @@ async def _run_drop_animation(
             await message.edit_text(text, reply_markup=markup)
         except Exception:
             pass
+    await asyncio.sleep(0.3)
 
 
 async def animate_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], is_user: bool) -> None:
@@ -533,13 +534,17 @@ async def callback_col(callback: CallbackQuery) -> None:
         state["current_turn_user_id"] = next_user_id
         await animate_group_drop(callback.message, session.id, state["board"], player_sign, move_row, move_col, group_lang, player_names, state)
         await update_session_state(session.id, state, next_user_id)
-        try:
-            await callback.message.edit_text(
-                render_group_status_text(group_lang, state, player_names),
-                reply_markup=board_keyboard(session.id, state["board"], True, duel_result["line"]),
-            )
-        except Exception:
-            pass
+        for _ in range(3):
+            try:
+                await callback.message.edit_text(
+                    render_group_status_text(group_lang, state, player_names),
+                    reply_markup=board_keyboard(session.id, state["board"], True, duel_result["line"]),
+                )
+                break
+            except TelegramRetryAfter as e:
+                await asyncio.sleep(e.retry_after)
+            except Exception:
+                break
         return
 
     if session.mode == SessionMode.duel_private:

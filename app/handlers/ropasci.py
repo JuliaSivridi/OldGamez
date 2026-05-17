@@ -115,10 +115,10 @@ def render_multi_text(title: str, state: dict, lang: dict,
     elif final == "p2_wins":
         lines.append(f"💀 {p1_name} {p1_wins} : {p2_wins} {p2_name} 🏆")
     else:
-        p1_icon = lang["rps-chosen"] if state.get("current_p1") else lang["rps-waiting"]
-        p2_icon = lang["rps-chosen"] if state.get("current_p2") else lang["rps-waiting"]
-        lines.append(f"{p1_name}: {p1_icon}  |  {p2_name}: {p2_icon}")
+        p1_icon = lang["rps-chosen"] if state.get("current_p1") else lang["rps-make-choice"]
+        p2_icon = lang["rps-chosen"] if state.get("current_p2") else lang["rps-make-choice"]
         lines.append(f"{p1_name} {p1_wins} : {p2_wins} {p2_name}")
+        lines.append(f"{p1_name}: {p1_icon}  |  {p2_name}: {p2_icon}")
     return "\n".join(lines)
 
 
