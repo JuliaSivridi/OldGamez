@@ -61,6 +61,7 @@ async def broadcast_private_duel_update(
     player_ids: Iterable[int | None],
     message_map: dict[str, dict[str, int]],
     renderer: Renderer,
+    parse_mode: str | None = None,
 ) -> None:
     for user_id in player_ids:
         if user_id is None:
@@ -75,6 +76,7 @@ async def broadcast_private_duel_update(
                 chat_id=message_meta["chat_id"],
                 message_id=message_meta["message_id"],
                 reply_markup=markup,
+                parse_mode=parse_mode,
             )
         except TelegramBadRequest:
             continue

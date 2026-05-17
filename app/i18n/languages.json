@@ -61,6 +61,7 @@
 
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Dealer cards*", "card-closed": "\n❓🃏 Closed card", "cards-user": "\n\n👤 *Your cards*",
     "cost-comp": "\n\nDealer = ", "cost-user": " | You = ", "menu-more": "🃏 Hit", "menu-stop": "✋ Stand", "bj-comp": " Dealer has", "bj-user": " You have", "bj-blackjack": " Blackjack!",
+    "bj-my-total": "\n\nYour total: ", "bj-opp-cards": "\n\n👤 *Opponent cards*", "bj-opp-total": "\n\nOpponent total: ",
     "help-bj": "ℹ️ *Blackjack*\n\n*Goal of the game* - score more points than the dealer without exceeding 21\n\n• Number cards score their face value \n• Face cards (Jack, Queen, King) score 10 points each \n• An Ace scores 11 points, but if the total exceeds 21, the Ace counts as 1 point \n\n*Combinations:* \n• Ace + 10-point card = Blackjack \n• Blackjack beats any other combination worth 21 points \n\nThe game uses 8 decks of cards, so repeated cards are possible",
 
     "menu-rand": "🎲 Random", "game-rand": "🎲 Random", "menu-guess": "🔢 Guess a number", "guess-low": "🔢 The computer guessed a random number from ", "guess-top": " to ",
@@ -141,6 +142,7 @@
 
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Jakajan kortit*", "card-closed": "\n❓🃏 Suljettu kortti", "cards-user": "\n\n👤 *Sinun korttisi*",
     "cost-comp": "\n\nJakaja = ", "cost-user": " | Sinä = ", "menu-more": "🃏 Nosta", "menu-stop": "✋ Jää", "bj-comp": " Jakajalla on", "bj-user": " Sinulla on", "bj-blackjack": " Blackjack!",
+    "bj-my-total": "\n\nSinun pisteet: ", "bj-opp-cards": "\n\n👤 *Vastustajan kortit*", "bj-opp-total": "\n\nVastustajan pisteet: ",
     "help-bj": "ℹ️ *Blackjack*\n\n*Tavoite* - saada enemmän pisteitä kuin jakaja ylittämättä 21:tä\n\n• Numerokortit lasketaan nimellisarvon mukaan \n• Kuvakorteilla (Jätkä, Kuningatar, Kuningas) on 10 pistettä \n• Ässä on 11 pistettä, mutta jos summa ylittää 21, ässä lasketaan 1 pisteeksi \n\n*Yhdistelmät:* \n• Ässä + 10 pisteen kortti = Blackjack \n• Blackjack voittaa minkä tahansa muun 21 pisteen yhdistelmän \n\nPelissä käytetään 8 korttipakkaa, joten samat kortit voivat toistua",
 
     "menu-rand": "🎲 Satunnainen", "game-rand": "🎲 Satunnainen", "menu-guess": "🔢 Arvaa luku", "guess-low": "🔢 Tietokone arvasi satunnaisen luvun väliltä ", "guess-top": " – ",
@@ -221,6 +223,7 @@
 
     "menu-bj": "🃏 Блэкджек", "game-bj": "🃏 Блэкджек", "cards-comp": "🎰 *Карты дилера*", "card-closed": "\n❓🃏 Закрытая карта", "cards-user": "\n\n👤 *Ваши карты*",
     "cost-comp": "\n\nДилер = ", "cost-user": " | Вы = ", "menu-more": "🃏 Еще", "menu-stop": "✋ Хватит", "bj-comp": "\nУ дилера", "bj-user": "\nУ вас", "bj-blackjack": " Блэкджек!",
+    "bj-my-total": "\n\nВаш итог: ", "bj-opp-cards": "\n\n👤 *Карты соперника*", "bj-opp-total": "\n\nИтог соперника: ",
     "help-bj": "ℹ️ *Блэкджек* \n\n*Цель игры* - набрать очков больше дилера, не превысив 21\n\n• Карты с числами дают очков по своему номеру \n• Картинки (валет, дама, король) - по 10 очков \n• Туз дает 11 очков, но если сумма превышает 21, то Туз дает 1 очко \n\n*Комбинации:* \n• Туз + Карта с 10 очками = Блэкджек \n• Блэкджек бьет любую другую комбинацию с 21 очком \n\nВ игре используется 8 колод, так что возможны повторы карт",
 
     "menu-rand": "🎲 Случайности", "game-rand": "🎲 Случайность", "menu-guess": "🔢 Угадай число", "guess-low": "🔢 Компьютер загадал случайное число от ", "guess-top": " до ",

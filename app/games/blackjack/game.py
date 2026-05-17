@@ -98,3 +98,58 @@ class BlackjackGame:
         state["user_cards"].append(self._random_card(lang))
         state["user_cost"] = self.cards_cost(state["user_cards"])
         return state
+
+    def _random_card_bare(self) -> dict:
+        suits = ["♠️", "♣️", "♥️", "♦️"]
+        ranks = ["!", "🤴", "👸", "👨‍🦰", "🔟", "9️⃣", "8️⃣", "7️⃣", "6️⃣", "5️⃣", "4️⃣", "3️⃣", "2️⃣"]
+        return {"suit": random.choice(suits), "rank": random.choice(ranks)}
+
+    def new_duel_state(self, p1_id: int, p2_id: int) -> dict:
+        p1_cards = [self._random_card_bare(), self._random_card_bare()]
+        p2_cards = [self._random_card_bare(), self._random_card_bare()]
+        p1_cost = self.cards_cost(p1_cards)
+        p2_cost = self.cards_cost(p2_cards)
+        return {
+            "p1_id": p1_id, "p2_id": p2_id,
+            "p1_cards": p1_cards, "p2_cards": p2_cards,
+            "p1_cost": p1_cost, "p2_cost": p2_cost,
+            "p1_done": p1_cost >= 21,
+            "p2_done": p2_cost >= 21,
+            "status": "active", "result": None, "message_ids": {},
+        }
+
+    def duel_hit(self, state: dict, user_id: int) -> dict:
+        is_p1 = user_id == state["p1_id"]
+        ck = "p1_cards" if is_p1 else "p2_cards"
+        vk = "p1_cost" if is_p1 else "p2_cost"
+        dk = "p1_done" if is_p1 else "p2_done"
+        state[ck].append(self._random_card_bare())
+        state[vk] = self.cards_cost(state[ck])
+        state[dk] = state[vk] >= 21
+        return {"game_state": state, "auto_done": state[dk], "both_done": state["p1_done"] and state["p2_done"]}
+
+    def duel_stand(self, state: dict, user_id: int) -> dict:
+        if user_id == state["p1_id"]:
+            state["p1_done"] = True
+        else:
+            state["p2_done"] = True
+        return {"game_state": state, "both_done": state["p1_done"] and state["p2_done"]}
+
+    def resolve_duel(self, state: dict) -> dict:
+        p1v, p2v = state["p1_cost"], state["p2_cost"]
+        p1c, p2c = state["p1_cards"], state["p2_cards"]
+        if p1v > 21 and p2v > 21:
+            result = "both_bust"
+        elif p1v > 21:
+            result = "p2_wins"
+        elif p2v > 21:
+            result = "p1_wins"
+        elif p1v == p2v:
+            p1bj = self.is_blackjack(p1c, p1v)
+            p2bj = self.is_blackjack(p2c, p2v)
+            result = "p1_wins" if (p1bj and not p2bj) else ("p2_wins" if (p2bj and not p1bj) else "draw")
+        else:
+            result = "p1_wins" if p1v > p2v else "p2_wins"
+        state["result"] = result
+        state["status"] = "finished"
+        return state
