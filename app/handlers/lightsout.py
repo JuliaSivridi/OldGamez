@@ -93,7 +93,10 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-size"], reply_markup=size_keyboard(lang))
+    size = int((user.settings or {}).get("lightsout_size", 5))
+    cur = f"{lang[str(size)]}✖️{lang[str(size)]}"
+    text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
+    await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:lightsout"))
     await callback.answer()
 
 

@@ -18,7 +18,7 @@ from app.services.users import update_user_settings, upsert_user
 router = Router()
 
 
-def cmplx_keyboard(lang: dict[str, str]):
+def cmplx_keyboard(lang: dict[str, str], back_callback: str):
     b = InlineKeyboardBuilder()
     for key, value in (
         ("cmplx-easy", 15),
@@ -26,7 +26,8 @@ def cmplx_keyboard(lang: dict[str, str]):
         ("cmplx-hard", 5),
     ):
         b.button(text=lang[key], callback_data=f"hng:cmplx:{value}")
-    b.adjust(3)
+    b.button(text=lang["main-back"], callback_data=back_callback)
+    b.adjust(3, 1)
     return b.as_markup()
 
 
@@ -115,7 +116,10 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("cmplx", game.code))
 async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-cmplx"], reply_markup=cmplx_keyboard(lang))
+    lives = int((user.settings or {}).get("hangman_lives", 10))
+    cmplx = _LIVES_TO_CMPLX.get(lives, "norm")
+    text = f"{lang['chus-cmplx']}\n\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+    await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:hang"))
     await callback.answer()
 
 

@@ -110,7 +110,9 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("cmplx", game.code))
 async def menu_cmplx(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-cmplx"], reply_markup=cmplx_keyboard(lang))
+    cmplx = (user.settings or {}).get("mastermind_cmplx", "easy")
+    text = f"{lang['chus-cmplx']}\n\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+    await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:mastermind"))
     await callback.answer()
 
 

@@ -27,9 +27,10 @@ def game_keyboard(session_id: int, state: dict, active: bool, lang: dict) -> Inl
     return builder.as_markup()
 
 
-def size_keyboard(lang: dict) -> InlineKeyboardMarkup:
+def size_keyboard(lang: dict, back_callback: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for size in (4, 5, 6):
         builder.button(text=lang[str(size)], callback_data=f"bc:size:{size}")
-    builder.adjust(3)
+    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.adjust(3, 1)
     return builder.as_markup()

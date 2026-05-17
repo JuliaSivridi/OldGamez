@@ -8,6 +8,7 @@ from app.handlers.fourinrow import router as fourinrow_router
 from app.handlers.hangman import router as hangman_router
 from app.handlers.lightsout import router as lightsout_router
 from app.handlers.mastermind import router as mastermind_router
+from app.handlers.memory import router as memory_router
 from app.handlers.minesweeper import router as minesweeper_router
 from app.handlers.npuzzle import router as npuzzle_router
 from app.handlers.randomfun import router as randomfun_router
@@ -30,4 +31,5 @@ def register_routers(dispatcher: Dispatcher) -> None:
     dispatcher.include_router(battleship_router)
     dispatcher.include_router(mastermind_router)
     dispatcher.include_router(bullscows_router)
+    dispatcher.include_router(memory_router)
     dispatcher.include_router(wordle_router)

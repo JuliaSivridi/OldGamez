@@ -1,7 +1,7 @@
 {
   "en": {
     "hi1": "Hello, ", "hi2": " 😋", 
-    "choose-game": "\n\nChoose a game", "menu-games": "🕹 Games", "game-ttl": "🕹 Choose a game", 
+    "choose-game": "\n\nChoose a game", "menu-games": "🕹 All games", "menu-duels": "👥 Duel games", "game-ttl": "🕹 Choose a game",
     "main-back": "⬅️ Back", "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Statistics", "stat-ttl": "📊 Statistics", "stat-sum": "Summary: ", "stat-all": "\n🕹 Games played: ", "stat-win": "\n🥇 Win: ", "stat-lose": "\n💀 Lose: ", "stat-draw": "\n🤝 Draw: ",
     "menu-help": "ℹ️ Help", "help": "ℹ️ There could be some help here",
@@ -10,8 +10,8 @@
     "menu-lang": "🔤 Language", "lang-ask": "🔤 Choose a language", "lang-ok": "✅ Language chosen",
 
     "menu-mode": "🔄 Mode", "chus-mode": "🔄 Select game mode",
-    "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-saved": "✅ Difficulty set", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
-    "menu-size": "🔢 Size", "chus-size": "🔢 Set board size", "size-saved": "✅ Size set", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
+    "menu-cmplx": "🧐 Difficulty", "chus-cmplx": "🧐 Select difficulty level", "cmplx-easy": "🥱 Easy", "cmplx-norm": "🙂 Normal", "cmplx-hard": "😳 Hard",
+    "menu-size": "🔢 Size", "chus-size": "🔢 Set board size", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Draw. 🤝 Thanks for playing!", "game-win": "🙂 Congratulations! 🎉 You won!", "game-lose": "🙁 You lose. Better luck next time!",
 
     "turn-comp": "Computer turn...", "turn-user": "Your turn!", "turn-friend": "Friend's turn!", "group-turn": "Turn:", "group-winner": "Winner:", 
@@ -59,6 +59,9 @@
     "menu-hang": "😵 Hangman", "game-hang": "😵 Hangman", "hang-lives": "Lives: ", "hang-cmplx": "\n\n🥱 Easy - 15 lives \n🙂 Normal - 10 lives \n😳 Hard - 5 lives ", "hang-one": "👀 Open one letter",
     "help-hang": "ℹ️ *How to Play Hangman* \n\n*Goal of the game* – guess the word within the allotted number of attempts \n\n• The hidden word is shown as blank spaces, e.g.: \\_ \\_ \\_ \\_ \n• You select letters one by one \n• If the letter is in the word, it appears in the correct positions \n• If the letter is not in the word, you lose an attempt \n• If you fail to guess the word within these attempts, the game ends\n\nYou have an unlimited number of hints 😎 When using a hint, the victory is not counted in the statistics\n\nThe game uses frequently used word lists",
 
+    "menu-mem": "🧠 Memory", "game-mem": "🧠 Memory", "mem-moves": "Moves: ", "mem-found": "Found: ", "mem-win": "Found all pairs in ", "mem-win2": " moves!",
+    "help-mem": "ℹ️ *Memory*\n\nFind all matching pairs of emoji!\n\n• Tap any face-down card (⬜) to flip it\n• Flip a second card — if they match, they stay open\n• If they don't match, both flip back after a moment\n• Find all pairs to win\n• No move limit, no time limit",
+
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Dealer cards*", "card-closed": "\n❓🃏 Closed card", "cards-user": "\n\n👤 *Your cards*",
     "cost-comp": "\n\nDealer = ", "cost-user": " | You = ", "menu-more": "🃏 Hit", "menu-stop": "✋ Stand", "bj-comp": " Dealer has", "bj-user": " You have", "bj-blackjack": " Blackjack!",
     "bj-my-total": "\n\nYour total: ", "bj-opp-cards": "\n\n👤 *Opponent cards*", "bj-opp-total": "\n\nOpponent total: ", "bj-vs-opp": "\n\nOpponent = ",
@@ -84,7 +87,7 @@
   },
   "fi": {
     "hi1": "Hei, ", "hi2": " 😋", 
-    "choose-game": "\n\nValitse peli", "menu-games": "🕹 Pelit", "game-ttl": "🕹 Valitse peli", 
+    "choose-game": "\n\nValitse peli", "menu-games": "🕹 Kaikki pelit", "menu-duels": "👥 Duelipelit", "game-ttl": "🕹 Valitse peli",
     "main-back": "⬅️ Takaisin", "main-ttl": "👾 Päävalikko",
     "menu-stat": "📊 Tilastot", "stat-ttl": "📊 Tilastot", "stat-sum": "Yhteensä: ", "stat-all": "\n🕹 Pelejä pelattu: ", "stat-win": "\n🥇 Voitot: ", "stat-lose": "\n💀 Häviöt: ", "stat-draw": "\n🤝 Tasapelit: ",
     "menu-help": "ℹ️ Ohje", "help": "ℹ️ Täällä voisi olla ohjeita",
@@ -93,8 +96,8 @@
     "menu-lang": "🔤 Kieli", "lang-ask": "🔤 Valitse kieli", "lang-ok": "✅ Kieli valittu",
 
     "menu-mode": "🔄 Tila", "chus-mode": "🔄 Valitse pelitila",
-    "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-saved": "✅ Vaikeustaso asetettu", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
-    "menu-size": "🔢 Koko", "chus-size": "🔢 Aseta laudan koko", "size-saved": "✅ Koko asetettu", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
+    "menu-cmplx": "🧐 Vaikeustaso", "chus-cmplx": "🧐 Valitse vaikeustaso", "cmplx-easy": "🥱 Helppo", "cmplx-norm": "🙂 Normaali", "cmplx-hard": "😳 Vaikea",
+    "menu-size": "🔢 Koko", "chus-size": "🔢 Aseta laudan koko", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Tasapeli. 🤝 Kiitos pelaamisesta!", "game-win": "🙂 Onnittelut! 🎉 Voitit!", "game-lose": "🙁 Hävisit. Onnea ensi kerralla!",
 
     "turn-comp": "Tietokoneen vuoro...", "turn-user": "Sinun vuorosi!", "turn-friend": "Kaverin vuoro!", "group-turn": "Vuoro:", "group-winner": "Voittaja:", 
@@ -142,6 +145,9 @@
     "menu-hang": "😵 Hirttopeli", "game-hang": "😵 Hirttopeli", "hang-lives": "Elämät: ", "hang-cmplx": "\n\n🥱 Helppo - 15 elämää \n🙂 Normaali - 10 elämää \n😳 Vaikea - 5 elämää ", "hang-one": "👀 Avaa yksi kirjain",
     "help-hang": "ℹ️ *Hirttopelin säännöt* \n\n*Tavoite* – arvaa sana annetussa yritysmäärässä \n\n• Piilotettu sana näytetään väliviivoina, esim.: \\_ \\_ \\_ \\_ \n• Valitset kirjaimia yksi kerrallaan \n• Jos kirjain on sanassa, se ilmestyy oikeille paikoilleen \n• Jos kirjainta ei ole sanassa, menetät yhden yrityksen \n• Jos et arvaa sanaa yrityksissä, peli päättyy\n\nVihjeitä voi käyttää rajattomasti 😎 Vinkin käyttäminen ei tilastoidu voittona\n\nPeli käyttää yleisimpiä sanalistoja",
 
+    "menu-mem": "🧠 Muistipeli", "game-mem": "🧠 Muistipeli", "mem-moves": "Siirtoja: ", "mem-found": "Löydetty: ", "mem-win": "Kaikki parit löydetty ", "mem-win2": " siirrossa!",
+    "help-mem": "ℹ️ *Muistipeli*\n\nLöydä kaikki vastaavat emoji-parit!\n\n• Napauta kääntynyttä korttia (⬜) kääntääksesi se\n• Käännä toinen kortti — jos ne täsmäävät, ne jäävät auki\n• Jos ne eivät täsmää, molemmat kääntyvät takaisin\n• Löydä kaikki parit voittaaksesi\n• Ei siirtorajoitusta, ei aikarajoitusta",
+
     "menu-bj": "🃏 Blackjack", "game-bj": "🃏 Blackjack", "cards-comp": "🎰 *Jakajan kortit*", "card-closed": "\n❓🃏 Suljettu kortti", "cards-user": "\n\n👤 *Sinun korttisi*",
     "cost-comp": "\n\nJakaja = ", "cost-user": " | Sinä = ", "menu-more": "🃏 Nosta", "menu-stop": "✋ Jää", "bj-comp": " Jakajalla on", "bj-user": " Sinulla on", "bj-blackjack": " Blackjack!",
     "bj-my-total": "\n\nSinun pisteet: ", "bj-opp-cards": "\n\n👤 *Vastustajan kortit*", "bj-opp-total": "\n\nVastustajan pisteet: ", "bj-vs-opp": "\n\nVastustaja = ",
@@ -167,7 +173,7 @@
     },
   "ru": {
     "hi1": "Привет, ", "hi2": " 😋", 
-    "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Игры", "game-ttl": "🕹 Выберите игру", 
+    "choose-game": "\n\nВыберите игру", "menu-games": "🕹 Все игры", "menu-duels": "👥 Игры дуэли", "game-ttl": "🕹 Выберите игру",
     "main-back": "⬅️ Назад", "main-ttl": "👾 Главное меню",
     "menu-stat": "📊 Статистика", "stat-ttl": "📊 Статистика", "stat-sum": "Итого: ", "stat-all": "\n🕹 Игр сыграно: ", "stat-win": "\n🥇 Побед: ", "stat-lose": "\n💀 Поражений: ", "stat-draw": "\n🤝 Ничьих: ",
     "menu-help": "ℹ️ Помощь", "help": "ℹ️ Тут могла бы быть справка",
@@ -176,8 +182,8 @@
     "menu-lang": "🔤 Язык", "lang-ask": "🔤 Выбери язык", "lang-ok": "✅ Язык выбран",
 
     "menu-mode": "🔄 Режим", "chus-mode": "🔄 Выбери режим игры",
-    "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-saved": "✅ Сложность установлена", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
-    "menu-size": "🔢 Размер", "chus-size": "🔢 Установить размер поля", "size-saved": "✅ Размер установлен", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
+    "menu-cmplx": "🧐 Сложность", "chus-cmplx": "🧐 Выберите уровень сложности", "cmplx-easy": "🥱 Легко", "cmplx-norm": "🙂 Нормально", "cmplx-hard": "😳 Сложно",
+    "menu-size": "🔢 Размер", "chus-size": "🔢 Установить размер поля", "3": "3️⃣", "4": "4️⃣", "5": "5️⃣", "6": "6️⃣", "7": "7️⃣", "8": "8️⃣",
     "game-draw": "😐 Ничья. 🤝 Спасибо за игру!", "game-win": "🙂 Поздравляю! 🎉 Вы выиграли!", "game-lose": "🙁 Вы проиграли. Удачи в другой раз!",
 
     "turn-comp": "Ход компьютера...", "turn-user": "Ваш ход!", "turn-friend": "Ход друга!", "group-turn": "Ход:", "group-winner": "Победитель:", 
@@ -224,6 +230,9 @@
 
     "menu-hang": "😵 Виселица", "game-hang": "😵 Виселица", "hang-lives": "Жизней: ", "hang-cmplx": "\n\n🥱 Легко - 15 жизней \n🙂 Нормально - 10 жизней \n😳 Сложно - 5 жизней ", "hang-one": "👀 Открыть одну букву",
     "help-hang": "ℹ️ *Виселица* \n\n*Цель игры* – угадать слово за отведенное количество попыток \n\n• Загаданное слово отображается в виде пустых ячеек, например: \\_ \\_ \\_ \\_ \n• Вы выбираете буквы по одной \n• Если буква есть в слове, она появляется в соответствующих местах \n• Если буквы нет в слове, вы теряете попытку \n• Если попытки закончились - игра заканчивается\n\nУ вас есть неограниченное число подсказок 😎 При использовании подсказки победа не засчитывается в статистике\n\nДля игры используются списки самых часто употребляемых слов",
+
+    "menu-mem": "🧠 Память", "game-mem": "🧠 Память", "mem-moves": "Ходов: ", "mem-found": "Найдено: ", "mem-win": "Все пары найдены за ", "mem-win2": " ходов!",
+    "help-mem": "ℹ️ *Память*\n\nНайди все совпадающие пары эмодзи!\n\n• Нажми на любую закрытую карточку (⬜), чтобы её открыть\n• Открой вторую — если совпадают, остаются открытыми\n• Если не совпадают, обе закрываются через мгновение\n• Найди все пары — победа!\n• Без ограничений ходов и времени",
 
     "menu-bj": "🃏 Блэкджек", "game-bj": "🃏 Блэкджек", "cards-comp": "🎰 *Карты дилера*", "card-closed": "\n❓🃏 Закрытая карта", "cards-user": "\n\n👤 *Ваши карты*",
     "cost-comp": "\n\nДилер = ", "cost-user": " | Вы = ", "menu-more": "🃏 Еще", "menu-stop": "✋ Хватит", "bj-comp": "\nУ дилера", "bj-user": "\nУ вас", "bj-blackjack": " Блэкджек!",

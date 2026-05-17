@@ -10,9 +10,10 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-four"], callback_data="game:four")
         builder.button(text=lang["menu-rps"], callback_data="game:rps")
         builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
+        builder.button(text=lang["menu-duels"], callback_data="menu:duels")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats")
         builder.button(text=lang["menu-lang"], callback_data="menu:lang")
-        builder.adjust(2, 2, 2)
+        builder.adjust(2, 2, 1, 2)
     else:
         builder.button(text=lang["menu-xo"], callback_data="game:xo")
         builder.button(text=lang["menu-sea"], callback_data="game:sea")
@@ -24,13 +25,15 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-bullscows"], callback_data="game:bullscows")
         builder.button(text=lang["menu-wordle"], callback_data="game:wordle")
         builder.button(text=lang["menu-hang"], callback_data="game:hang")
+        builder.button(text=lang["menu-mem"], callback_data="game:mem")
         builder.button(text=lang["menu-bj"], callback_data="game:bj")
         builder.button(text=lang["menu-rand"], callback_data="game:rand")
         builder.button(text=lang["menu-rps"], callback_data="game:rps")
         builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
+        builder.button(text=lang["menu-duels"], callback_data="menu:duels")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats")
         builder.button(text=lang["menu-lang"], callback_data="menu:lang")
-        builder.adjust(2, 2, 2, 2, 2, 2, 2, 2)
+        builder.adjust(2, 2, 2, 2, 2, 1, 2, 2, 1, 2)
     return builder.as_markup()
 
 
@@ -42,9 +45,10 @@ def duel_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
     builder.button(text=lang["menu-bj"], callback_data="game:bj")
     builder.button(text=lang["menu-rps"], callback_data="game:rps")
     builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
+    builder.button(text=lang["menu-games"], callback_data="menu:games")
     builder.button(text=lang["menu-stat"], callback_data="menu:stats")
     builder.button(text=lang["menu-lang"], callback_data="menu:lang")
-    builder.adjust(2, 2, 2, 2)
+    builder.adjust(2, 2, 2, 1, 2)
     return builder.as_markup()
 
 

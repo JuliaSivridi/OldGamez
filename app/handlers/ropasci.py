@@ -53,11 +53,12 @@ def rpssl_menu_keyboard(lang, chat_type=None) -> InlineKeyboardMarkup:
                                extra_duel_key="duel", extra_group_key="group", chat_type=chat_type)
 
 
-def rps_mode_keyboard(game_code: str) -> InlineKeyboardMarkup:
+def rps_mode_keyboard(game_code: str, back_callback: str, lang: dict) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for wins_needed, label in [(1, "1 / 1"), (2, "2 / 3"), (3, "3 / 5")]:
         builder.button(text=label, callback_data=f"rps:setmode:{game_code}:{wins_needed}")
-    builder.adjust(3)
+    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.adjust(3, 1)
     return builder.as_markup()
 
 
@@ -467,7 +468,9 @@ async def menu_new_group_rps(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("mode", game.code))
 async def menu_rps_mode(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-mode"], reply_markup=rps_mode_keyboard(game.code))
+    wins_needed = int((user.settings or {}).get("rps_mode", 1))
+    text = f"{lang['chus-mode']}\n\n{lang['setting-mode']}: {MODE_LABEL.get(wins_needed, '?')}"
+    await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(game.code, "game:rps", lang))
     await callback.answer()
 
 
@@ -586,7 +589,9 @@ async def menu_new_group_rpssl(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("mode", rpssl_game.code))
 async def menu_rpssl_mode(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-mode"], reply_markup=rps_mode_keyboard(rpssl_game.code))
+    wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
+    text = f"{lang['chus-mode']}\n\n{lang['setting-mode']}: {MODE_LABEL.get(wins_needed, '?')}"
+    await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(rpssl_game.code, "game:rpssl", lang))
     await callback.answer()
 
 

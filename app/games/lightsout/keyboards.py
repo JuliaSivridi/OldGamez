@@ -5,11 +5,12 @@ ON = "🟨"
 OFF = "⬛"
 
 
-def size_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
+def size_keyboard(lang: dict[str, str], back_callback: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for size in (4, 5, 6):
-        builder.button(text=lang[str(size)], callback_data=f"lto:size:{size}")
-    builder.adjust(3)
+        builder.button(text=f"{lang[str(size)]}✖️{lang[str(size)]}", callback_data=f"lto:size:{size}")
+    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.adjust(3, 1)
     return builder.as_markup()
 
 

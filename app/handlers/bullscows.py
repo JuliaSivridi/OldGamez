@@ -106,7 +106,9 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["chus-size"], reply_markup=size_keyboard(lang))
+    size = int((user.settings or {}).get("bullscows_size", 4))
+    text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {lang[str(size)]}"
+    await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:bullscows"))
     await callback.answer()
 
 

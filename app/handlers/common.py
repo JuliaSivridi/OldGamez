@@ -25,6 +25,7 @@ GAME_CODE_MASTERMIND = "mastermind"
 GAME_CODE_BULLSCOWS = "bullscows"
 GAME_CODE_WORDLE = "wordle"
 GAME_CODE_HANGMAN = "hangman"
+GAME_CODE_MEMORY = "memory"
 GAME_CODE_BLACKJACK = "blackjack"
 GAME_CODE_RANDOM = "random"
 GAME_CODE_RPS = "ropasci"
@@ -42,6 +43,7 @@ GAME_STATS_ORDER: list[tuple[str, str]] = [
     (GAME_CODE_BULLSCOWS, "menu-bullscows"),
     (GAME_CODE_WORDLE, "menu-wordle"),
     (GAME_CODE_HANGMAN, "menu-hang"),
+    (GAME_CODE_MEMORY, "menu-mem"),
     (GAME_CODE_BLACKJACK, "menu-bj"),
     (GAME_CODE_RPS, "menu-rps"),
     (GAME_CODE_RPSSL, "menu-rpssl"),
@@ -60,6 +62,7 @@ GAME_MENU_REGISTRY: dict[str, str] = {
     GAME_CODE_BULLSCOWS: "app.handlers.bullscows:open_bullscows_menu",
     GAME_CODE_WORDLE: "app.handlers.wordle:open_wordle_menu",
     GAME_CODE_HANGMAN: "app.handlers.hangman:open_hangman_menu",
+    GAME_CODE_MEMORY: "app.handlers.memory:open_memory_menu",
     GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
     GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",
     GAME_CODE_RPS: "app.handlers.ropasci:open_ropasci_menu",
@@ -223,6 +226,34 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         lang["lang-ok"],
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu:duels")
+async def callback_menu_duels(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["game-ttl"],
+        reply_markup=duel_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu:games")
+async def callback_menu_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["game-ttl"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await callback.answer()
