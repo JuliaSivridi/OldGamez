@@ -27,6 +27,15 @@ class MemoryGame:
     code = "memory"
     title = "Memory"
 
+    def new_duel_state(self, p1_id: int, p2_id: int, size: int = 4) -> dict:
+        state = self.new_game_state(size=size)
+        state["p1_id"] = p1_id
+        state["p2_id"] = p2_id
+        state["p1_found"] = 0
+        state["p2_found"] = 0
+        state["message_ids"] = {}
+        return state
+
     def new_game_state(self, size: int = 4) -> dict:
         rows, cols = GRID_DIMS[size]
         total = rows * cols

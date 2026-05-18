@@ -15,6 +15,7 @@ PRIVATE_DUEL_HANDLERS: dict[str, str] = {
     "rpssl": "app.handlers.ropasci:join_rpssl_private_duel",
     "battleship": "app.handlers.battleship:join_battleship_duel",
     "blackjack": "app.handlers.blackjack:join_blackjack_duel",
+    "memory": "app.handlers.memory:join_memory_duel",
 }
 
 
