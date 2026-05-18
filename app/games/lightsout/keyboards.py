@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -25,8 +26,8 @@ def board_keyboard(
     row_sizes = []
 
     if active and lang is not None:
-        builder.button(text=lang["lto-solve"], callback_data=f"lto:solve:{session_id}")
-        builder.button(text=lang["lto-give-up"], callback_data=f"lto:give_up:{session_id}")
+        builder.button(text=lang["lto-solve"], callback_data=f"lto:solve:{session_id}", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["lto-give-up"], callback_data=f"lto:give_up:{session_id}", style=ButtonStyle.DANGER)
         row_sizes.append(2)
 
     for idx, lit in enumerate(cells):

@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -42,9 +43,9 @@ def game_keyboard(session_id: int, state: dict, active: bool, lang: dict) -> Inl
     hint_cb = f"wrd:hint:{session_id}" if has_hint else "wrd:noop"
     sub_cb = f"wrd:submit:{session_id}" if is_full else "wrd:noop"
 
-    builder.button(text=lang["btn-delete"], callback_data=del_cb)
+    builder.button(text=lang["btn-delete"], callback_data=del_cb, style=ButtonStyle.DANGER)
     builder.button(text=lang["wrd-hint"], callback_data=hint_cb)
-    builder.button(text=lang["btn-submit"], callback_data=sub_cb)
+    builder.button(text=lang["btn-submit"], callback_data=sub_cb, style=ButtonStyle.SUCCESS)
     row_sizes.append(3)
 
     builder.adjust(*row_sizes)

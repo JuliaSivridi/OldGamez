@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -23,8 +24,8 @@ SYMBOLS = {
 def field_keyboard(lang: dict[str, str], state: dict, session_id: int, game_over: bool = False) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     is_dig = state["is_dig"]
-    builder.button(text=lang["mode-dig"], callback_data="msw:switch:dig" if not game_over else "msw:noop")
-    builder.button(text=lang["mode-flag"], callback_data="msw:switch:flag" if not game_over else "msw:noop")
+    builder.button(text=lang["mode-dig"], callback_data="msw:switch:dig" if not game_over else "msw:noop", style=ButtonStyle.PRIMARY)
+    builder.button(text=lang["mode-flag"], callback_data="msw:switch:flag" if not game_over else "msw:noop", style=ButtonStyle.DANGER)
 
     field = state["field"]
     cover = state["cover"]
