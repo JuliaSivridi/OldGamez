@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     bot_storage_path: Path = Field(default=Path("./data"), alias="BOT_STORAGE_PATH")
     healthcheck_host: str = Field(default="0.0.0.0", alias="HEALTHCHECK_HOST")
     healthcheck_port: int = Field(default=8080, alias="PORT")
+    feedback_chat_id: int | None = Field(default=None, alias="FEEDBACK_CHAT_ID")
 
     model_config = SettingsConfigDict(
         env_file=".env",

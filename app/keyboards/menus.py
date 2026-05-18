@@ -35,7 +35,8 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-stat"], callback_data="menu:stats")
         builder.button(text=lang["menu-lang"], callback_data="menu:lang")
         builder.button(text=lang["menu-donate"], callback_data="menu:donate")
-        builder.adjust(2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1)
+        builder.button(text=lang["menu-feedback"], callback_data="menu:feedback")
+        builder.adjust(2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 2)
     return builder.as_markup()
 
 
