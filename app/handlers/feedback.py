@@ -31,6 +31,9 @@ async def callback_feedback(callback: CallbackQuery, state: FSMContext) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
+    if callback.message.chat.type in ("group", "supergroup"):
+        await callback.answer(lang["feedback-group-only"], show_alert=True)
+        return
     await state.set_state(FeedbackStates.waiting_for_text)
     await safe_edit(callback.message, lang["feedback-prompt"], reply_markup=_cancel_keyboard(lang))
     await callback.answer()
