@@ -190,7 +190,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stats_map = await get_game_stats_bulk(user.id, game_codes)
 
     stats_lines = [
-        f"{'🕹':<8}{'🥇':<8}{'💀':<8}{'🤝':<8}",
+        f"{lang['stat-col-played']:<8}{lang['stat-col-wins']:<8}{lang['stat-col-losses']:<8}{lang['stat-col-draws']:<8}",
     ]
     total_played = total_wins = total_losses = total_draws = 0
     for game_code, label_key in GAME_STATS_ORDER:
