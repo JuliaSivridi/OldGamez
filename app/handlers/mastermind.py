@@ -34,7 +34,7 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
     size = state["size"]
     colors = state["colors"]
     n_colors = len(colors)
-    title = f"{lang['game-mastermind']} · {size} {lang['mm-positions']}, {n_colors} {lang['mm-colors']}"
+    title = f"{lang['game-mastermind']} · {n_colors} {lang['mm-colors']} {lang['mm-on']} {size} {lang['mm-positions']}"
 
     lines = [title, ""]
     for entry in state["history"]:
@@ -208,7 +208,6 @@ async def callback_submit(callback: CallbackQuery) -> None:
         menu_msg_id = state.get("menu_message_id")
         await callback.message.edit_text(
             render_text(lang, state, final=result["state"]),
-            reply_markup=game_keyboard(session.id, state, False, lang),
         )
         if menu_msg_id:
             try:

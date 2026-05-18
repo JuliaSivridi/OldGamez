@@ -200,7 +200,6 @@ async def callback_submit(callback: CallbackQuery) -> None:
         menu_msg_id = state.get("menu_message_id")
         await callback.message.edit_text(
             render_text(lang, state, final=result["state"]),
-            reply_markup=game_keyboard(session.id, state, False, lang),
         )
         if menu_msg_id:
             try:

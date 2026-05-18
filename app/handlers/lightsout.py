@@ -160,7 +160,6 @@ async def callback_press(callback: CallbackQuery) -> None:
         await record_game_result(user.id, game.code, "win")
         await callback.message.edit_text(
             lang["game-win"],
-            reply_markup=board_keyboard(session.id, state["cells"], size, False),
         )
         if menu_msg_id:
             try:
@@ -193,7 +192,6 @@ async def callback_give_up(callback: CallbackQuery) -> None:
     await record_game_result(user.id, game.code, "loss")
     await callback.message.edit_text(
         lang["game-lose"],
-        reply_markup=board_keyboard(session.id, state["cells"], state["size"], False),
     )
     if menu_msg_id:
         try:
@@ -225,9 +223,10 @@ async def callback_solve(callback: CallbackQuery) -> None:
         state = result["game_state"]
         await callback.message.edit_text(
             f"{lang['game-lightsout']}{size}×{size}",
-            reply_markup=board_keyboard(session.id, state["cells"], size, False),
+            reply_markup=board_keyboard(session.id, state["cells"], size, False),  # animation step
         )
 
+    await callback.message.edit_text(lang["game-win"])
     await finish_session(session.id, state, winner_user_id=None)
     # No stat recorded — solver was used
     if menu_msg_id:

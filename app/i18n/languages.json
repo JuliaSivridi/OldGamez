@@ -36,7 +36,7 @@
     "help-mines": "ℹ️ *Minesweeper*\n\n*Goal of the game* - open all safe cells \n1️⃣ A number on a cell indicates how many mines are around it (horizontally, vertically, and diagonally) \n💣 If you open a cell with a mine, the game is over \n\nYou can switch between modes: \n⛏️ Dig - opens a cell \n🚩 Mark - places a flag on a suspected mine \n\nIncorrectly placed flags are marked with ❌ at the end of the game\n\n*Your first click is always safe* 🎉",
 
     "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
-    "help-lightsout": "ℹ️ *Lights Out*\n\n*Goal of the game* - turn off all the lights 🟨\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)",
+    "help-lightsout": "ℹ️ *Lights Out*\n\n*Goal of the game* - turn off all the lights 🟨\n\nTapping a cell toggles it *and* all its direct neighbours (up, down, left, right)\n\n😎 Using ⚡️ Solve does not count as a win in statistics",
     "lto-solve": "⚡️ Solve", "lto-give-up": "🏳️ Give up",
 
     "menu-npuzzle": "🧩 N-puzzle", "game-npuzzle": "🧩 N-puzzle game ",
@@ -45,7 +45,7 @@
     "btn-delete": "⬅️ Delete", "btn-submit": "✅ Ready",
 
     "menu-mastermind": "🎯 Mastermind", "game-mastermind": "🎯 Mastermind",
-    "mm-positions": "positions", "mm-colors": "colors", "mm-attempt": "Attempt", "mm-secret": "The secret was:",
+    "mm-on": "on", "mm-positions": "positions", "mm-colors": "colors", "mm-attempt": "Attempt", "mm-secret": "The secret was:",
     "help-mastermind": "ℹ️ *Mastermind*\n\nGuess the secret sequence of colored pegs\n\n• Tap a color to add it to your guess\n• ⬅️ to remove the last color, ✅ to submit\n• ⚫ right color, right position\n• ⚪ right color, wrong position\n• Repeats are allowed in the secret\n• Attempts = Easy → 10, Normal → 12, Hard → 18",
 
     "menu-bullscows": "🐂 Bulls & Cows", "game-bullscows": "🐂 Bulls and Cows",
@@ -122,7 +122,7 @@
     "help-mines": "ℹ️ *Miinaharava*\n\n*Tavoite* - avata kaikki turvalliset ruudut \n1️⃣ Ruudun numero kertoo, kuinka monta miinaa on sen ympärillä (vaaka-, pysty- ja vinosuunnissa) \n💣 Jos avaat miinan sisältävän ruudun, peli päättyy \n\nVoit vaihtaa tilaa: \n⛏️ Kaiva - avaa ruudun \n🚩 Merkitse - asettaa lipun epäilyttävälle ruudulle \n\nVäärin asetetut liput merkitään ❌:llä pelin lopussa\n\n*Ensimmäinen klikkaus on aina turvallinen* 🎉",
 
     "menu-lightsout": "🔆 Lights Out", "game-lightsout": "🔆 Lights Out ",
-    "help-lightsout": "ℹ️ *Lights Out*\n\n*Tavoite* - sammuta kaikki valot 🟨\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila",
+    "help-lightsout": "ℹ️ *Lights Out*\n\n*Tavoite* - sammuta kaikki valot 🟨\n\nRuutua napauttamalla vaihdetaan sen *ja* kaikkien suorien naapureiden (ylös, alas, vasemmalle, oikealle) tila\n\n😎 ⚡️ Ratkaise-toiminnon käyttäminen ei tilastoidu voittona",
     "lto-solve": "⚡️ Ratkaise", "lto-give-up": "🏳️ Luovutan",
 
     "menu-npuzzle": "🧩 N-pulmapeli", "game-npuzzle": "🧩 N-pulmapeli ",
@@ -131,7 +131,7 @@
     "btn-delete": "⬅️ Poista", "btn-submit": "✅ Valmis",
 
     "menu-mastermind": "🎯 Mastermind", "game-mastermind": "🎯 Mastermind",
-    "mm-positions": "paikkaa", "mm-colors": "väriä", "mm-attempt": "Yritys", "mm-secret": "Salainen koodi oli:",
+    "mm-on": "/", "mm-positions": "paikalla", "mm-colors": "väriä", "mm-attempt": "Yritys", "mm-secret": "Salainen koodi oli:",
     "help-mastermind": "ℹ️ *Mastermind*\n\nArvaa salainen värijärjestys\n\n• Napauta väriä lisätäksesi sen arvaukseen\n• ⬅️ poistaa viimeisen värin, ✅ lähettää arvauksen\n• ⚫ oikea väri, oikea paikka\n• ⚪ oikea väri, väärä paikka\n• Toistot ovat sallittuja salaisessa koodissa\n• Yrityksiä = Helppo → 10, Normaali → 12, Vaikea → 18",
 
     "menu-bullscows": "🐂 Härät ja lehmät", "game-bullscows": "🐂 Härät ja lehmät",
@@ -208,7 +208,7 @@
     "help-mines": "ℹ️ *Сапёр*\n\n*Цель игры* - открыть все безопасные клетки \n1️⃣ Число на клетке показывает, сколько мин находится вокруг неё (по горизонтали, вертикали и диагоналям) \n💣 Если вы открываете клетку с миной, игра заканчивается \n\nВы можете переключаться между режимами: \n⛏️ Копать - открывает клетку \n🚩 Пометить - ставит флажок на предполагаемую мину \n\nНеправильно установленные флажки в конце игры отмечаются ❌ крестиком\n\n*Ваш первый клик всегда безопасен* 🎉",
 
     "menu-lightsout": "🔆 Гаси огни", "game-lightsout": "🔆 Гаси огни ",
-    "help-lightsout": "ℹ️ *Гаси огни*\n\n*Цель игры* - погасить все лампочки 🟨\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)",
+    "help-lightsout": "ℹ️ *Гаси огни*\n\n*Цель игры* - погасить все лампочки 🟨\n\nПри нажатии на клетку переключается она *и* все прямые соседи (вверх, вниз, влево, вправо)\n\n😎 Использование ⚡️ Решить не засчитывается как победа в статистике",
     "lto-solve": "⚡️ Решить", "lto-give-up": "🏳️ Сдаться",
 
     "menu-npuzzle": "🧩 Пятнашки", "game-npuzzle": "🧩 Пятнашки ",
@@ -217,7 +217,7 @@
     "btn-delete": "⬅️ Удалить", "btn-submit": "✅ Готово",
 
     "menu-mastermind": "🎯 Мастермайнд", "game-mastermind": "🎯 Мастермайнд",
-    "mm-positions": "позиций", "mm-colors": "цветов", "mm-attempt": "Попытка", "mm-secret": "Загадано было:",
+    "mm-on": "на", "mm-positions": "позициях", "mm-colors": "цветов", "mm-attempt": "Попытка", "mm-secret": "Загадано было:",
     "help-mastermind": "ℹ️ *Мастермайнд*\n\nУгадай секретную комбинацию цветных фишек\n\n• Нажимай цвета, чтобы составить догадку\n• ⬅️ удаляет последний цвет, ✅ отправляет догадку\n• ⚫ правильный цвет, правильная позиция\n• ⚪ правильный цвет, неправильная позиция\n• Повторы разрешены\n• Попыток = Легко → 10, Нормально → 12, Сложно → 18",
 
     "menu-bullscows": "🐂 Быки и коровы", "game-bullscows": "🐂 Быки и коровы",

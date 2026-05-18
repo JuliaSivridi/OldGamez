@@ -196,7 +196,6 @@ async def callback_play(callback: CallbackQuery) -> None:
             await record_game_result(user.id, game.code, 'win')
         await callback.message.edit_text(
             render_text(lang, state, final='win'),
-            reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
             parse_mode=ParseMode.HTML,
         )
         if menu_msg_id:
@@ -212,7 +211,6 @@ async def callback_play(callback: CallbackQuery) -> None:
         await record_game_result(user.id, game.code, 'loss')
         await callback.message.edit_text(
             render_text(lang, state, final='loss'),
-            reply_markup=letters_keyboard(session.id, state['letters'], lang, False),
             parse_mode=ParseMode.HTML,
         )
         if menu_msg_id:

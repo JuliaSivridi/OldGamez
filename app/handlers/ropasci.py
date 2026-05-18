@@ -225,7 +225,6 @@ async def _finish_game(callback: CallbackQuery, session_id: int, state: dict, fi
     await safe_edit(
         callback.message,
         render_text(title, state, lang, final=final),
-        reply_markup=rps_game_keyboard(session_id, moves, False, lang, prefix),
     )
     menu_msg_id = state.get("menu_message_id")
     if menu_msg_id:
@@ -366,7 +365,6 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
                 render_multi_text(lang[title_key], state, lang,
                                    format_player_name(p1), format_player_name(p2),
                                    final=result["state"]),
-                reply_markup=rps_game_keyboard(session.id, moves, False, lang, prefix),
             )
         else:
             refreshed = await get_session_by_id(session.id)

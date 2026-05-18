@@ -8,6 +8,7 @@ def language_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMar
     builder = InlineKeyboardBuilder()
     for label, code in LANGUAGE_CHOICES.items():
         builder.button(text=label, callback_data=f"lang:{code}")
-    builder.adjust(3)
+    builder.button(text=lang["main-back"], callback_data="main:back")
+    builder.adjust(3, 1)
     return builder.as_markup()
 
