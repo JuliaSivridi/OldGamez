@@ -53,7 +53,12 @@ async def callback_feedback_cancel(callback: CallbackQuery, state: FSMContext) -
 
 @router.message(FeedbackStates.waiting_for_text)
 async def handle_feedback_text(message: Message, state: FSMContext) -> None:
-    if message.from_user is None or not message.text:
+    if message.from_user is None:
+        return
+    if not message.text:
+        user = await upsert_user(message.from_user)
+        lang = get_language_pack(user.language_code)
+        await message.answer(lang["feedback-text-only"], reply_markup=_cancel_keyboard(lang))
         return
     await state.clear()
     user = await upsert_user(message.from_user)

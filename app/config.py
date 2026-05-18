@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     healthcheck_host: str = Field(default="0.0.0.0", alias="HEALTHCHECK_HOST")
     healthcheck_port: int = Field(default=8080, alias="PORT")
     feedback_chat_id: int | None = Field(default=None, alias="FEEDBACK_CHAT_ID")
+    dashboard_token: str | None = Field(default=None, alias="DASHBOARD_TOKEN")
 
     model_config = SettingsConfigDict(
         env_file=".env",
