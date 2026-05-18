@@ -8,12 +8,13 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
     if chat_type in ("group", "supergroup"):
         builder.button(text=lang["menu-xo"], callback_data="game:xo")
         builder.button(text=lang["menu-four"], callback_data="game:four")
+        builder.button(text=lang["menu-mem"], callback_data="game:mem")
         builder.button(text=lang["menu-rps"], callback_data="game:rps")
         builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 2, 2, 1)
+        builder.adjust(2, 1, 2, 2, 1)
     else:
         builder.button(text=lang["menu-xo"], callback_data="game:xo")
         builder.button(text=lang["menu-sea"], callback_data="game:sea")
