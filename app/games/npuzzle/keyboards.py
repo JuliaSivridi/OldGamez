@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -11,14 +12,26 @@ def size_keyboard(lang: dict[str, str], back_callback: str) -> InlineKeyboardMar
     return builder.as_markup()
 
 
-def tiles_keyboard(session_id: int, tiles: list[int], size: int) -> InlineKeyboardMarkup:
+def tiles_keyboard(
+    session_id: int,
+    tiles: list[int],
+    size: int,
+    active: bool = True,
+    lang: dict[str, str] | None = None,
+) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    space_pos = tiles.index(0)
+    row_sizes = []
 
+    if active and lang is not None:
+        builder.button(text=lang["lto-solve"], callback_data=f"npz:solve:{session_id}", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["lto-give-up"], callback_data=f"npz:give_up:{session_id}", style=ButtonStyle.DANGER)
+        row_sizes.append(2)
+
+    space_pos = tiles.index(0)
     for idx, tile in enumerate(tiles):
         text = "  " if tile == 0 else str(tile)
         callback_data = "npz:noop"
-        if (
+        if active and (
             (idx == space_pos - 1 and idx % size != size - 1)
             or (idx == space_pos + 1 and idx % size != 0)
             or idx == space_pos - size
@@ -26,7 +39,7 @@ def tiles_keyboard(session_id: int, tiles: list[int], size: int) -> InlineKeyboa
         ):
             callback_data = f"npz:move:{session_id}:{idx}"
         builder.button(text=text, callback_data=callback_data)
+    row_sizes.extend([size] * size)
 
-    builder.adjust(*([size] * size))
+    builder.adjust(*row_sizes)
     return builder.as_markup()
-
