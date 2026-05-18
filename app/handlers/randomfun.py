@@ -1,5 +1,7 @@
 ﻿from aiogram import F, Router
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -7,7 +9,11 @@ from app.games.randomfun import game
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
-from app.services.users import get_user_setting, update_user_settings, upsert_user
+from app.services.users import update_user_settings, upsert_user
+
+
+class GuessStates(StatesGroup):
+    waiting = State()
 
 
 router = Router()
@@ -112,18 +118,20 @@ async def callback_card(callback: CallbackQuery) -> None:
 
 
 @router.callback_query(F.data == "rand:guess")
-async def callback_guess(callback: CallbackQuery) -> None:
+async def callback_guess(callback: CallbackQuery, state: FSMContext) -> None:
     if callback.from_user is None or callback.message is None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    state = game.new_guess_game()
+    gs = game.new_guess_game()
+    await state.set_state(GuessStates.waiting)
+    await state.update_data(target=gs['target'], low=gs['low'], high=gs['high'], msg_id=callback.message.message_id)
     await safe_edit(
         callback.message,
-        f"{lang['guess-low']}{state['low']}{lang['guess-top']}{state['high']}\n{lang['guess-guess']}",
-        reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type)
+        f"{lang['guess-low']}{gs['low']}{lang['guess-top']}{gs['high']}\n{lang['guess-guess']}",
+        reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
-    await update_user_settings(user.id, {'random_target': state['target'], 'guess_low': state['low'], 'guess_high': state['high'], 'current_game': game.code, 'guess_msg_id': callback.message.message_id})
+    await update_user_settings(user.id, {'current_game': game.code})
     await callback.answer()
 
 
@@ -134,40 +142,39 @@ async def menu_help(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.message(F.text.is_not(None), ~F.text.startswith('/'))
-async def guess_number_or_default(message: Message) -> None:
+@router.message(GuessStates.waiting)
+async def handle_guess_input(message: Message, state: FSMContext) -> None:
     if message.from_user is None or message.text is None:
+        return
+    if not message.text.isdigit():
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    target = get_user_setting(user, 'random_target')
+    data = await state.get_data()
+    target = data['target']
+    low = data['low']
+    high = data['high']
+    msg_id = data.get('msg_id')
 
-    if message.text.isdigit() and target is not None:
-        value = int(message.text)
-        low = get_user_setting(user, 'guess_low')
-        high = get_user_setting(user, 'guess_high')
-        range_line = f"{lang['guess-low']}{low}{lang['guess-top']}{high}"
+    value = int(message.text)
+    range_line = f"{lang['guess-low']}{low}{lang['guess-top']}{high}"
+    if value < target:
+        result_line = lang['guess-more']
+    elif value > target:
+        result_line = lang['guess-less']
+    else:
+        result_line = lang['guess-equals']
 
-        if value < int(target):
-            result_line = lang['guess-more']
-        elif value > int(target):
-            result_line = lang['guess-less']
-        else:
-            result_line = lang['guess-equals']
+    if msg_id:
+        try:
+            await message.bot.delete_message(chat_id=message.chat.id, message_id=msg_id)
+        except Exception:
+            pass
 
-        response_text = f"{range_line}\n{lang['guess-user']}{value}\n{result_line}"
-        keyboard = random_menu_keyboard(lang, chat_type=message.chat.type)
-        guess_msg_id = get_user_setting(user, 'guess_msg_id')
-        if guess_msg_id:
-            try:
-                await message.bot.delete_message(chat_id=message.chat.id, message_id=int(guess_msg_id))
-            except Exception:
-                pass
-        sent = await message.answer(response_text, reply_markup=keyboard)
-        await update_user_settings(user.id, {'guess_msg_id': sent.message_id})
+    keyboard = random_menu_keyboard(lang, chat_type=message.chat.type)
+    sent = await message.answer(f"{range_line}\n{lang['guess-user']}{value}\n{result_line}", reply_markup=keyboard)
 
-        if value == int(target):
-            await update_user_settings(user.id, {'random_target': None, 'guess_low': None, 'guess_high': None, 'guess_msg_id': None, 'current_game': game.code})
-        return
-
-    await message.answer(lang['default'], reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
+    if value == target:
+        await state.clear()
+    else:
+        await state.update_data(msg_id=sent.message_id)
