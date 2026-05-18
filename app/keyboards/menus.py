@@ -46,12 +46,15 @@ def duel_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
     builder.button(text=lang["menu-sea"], callback_data="game:sea")
     builder.button(text=lang["menu-four"], callback_data="game:four")
     builder.button(text=lang["menu-bj"], callback_data="game:bj")
+    builder.button(text=lang["menu-mem"], callback_data="game:mem")
     builder.button(text=lang["menu-rps"], callback_data="game:rps")
     builder.button(text=lang["menu-rpssl"], callback_data="game:rpssl")
     builder.button(text=lang["menu-games"], callback_data="menu:games")
     builder.button(text=lang["menu-stat"], callback_data="menu:stats")
     builder.button(text=lang["menu-lang"], callback_data="menu:lang")
-    builder.adjust(2, 2, 2, 1, 2)
+    builder.button(text=lang["menu-donate"], callback_data="menu:donate")
+    builder.button(text=lang["menu-feedback"], callback_data="menu:feedback")
+    builder.adjust(2, 2, 1, 2, 1, 2, 2)
     return builder.as_markup()
 
 
