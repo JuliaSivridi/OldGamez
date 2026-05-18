@@ -93,12 +93,14 @@ class Feedback(Base):
 
 class GameStat(Base):
     __tablename__ = "game_stats"
-    __table_args__ = (UniqueConstraint("user_id", "game_code", name="uq_user_game_stat"),)
+    __table_args__ = (UniqueConstraint("user_id", "game_code", "variant_key", name="uq_user_game_variant"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     game_code: Mapped[str] = mapped_column(String(50), index=True)
+    variant_key: Mapped[str] = mapped_column(String(20), default="default")
+    played: Mapped[int] = mapped_column(Integer, default=0)
     wins: Mapped[int] = mapped_column(Integer, default=0)
     losses: Mapped[int] = mapped_column(Integer, default=0)
     draws: Mapped[int] = mapped_column(Integer, default=0)
-    played: Mapped[int] = mapped_column(Integer, default=0)
+    best_score: Mapped[int | None] = mapped_column(Integer, nullable=True)

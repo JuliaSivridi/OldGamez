@@ -3,7 +3,9 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, update
+from dataclasses import dataclass, field as dc_field
+
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 
 from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus
@@ -325,52 +327,108 @@ async def finish_session(
         return game_session
 
 
-async def record_game_result(user_id: int, game_code: str, result: str) -> None:
+@dataclass
+class GameStatSummary:
+    played: int = 0
+    wins: int = 0
+    losses: int = 0
+    draws: int = 0
+
+
+async def record_game_result(
+    user_id: int,
+    game_code: str,
+    result: str,
+    variant_key: str = "default",
+    best_score: int | None = None,
+) -> None:
     async with SessionLocal() as session:
         existing = await session.execute(
             select(GameStat).where(
                 GameStat.user_id == user_id,
                 GameStat.game_code == game_code,
+                GameStat.variant_key == variant_key,
             ).with_for_update()
         )
         stat = existing.scalar_one_or_none()
         if stat is None:
-            session.add(GameStat(user_id=user_id, game_code=game_code, wins=0, losses=0, draws=0, played=0))
+            session.add(GameStat(
+                user_id=user_id, game_code=game_code, variant_key=variant_key,
+                wins=0, losses=0, draws=0, played=0,
+            ))
             await session.flush()
+            stat = None  # best_score check will treat as no prior record
+
+        new_best: int | None = None
+        if best_score is not None:
+            if stat is None or stat.best_score is None or best_score < stat.best_score:
+                new_best = best_score
+
+        values: dict = dict(
+            played=GameStat.played + 1,
+            wins=GameStat.wins + (1 if result == "win" else 0),
+            losses=GameStat.losses + (1 if result == "loss" else 0),
+            draws=GameStat.draws + (1 if result == "draw" else 0),
+        )
+        if new_best is not None:
+            values["best_score"] = new_best
 
         await session.execute(
             update(GameStat)
-            .where(GameStat.user_id == user_id, GameStat.game_code == game_code)
-            .values(
-                played=GameStat.played + 1,
-                wins=GameStat.wins + (1 if result == "win" else 0),
-                losses=GameStat.losses + (1 if result == "loss" else 0),
-                draws=GameStat.draws + (1 if result == "draw" else 0),
+            .where(
+                GameStat.user_id == user_id,
+                GameStat.game_code == game_code,
+                GameStat.variant_key == variant_key,
             )
+            .values(**values)
         )
         await session.commit()
 
 
-async def get_game_stats_bulk(user_id: int, game_codes: list[str]) -> dict[str, GameStat]:
+async def get_game_stats_bulk(user_id: int, game_codes: list[str]) -> dict[str, GameStatSummary]:
     async with SessionLocal() as session:
-        result = await session.execute(
-            select(GameStat).where(
-                GameStat.user_id == user_id,
-                GameStat.game_code.in_(game_codes),
+        rows = await session.execute(
+            select(
+                GameStat.game_code,
+                func.sum(GameStat.played).label("played"),
+                func.sum(GameStat.wins).label("wins"),
+                func.sum(GameStat.losses).label("losses"),
+                func.sum(GameStat.draws).label("draws"),
             )
+            .where(GameStat.user_id == user_id, GameStat.game_code.in_(game_codes))
+            .group_by(GameStat.game_code)
         )
-        return {stat.game_code: stat for stat in result.scalars()}
+        return {
+            row.game_code: GameStatSummary(
+                played=row.played or 0,
+                wins=row.wins or 0,
+                losses=row.losses or 0,
+                draws=row.draws or 0,
+            )
+            for row in rows
+        }
 
 
-async def get_game_stat(user_id: int, game_code: str) -> GameStat | None:
+async def get_game_stat(user_id: int, game_code: str, variant_key: str = "default") -> GameStat | None:
     async with SessionLocal() as session:
         result = await session.execute(
             select(GameStat).where(
                 GameStat.user_id == user_id,
                 GameStat.game_code == game_code,
+                GameStat.variant_key == variant_key,
             )
         )
         return result.scalar_one_or_none()
+
+
+async def get_all_game_stats(user_id: int, game_code: str) -> list[GameStat]:
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(GameStat)
+            .where(GameStat.user_id == user_id, GameStat.game_code == game_code)
+            .order_by(GameStat.variant_key)
+        )
+        return list(result.scalars())
 
 
 def generate_join_code() -> str:
