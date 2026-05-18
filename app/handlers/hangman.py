@@ -11,7 +11,7 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
 from app.keyboards.menus import game_menu_keyboard
-from app.services.sessions import create_solo_session, finish_session, format_variant_stats_text, get_all_game_stats, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, format_leaderboard_text, format_variant_stats_text, get_all_game_stats, get_game_leaderboard, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
 
@@ -134,6 +134,15 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
     game_title = f"{lang['icon-stat']} *{lang['game-hang']}*"
     text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
+    await safe_edit(callback.message, text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
+
+
+@router.callback_query(GameCallbackFilter("top", game.code))
+async def menu_top(callback: CallbackQuery, user, lang) -> None:
+    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
+    title = f"*{lang['game-hang']}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 

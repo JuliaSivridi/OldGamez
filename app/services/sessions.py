@@ -8,7 +8,7 @@ from dataclasses import dataclass, field as dc_field
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 
-from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus
+from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User
 from app.db.session import SessionLocal
 
 
@@ -454,7 +454,7 @@ def format_game_stats_text(
         "losses": stat.losses if stat else 0,
         "draws": stat.draws if stat else 0,
     }
-    result = f"*{lang['stat-ttl']}*"
+    result = f"*{lang['stat-ttl']}*\n"
     for field in fields:
         label = lang[_STAT_FIELD_KEYS[field]]
         result += f"`{label}{str(values[field]).rjust(20 - len(label))}`"
@@ -500,4 +500,115 @@ def format_variant_stats_text(
         row = f"{label:<{lbl_w}}" + "".join(f"{v:<{col_w}}" for v in vals)
         lines.append(f"`{row}`")
 
+    return "\n".join(lines)
+
+
+GAME_VARIANT_POINTS: dict[str, dict[str, int]] = {
+    "tictactoe": {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
+    "npuzzle":   {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
+    "memory":    {"3": 1, "4": 1, "5": 5, "6": 5, "7": 25, "8": 25},
+    "lightsout": {"4": 1, "5": 5, "6": 25},
+    "minesweeper": {"easy": 1, "normal": 5, "hard": 25},
+    "mastermind":  {"easy": 1, "normal": 5, "hard": 25},
+    "hangman":     {"easy": 1, "normal": 5, "hard": 25},
+    "bullscows":   {"easy": 1, "normal": 5, "hard": 25},
+    "fourinrow":   {"default": 1},
+    "battleship":  {"default": 1},
+    "wordle":      {"default": 1},
+    "blackjack":   {"default": 1},
+    "rps":         {"default": 1},
+    "rpssl":       {"default": 1},
+}
+
+_TOP_MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+
+
+def _build_ratings(rows, points_map: dict[str, int]) -> tuple[dict[int, int], dict[int, str]]:
+    user_rating: dict[int, int] = {}
+    user_name: dict[int, str] = {}
+    for user_id, first_name, username, variant_key, wins in rows:
+        pts = points_map.get(variant_key, 1)
+        user_rating[user_id] = user_rating.get(user_id, 0) + wins * pts
+        if user_id not in user_name:
+            user_name[user_id] = first_name or username or "?"
+    return user_rating, user_name
+
+
+def _extract_viewer_entry(
+    ranked: list[tuple[int, int]],
+    user_name: dict[int, str],
+    viewer_user_id: int | None,
+    limit: int,
+) -> tuple[int, str, int] | None:
+    if viewer_user_id is None:
+        return None
+    for pos, (uid, score) in enumerate(ranked, start=1):
+        if uid == viewer_user_id:
+            return None if pos <= limit else (pos, user_name[uid], score)
+    return None
+
+
+async def get_game_leaderboard(
+    game_code: str,
+    limit: int = 10,
+    viewer_user_id: int | None = None,
+) -> tuple[list[tuple[str, int]], tuple[int, str, int] | None]:
+    async with SessionLocal() as db:
+        rows = (await db.execute(
+            select(GameStat.user_id, User.first_name, User.username, GameStat.variant_key, GameStat.wins)
+            .join(User, User.id == GameStat.user_id)
+            .where(GameStat.game_code == game_code, GameStat.wins > 0)
+        )).all()
+
+    points_map = GAME_VARIANT_POINTS.get(game_code, {})
+    user_rating, user_name = _build_ratings(rows, points_map)
+    ranked = sorted(user_rating.items(), key=lambda x: x[1], reverse=True)
+    entries = [(user_name[uid], score) for uid, score in ranked[:limit]]
+    viewer_entry = _extract_viewer_entry(ranked, user_name, viewer_user_id, limit)
+    return entries, viewer_entry
+
+
+async def get_global_leaderboard(
+    limit: int = 10,
+    viewer_user_id: int | None = None,
+) -> tuple[list[tuple[str, int]], tuple[int, str, int] | None]:
+    async with SessionLocal() as db:
+        rows = (await db.execute(
+            select(GameStat.user_id, User.first_name, User.username, GameStat.game_code, GameStat.variant_key, GameStat.wins)
+            .join(User, User.id == GameStat.user_id)
+            .where(GameStat.wins > 0)
+        )).all()
+
+    user_rating: dict[int, int] = {}
+    user_name: dict[int, str] = {}
+    for user_id, first_name, username, game_code, variant_key, wins in rows:
+        points_map = GAME_VARIANT_POINTS.get(game_code, {})
+        pts = points_map.get(variant_key, 1)
+        user_rating[user_id] = user_rating.get(user_id, 0) + wins * pts
+        if user_id not in user_name:
+            user_name[user_id] = first_name or username or "?"
+
+    ranked = sorted(user_rating.items(), key=lambda x: x[1], reverse=True)
+    entries = [(user_name[uid], score) for uid, score in ranked[:limit]]
+    viewer_entry = _extract_viewer_entry(ranked, user_name, viewer_user_id, limit)
+    return entries, viewer_entry
+
+
+def format_leaderboard_text(
+    entries: list[tuple[str, int]],
+    game_title: str,
+    lang: dict[str, str],
+    viewer_entry: tuple[int, str, int] | None = None,
+) -> str:
+    header = f"🏆 {game_title} | *{lang['top-ttl']}*"
+    if not entries:
+        return f"{header}\n\n{lang['top-empty']}"
+    lines = [header, ""]
+    for i, (name, score) in enumerate(entries):
+        medal = _TOP_MEDALS[i] if i < len(_TOP_MEDALS) else f"{i + 1}."
+        lines.append(f"{medal} {name} : {score}")
+    if viewer_entry is not None:
+        pos, name, score = viewer_entry
+        lines.append("...")
+        lines.append(f"{pos}. {name} : {score}")
     return "\n".join(lines)

@@ -10,7 +10,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
 from app.keyboards.menus import game_menu_keyboard, duel_menu_keyboard, main_menu_keyboard
-from app.services.sessions import get_game_stats_bulk
+from app.services.sessions import format_leaderboard_text, get_game_stats_bulk, get_global_leaderboard
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
 router = Router()
@@ -228,6 +228,23 @@ async def cmd_lang_command(message: Message) -> None:
         lang["lang-ask"],
         reply_markup=language_keyboard(lang, chat_type=message.chat.type),
     )
+
+
+@router.callback_query(F.data == "menu:top")
+async def callback_menu_top(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    entries, viewer_entry = await get_global_leaderboard(viewer_user_id=user.id)
+    title = f"*{lang['top-all-games']}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
+    await safe_edit(
+        callback.message,
+        text,
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
 
 
 @router.callback_query(F.data == "menu:lang")

@@ -30,8 +30,10 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
+    format_leaderboard_text,
     format_variant_stats_text,
     get_all_game_stats,
+    get_game_leaderboard,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -221,11 +223,13 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-async def start_memory_group(message: Message, user, lang: dict, size: int) -> None:
+async def start_memory_group(message: Message, user, lang: dict, size: int, menu_message_id: int | None = None) -> None:
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(lang["group-only"], reply_markup=memory_menu_keyboard(lang, chat_type=message.chat.type))
         return
     state: dict = {"status": "pending", "size": size}
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_group_match_session(user.id, message.chat.id, game.code, state)
     await message.answer(lang["group-wait"], reply_markup=group_duel_keyboard(lang, f"mem:group_join:{session.id}"))
 
@@ -233,7 +237,7 @@ async def start_memory_group(message: Message, user, lang: dict, size: int) -> N
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
-    await start_memory_group(callback.message, user, lang, size)
+    await start_memory_group(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -268,6 +272,15 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     variant_labels = {str(s): f"{r}×{c}" for s, (r, c) in GRID_DIMS.items()}
     game_title = f"{lang['icon-stat']} *{lang['game-mem']}*"
     text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses", "draws"], has_best_score=True)
+    await safe_edit(callback.message, text, reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
+
+
+@router.callback_query(GameCallbackFilter("top", game.code))
+async def menu_top(callback: CallbackQuery, user, lang) -> None:
+    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
+    title = f"*{lang['game-mem']}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text, reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -552,10 +565,17 @@ async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: i
             await finish_session(session.id, state, winner_user_id=winner_id)
             await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
             await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
+            menu_msg_id = state.get("menu_message_id")
             await callback.message.edit_text(
                 render_group_text(group_lang, state, player_names, final=True),
                 reply_markup=board_keyboard(session.id, state, False),
             )
+            if menu_msg_id:
+                try:
+                    await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+                except Exception:
+                    pass
+            await open_memory_menu(callback.message, user, lang)
         else:
             await update_session_state(session.id, state, user.id)
             await callback.message.edit_text(

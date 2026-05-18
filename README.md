@@ -33,8 +33,10 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 - **Private duel** — send an invite link; anyone who opens it joins your game
 - **Group match** — start a game in a group, a second player joins by tapping a button
 
-**Stats & language**
+**Stats & leaderboards**
 - Per-game statistics broken down by difficulty or board size: games played, wins, losses, draws; best score (moves/taps) tracked for Lights Out, N-Puzzle, and Memory
+- Per-game leaderboard (🏆 Top) with weighted points by difficulty/size (Easy=1, Normal=5, Hard=25); top-10 with medals, plus your own position if outside the top 10
+- Global leaderboard across all games — sum of all weighted wins
 - Three interface languages: 🇬🇧 English, 🇫🇮 Finnish, 🇷🇺 Russian — switchable with `/lang`
 
 **Infrastructure**

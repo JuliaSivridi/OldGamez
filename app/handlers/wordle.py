@@ -14,6 +14,8 @@ from app.services.sessions import (
     create_solo_session,
     finish_session,
     format_game_stats_text,
+    format_leaderboard_text,
+    get_game_leaderboard,
     get_game_stat,
     get_session_by_id,
     record_game_result,
@@ -112,6 +114,15 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
     game_title = f"{lang['icon-stat']} *{lang['game-wordle']}*"
     text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    await safe_edit(callback.message, text, reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
+
+
+@router.callback_query(GameCallbackFilter("top", game.code))
+async def menu_top(callback: CallbackQuery, user, lang) -> None:
+    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
+    title = f"*{lang['game-wordle']}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text, reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 

@@ -12,9 +12,10 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 1, 2, 2, 1)
+        builder.adjust(2, 1, 2, 2, 2)
     else:
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
         builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
@@ -33,10 +34,11 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text=lang["menu-duels"], callback_data="menu:duels", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 2)
+        builder.adjust(2, 2, 2, 2, 2, 1, 2, 2, 1, 2, 1, 2)
     return builder.as_markup()
 
 
@@ -49,9 +51,10 @@ def duel_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 1, 2, 2, 1)
+        builder.adjust(2, 1, 2, 2, 2)
     else:
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
         builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
@@ -62,10 +65,11 @@ def duel_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text=lang["menu-games"], callback_data="menu:games", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 2, 1, 2, 1, 2, 2)
+        builder.adjust(2, 2, 1, 2, 1, 2, 1, 2)
     return builder.as_markup()
 
 
@@ -96,9 +100,11 @@ def game_menu_keyboard(
         layout.append(1)
 
     builder.button(text=lang["menu-stat"], callback_data=f"game:stat:{game_code}")
+    builder.button(text=lang["menu-top"], callback_data=f"game:top:{game_code}")
     builder.button(text=lang["menu-help"], callback_data=f"game:help:{game_code}")
     builder.button(text=lang["main-back"], callback_data="main:back")
-    layout.append(3)
+    layout.append(2)
+    layout.append(2)
 
     builder.adjust(*layout)
     return builder.as_markup()
