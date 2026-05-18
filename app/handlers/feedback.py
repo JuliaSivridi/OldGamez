@@ -59,19 +59,22 @@ async def handle_feedback_text(message: Message, state: FSMContext) -> None:
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
 
-    await save_feedback(user.id, message.text)
+    try:
+        await save_feedback(user.id, message.text)
+    except Exception:
+        pass
 
     settings = get_settings()
     if settings.feedback_chat_id:
         tg = message.from_user
         name = " ".join(filter(None, [tg.first_name, tg.last_name]))
-        mention = f"@{tg.username}" if tg.username else f"tg://user?id={tg.id}"
-        header = f"📨 *Feedback*\n{name} ({mention}) · `{user.language_code}`\n\n"
+        mention = f"@{tg.username}" if tg.username else f"id={tg.id}"
         try:
             await message.bot.send_message(
                 settings.feedback_chat_id,
-                header + message.text,
+                f"📨 *Feedback* от {name} ({mention}) · `{user.language_code}`",
             )
+            await message.forward(settings.feedback_chat_id)
         except Exception:
             pass
 
