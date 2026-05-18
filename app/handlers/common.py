@@ -133,6 +133,20 @@ async def cmd_start(message: Message) -> None:
     )
 
 
+@router.callback_query(F.data == "menu:games")
+async def callback_menu_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["game-ttl"],
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
 @router.message(Command("games"))
 async def cmd_games_command(message: Message) -> None:
     if message.from_user is None:
@@ -140,6 +154,20 @@ async def cmd_games_command(message: Message) -> None:
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
     await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
+
+
+@router.callback_query(F.data == "menu:duels")
+async def callback_menu_duels(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["game-ttl"],
+        reply_markup=duel_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
 
 
 @router.message(Command("duel"))
@@ -226,34 +254,6 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         lang["lang-ok"],
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu:duels")
-async def callback_menu_duels(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["game-ttl"],
-        reply_markup=duel_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu:games")
-async def callback_menu_games(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["game-ttl"],
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await callback.answer()
