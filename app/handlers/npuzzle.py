@@ -149,7 +149,10 @@ async def callback_move(callback: CallbackQuery) -> None:
     if result["state"] == "win":
         await finish_session(session.id, state, winner_user_id=user.id)
         await record_game_result(user.id, game.code, "win")
-        await callback.message.edit_text(lang["game-win"])
+        await callback.message.edit_text(
+            lang["game-win"],
+            reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"], active=False),
+        )
         if menu_msg_id:
             try:
                 await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
@@ -179,7 +182,10 @@ async def callback_give_up(callback: CallbackQuery) -> None:
     menu_msg_id = state.get("menu_message_id")
     await finish_session(session.id, state, winner_user_id=None)
     await record_game_result(user.id, game.code, "loss")
-    await callback.message.edit_text(lang["game-lose"])
+    await callback.message.edit_text(
+        lang["game-lose"],
+        reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"], active=False),
+    )
     if menu_msg_id:
         try:
             await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
@@ -214,7 +220,10 @@ async def callback_solve(callback: CallbackQuery) -> None:
             reply_markup=tiles_keyboard(session.id, state["tiles"], size, active=False),
         )
 
-    await callback.message.edit_text(lang["game-win"])
+    await callback.message.edit_text(
+        lang["game-win"],
+        reply_markup=tiles_keyboard(session.id, state["tiles"], size, active=False),
+    )
     await finish_session(session.id, state, winner_user_id=None)
     # No stat recorded — solver was used
     if menu_msg_id:

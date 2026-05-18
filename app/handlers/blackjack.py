@@ -92,7 +92,7 @@ async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], u
     state["result"] = verdict["result"]
     await finish_session(session_id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
     await record_game_result(user.id, game.code, verdict["result"])
-    await message.edit_text(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown")
+    await message.edit_text(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown", reply_markup=None)
     if menu_msg_id:
         try:
             await message.bot.delete_message(message.chat.id, menu_msg_id)
