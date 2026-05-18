@@ -14,7 +14,7 @@ from app.games.memory.keyboards import board_keyboard, size_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
-from app.keyboards.duels import duel_invite_keyboard
+from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
@@ -24,7 +24,9 @@ from app.services.duels import (
     set_duel_message_ref,
 )
 from app.services.sessions import (
+    activate_group_match_session,
     activate_private_duel_session,
+    create_group_match_session,
     create_private_duel_invite,
     create_solo_session,
     finish_session,
@@ -34,7 +36,7 @@ from app.services.sessions import (
     record_game_result,
     update_session_state,
 )
-from app.services.users import get_user_by_id, update_user_settings, upsert_user
+from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 
 router = Router()
 
@@ -45,6 +47,7 @@ def memory_menu_keyboard(lang: dict, chat_type=None):
         game_code=game.code,
         extra_setting_key="size",
         extra_duel_key="duel",
+        extra_group_key="group",
         chat_type=chat_type,
     )
 
@@ -87,6 +90,27 @@ def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = Fals
 
     turn_line = lang["mem-your-turn"] if state.get("current_turn_user_id") == viewer_id else lang["mem-opp-turn"]
     return f"{header}\n\n{score}\n{turn_line}"
+
+
+def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False) -> str:
+    rows, cols = state["rows"], state["cols"]
+    total_pairs = len(state["cards"]) // 2
+    header = f"{lang['game-mem']} · {rows}×{cols}"
+    p1_id, p2_id = state["p1_id"], state["p2_id"]
+    p1_name = player_names.get(p1_id, str(p1_id))
+    p2_name = player_names.get(p2_id, str(p2_id))
+    score = f"{p1_name}: {state['p1_found']}  {p2_name}: {state['p2_found']}/{total_pairs}"
+    if final:
+        p1f, p2f = state["p1_found"], state["p2_found"]
+        winner_id = p1_id if p1f > p2f else (p2_id if p2f > p1f else None)
+        if winner_id is None:
+            result = lang["game-draw"]
+        else:
+            result = f"{lang['group-winner']} {player_names.get(winner_id, str(winner_id))}"
+        return f"{header}\n\n{score}\n\n{result}"
+    current_id = state.get("current_turn_user_id")
+    current_name = player_names.get(current_id, "?") if current_id else "?"
+    return f"{header}\n\n{score}\n{lang['group-turn']} {current_name}"
 
 
 async def _sync_mem_duel(bot, session_id: int, state: dict, final: bool = False) -> None:
@@ -197,6 +221,22 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
+async def start_memory_group(message: Message, user, lang: dict, size: int) -> None:
+    if message.chat.type not in ("group", "supergroup"):
+        await message.answer(lang["group-only"], reply_markup=memory_menu_keyboard(lang, chat_type=message.chat.type))
+        return
+    state: dict = {"status": "pending", "size": size}
+    session = await create_group_match_session(user.id, message.chat.id, game.code, state)
+    await message.answer(lang["group-wait"], reply_markup=group_duel_keyboard(lang, f"mem:group_join:{session.id}"))
+
+
+@router.callback_query(GameCallbackFilter("group", game.code))
+async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
+    size = int((user.settings or {}).get("memory_size", 4))
+    await start_memory_group(callback.message, user, lang, size)
+    await callback.answer()
+
+
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
@@ -277,6 +317,8 @@ async def callback_flip(callback: CallbackQuery) -> None:
 
     if session.mode == SessionMode.duel_private:
         await _flip_duel(callback, session, user, lang, idx)
+    elif session.mode == SessionMode.group_match:
+        await _flip_group(callback, session, user, lang, idx)
     else:
         await _flip_solo(callback, session, user, lang, idx)
 
@@ -441,3 +483,152 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
             await _sync_mem_duel(callback.bot, session.id, state)
         except Exception:
             pass
+
+
+async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: int) -> None:
+    state = dict(session.state)
+
+    if user.id not in {state.get("p1_id"), state.get("p2_id")}:
+        await callback.answer()
+        return
+    if state.get("current_turn_user_id") != user.id:
+        await callback.answer()
+        return
+
+    flipped: list[int] = list(state.get("flipped", []))
+    if state.get("revealing") or state["matched"][idx]:
+        await callback.answer()
+        return
+    if len(flipped) == 1 and flipped[0] == idx:
+        await callback.answer()
+        return
+
+    await callback.answer()
+
+    host = await get_user_by_id(session.created_by_user_id)
+    group_lang = get_language_pack(host.language_code if host else "en")
+    player_names = {
+        state["p1_id"]: format_player_name(await get_user_by_id(state["p1_id"])),
+        state["p2_id"]: format_player_name(await get_user_by_id(state["p2_id"])),
+    }
+
+    if len(flipped) == 0:
+        state["flipped"] = [idx]
+        await update_session_state(session.id, state, user.id)
+        await callback.message.edit_text(
+            render_group_text(group_lang, state, player_names),
+            reply_markup=board_keyboard(session.id, state, True),
+        )
+        return
+
+    first = flipped[0]
+    state["flipped"] = [first, idx]
+    state["moves"] += 1
+
+    if state["cards"][first] == state["cards"][idx]:
+        state["matched"][first] = True
+        state["matched"][idx] = True
+        state["found"] += 1
+        state["flipped"] = []
+
+        is_p1 = user.id == state["p1_id"]
+        if is_p1:
+            state["p1_found"] += 1
+        else:
+            state["p2_found"] += 1
+
+        total_pairs = len(state["cards"]) // 2
+        if state["found"] == total_pairs:
+            p1f, p2f = state["p1_found"], state["p2_found"]
+            winner_id = state["p1_id"] if p1f > p2f else (state["p2_id"] if p2f > p1f else None)
+            p1_result = "win" if p1f > p2f else ("loss" if p1f < p2f else "draw")
+            p2_result = "win" if p2f > p1f else ("loss" if p2f < p1f else "draw")
+            state["status"] = "finished"
+            await finish_session(session.id, state, winner_user_id=winner_id)
+            await record_game_result(state["p1_id"], game.code, p1_result)
+            await record_game_result(state["p2_id"], game.code, p2_result)
+            await callback.message.edit_text(
+                render_group_text(group_lang, state, player_names, final=True),
+                reply_markup=board_keyboard(session.id, state, False),
+            )
+        else:
+            await update_session_state(session.id, state, user.id)
+            await callback.message.edit_text(
+                render_group_text(group_lang, state, player_names),
+                reply_markup=board_keyboard(session.id, state, True),
+            )
+    else:
+        state["revealing"] = True
+        await update_session_state(session.id, state, user.id)
+        await callback.message.edit_text(
+            render_group_text(group_lang, state, player_names),
+            reply_markup=board_keyboard(session.id, state, False),
+        )
+
+        await asyncio.sleep(1.5)
+
+        state["flipped"] = []
+        state["revealing"] = False
+        next_player = state["p2_id"] if user.id == state["p1_id"] else state["p1_id"]
+        state["current_turn_user_id"] = next_player
+        await update_session_state(session.id, state, next_player)
+        try:
+            await callback.message.edit_text(
+                render_group_text(group_lang, state, player_names),
+                reply_markup=board_keyboard(session.id, state, True),
+            )
+        except Exception:
+            pass
+
+
+@router.callback_query(F.data.startswith("mem:group_join:"))
+async def callback_memory_group_join(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+
+    if session is None or session.mode != SessionMode.group_match:
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+    if session.created_by_user_id == user.id:
+        await callback.answer(lang["duel-self"], show_alert=True)
+        return
+    if session.status != SessionStatus.pending:
+        await callback.answer(lang["duel-full"], show_alert=True)
+        return
+
+    player_ids = {player.user_id for player in session.players}
+    if user.id in player_ids:
+        await callback.answer(lang["group-already-joined"], show_alert=True)
+        return
+    if len(player_ids) >= 2:
+        await callback.answer(lang["duel-full"], show_alert=True)
+        return
+
+    original_state = dict(session.state or {})
+    size = int(original_state.get("size", 4))
+    duel_state = game.new_duel_state(session.created_by_user_id, user.id, size)
+    first_player = random.choice([session.created_by_user_id, user.id])
+    duel_state["current_turn_user_id"] = first_player
+
+    session = await activate_group_match_session(session_id, user.id, duel_state, first_player)
+    if session is None:
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+
+    host = await get_user_by_id(session.created_by_user_id)
+    group_lang = get_language_pack(host.language_code if host else "en")
+    player_names = {
+        session.created_by_user_id: format_player_name(host),
+        user.id: format_player_name(user),
+    }
+
+    await callback.message.edit_text(
+        render_group_text(group_lang, duel_state, player_names),
+        reply_markup=board_keyboard(session.id, duel_state, True),
+    )
+    await callback.answer(lang["duel-join-ok"])
