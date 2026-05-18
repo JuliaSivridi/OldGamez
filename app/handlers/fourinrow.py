@@ -76,7 +76,7 @@ def render_group_status_text(
     current_turn_user_id = state.get("current_turn_user_id")
     current_symbol = SYMBOLS[1] if current_turn_user_id == state.get("player_red_id") else SYMBOLS[2]
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
-    return f"{lang['game-four']}\n\n{lang['group-turn']} {current_symbol} {current_name}"
+    return f"{lang['icon-four']} {lang['game-four']}\n\n{lang['group-turn']} {current_symbol} {current_name}"
 
 
 def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = None) -> str:
@@ -90,7 +90,7 @@ def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = 
             return lang["game-lose"]
         current_sign = 1 if state.get("current_turn_user_id") == state.get("player_red_id") else 2
         turn_line = lang["turn-user"] if viewer_user_id == state.get("current_turn_user_id") else lang["turn-friend"]
-        return f"{lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
+        return f"{lang['icon-four']} {lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
 
     if state["status"] == "finished":
         result = state.get("result")
@@ -101,7 +101,7 @@ def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = 
         return lang["game-draw"]
     current_sign = state["user_sign"] if state["current_turn"] == "user" else state["bot_sign"]
     turn_line = lang["turn-user"] if state["current_turn"] == "user" else lang["turn-comp"]
-    return f"{lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
+    return f"{lang['icon-four']} {lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
 
 
 def render_drop_text(lang: dict[str, str], sign: int, viewer_turn: str) -> str:
@@ -111,7 +111,7 @@ def render_drop_text(lang: dict[str, str], sign: int, viewer_turn: str) -> str:
         turn_line = lang["turn-friend"]
     else:
         turn_line = lang["turn-comp"]
-    return f"{lang['game-four']}\n\n{SYMBOLS[sign]} {turn_line}"
+    return f"{lang['icon-four']} {lang['game-four']}\n\n{SYMBOLS[sign]} {turn_line}"
 
 
 async def _run_drop_animation(
@@ -229,7 +229,7 @@ async def send_four_menu_to_other_duel_players(
         try:
             await bot.send_message(
                 chat_id=message_meta["chat_id"],
-                text=lang["game-four"],
+                text=_four_menu_text(lang),
                 reply_markup=four_menu_keyboard(lang, chat_type=chat_type),
             )
         except TelegramBadRequest:
@@ -347,10 +347,14 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         await sync_duel_messages(message.bot, session)
 
 
+def _four_menu_text(lang: dict) -> str:
+    return f"{lang['icon-four']} *{lang['game-four']}*"
+
+
 async def open_four_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-four"],
+        _four_menu_text(lang),
         reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -371,7 +375,7 @@ async def open_four_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _four_menu_text(lang), reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -396,14 +400,15 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
+    game_title = f"{lang['icon-stat']} *{lang['game-four']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-four"], reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-four']}* | *{lang['help-ttl']}*\n\n{lang['help-four']}", reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

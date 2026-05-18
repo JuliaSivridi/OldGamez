@@ -179,7 +179,7 @@ async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_mess
             try:
                 await bot.send_message(
                     chat_id=msg_meta["chat_id"],
-                    text=other_lang["game-bj"],
+                    text=_bj_menu_text(other_lang),
                     reply_markup=blackjack_menu_keyboard(other_lang),
                 )
             except TelegramBadRequest:
@@ -247,10 +247,14 @@ async def _handle_duel_action(callback: CallbackQuery, session, user, lang: dict
             await _sync_bj_duel_messages(callback.bot, updated)
 
 
+def _bj_menu_text(lang: dict) -> str:
+    return f"{lang['icon-bj']} *{lang['game-bj']}*"
+
+
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-bj"],
+        _bj_menu_text(lang),
         reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -271,7 +275,7 @@ async def open_blackjack_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-bj"], reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _bj_menu_text(lang), reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -297,7 +301,8 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
+    game_title = f"{lang['icon-stat']} *{lang['game-bj']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text,
         reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
         parse_mode="Markdown")
@@ -306,7 +311,7 @@ async def menu_stats(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-bj"],
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-bj']}* | *{lang['help-ttl']}*\n\n{lang['help-bj']}",
         reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
         parse_mode="Markdown")
     await callback.answer()

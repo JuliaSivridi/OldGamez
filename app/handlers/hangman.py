@@ -11,7 +11,7 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
 from app.keyboards.menus import game_menu_keyboard
-from app.services.sessions import create_solo_session, finish_session, format_game_stats_text, get_game_stat, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, format_variant_stats_text, get_all_game_stats, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
 
@@ -38,7 +38,7 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
         return f"{game.hang_art(state['lives_total'], state['lives'])}\n{lang['game-lose']}\n<b>{state['word']}</b>"
     return (
         f"{game.hang_art(state['lives_total'], state['lives'])}\n"
-        f"{lang['game-hang']} | {lang['hang-lives']}{state['lives']}\n"
+        f"{lang['icon-hang']} {lang['game-hang']} | {lang['hang-lives']}{state['lives']}\n"
         f"<code>{' '.join(state['guess'])}</code>"
     )
 
@@ -71,12 +71,13 @@ def hangman_menu_keyboard(lang: dict[str, str], chat_type=None):
 
 
 _LIVES_TO_CMPLX = {15: "easy", 10: "norm", 5: "hard"}
+_LIVES_TO_VARIANT = {15: "easy", 10: "normal", 5: "hard"}
 
 
 def _hang_menu_text(lang: dict, user_settings: dict | None) -> str:
     lives = int((user_settings or {}).get("hangman_lives", 10))
     cmplx = _LIVES_TO_CMPLX.get(lives, "norm")
-    return f"{lang['game-hang']}\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+    return f"{lang['icon-hang']} *{lang['game-hang']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
 
 
 async def open_hangman_menu(message: Message, user, lang) -> None:
@@ -123,17 +124,23 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
+_DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
+
+
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: _DIFFICULTY_ORDER.get(s.variant_key, 9))
+    variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
+    game_title = f"{lang['icon-stat']} *{lang['game-hang']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-hang"], reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-hang']}* | *{lang['help-ttl']}*\n\n{lang['help-hang']}", reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -193,7 +200,7 @@ async def callback_play(callback: CallbackQuery) -> None:
     if result['state'] == 'win':
         await finish_session(session.id, state, winner_user_id=user.id)
         if not state.get('hint_used', False):
-            await record_game_result(user.id, game.code, 'win')
+            await record_game_result(user.id, game.code, 'win', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
         await callback.message.edit_text(
             render_text(lang, state, final='win'),
             parse_mode=ParseMode.HTML,
@@ -208,7 +215,7 @@ async def callback_play(callback: CallbackQuery) -> None:
 
     if result['state'] == 'loss':
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, 'loss')
+        await record_game_result(user.id, game.code, 'loss', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
         await callback.message.edit_text(
             render_text(lang, state, final='loss'),
             parse_mode=ParseMode.HTML,

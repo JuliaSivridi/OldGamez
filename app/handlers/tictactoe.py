@@ -31,8 +31,8 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_game_stats_text,
-    get_game_stat,
+    format_variant_stats_text,
+    get_all_game_stats,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -82,7 +82,7 @@ def render_group_status_text(
     current_symbol = "❌" if current_turn_user_id == state.get("player_x_id") else "⭕"
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
     return (
-        f"{lang['game-xo']}{board_size}x{board_size}"
+        f"{lang['icon-xo']} {lang['game-xo']} {board_size}x{board_size}"
         f"{lang['xo-win-need']}{win_length}\n\n"
         f"{lang['group-turn']} {current_symbol} {current_name}"
     )
@@ -107,7 +107,7 @@ def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | 
 
         turn_line = lang["turn-user"] if viewer_user_id == current_turn_user_id else lang["turn-friend"]
         return (
-            f"{lang['game-xo']}{board_size}x{board_size}"
+            f"{lang['icon-xo']} {lang['game-xo']} {board_size}x{board_size}"
             f"{lang['xo-win-need']}{win_length}\n\n"
             f"{current_symbol} {turn_line}"
         )
@@ -126,7 +126,7 @@ def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | 
     turn_line = lang["turn-user"] if state["current_turn"] == "user" else lang["turn-comp"]
     current_symbol = user_symbol if state["current_turn"] == "user" else bot_symbol
     return (
-        f"{lang['game-xo']}{board_size}x{board_size}"
+        f"{lang['icon-xo']} {lang['game-xo']} {board_size}x{board_size}"
         f"{lang['xo-win-need']}{win_length}\n\n"
         f"{current_symbol} {turn_line}"
     )
@@ -193,7 +193,7 @@ async def send_tictactoe_menu_to_other_duel_players(
         try:
             await bot.send_message(
                 chat_id=message_meta["chat_id"],
-                text=lang["game-xo"],
+                text=f"{lang['icon-xo']} {lang['game-xo']}",
                 reply_markup=tictactoe_menu_keyboard(lang, chat_type=chat_type),
             )
         except TelegramBadRequest:
@@ -324,7 +324,7 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
 
 def _xo_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("tictactoe_size", 3))
-    return f"{lang['game-xo']}\n{lang['setting-size']}: {size} × {size}"
+    return f"{lang['icon-xo']} *{lang['game-xo']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
 
 
 async def open_tictactoe_menu(message: Message, user, lang) -> None:
@@ -388,15 +388,18 @@ async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0)
+    variant_labels = {str(s): f"{s}×{s}" for s in range(3, 9)}
+    game_title = f"{lang['icon-stat']} *{lang['game-xo']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text, reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-xo"], reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-xo']}* | *{lang['help-ttl']}*\n\n{lang['help-xo']}", reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -541,12 +544,13 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 winner_user_id=state["winner_user_id"],
             )
             other_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
+            vk = str(state["board_size"])
             if duel_turn.state == "draw":
-                await record_game_result(user.id, game.code, "draw")
-                await record_game_result(other_user_id, game.code, "draw")
+                await record_game_result(user.id, game.code, "draw", variant_key=vk)
+                await record_game_result(other_user_id, game.code, "draw", variant_key=vk)
             else:
-                await record_game_result(user.id, game.code, "win")
-                await record_game_result(other_user_id, game.code, "loss")
+                await record_game_result(user.id, game.code, "win", variant_key=vk)
+                await record_game_result(other_user_id, game.code, "loss", variant_key=vk)
             await callback.message.edit_text(
                 render_group_status_text(state, group_lang, {
                     state["player_x_id"]: format_player_name(await get_user_by_id(state["player_x_id"])),
@@ -617,12 +621,13 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                 winner_user_id=state["winner_user_id"],
             )
             other_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
+            vk = str(state["board_size"])
             if duel_turn.state == "draw":
-                await record_game_result(user.id, game.code, "draw")
-                await record_game_result(other_user_id, game.code, "draw")
+                await record_game_result(user.id, game.code, "draw", variant_key=vk)
+                await record_game_result(other_user_id, game.code, "draw", variant_key=vk)
             else:
-                await record_game_result(user.id, game.code, "win")
-                await record_game_result(other_user_id, game.code, "loss")
+                await record_game_result(user.id, game.code, "win", variant_key=vk)
+                await record_game_result(other_user_id, game.code, "loss", variant_key=vk)
             refreshed_session = await get_session_by_id(session.id)
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
@@ -669,7 +674,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         state["status"] = "finished"
         state["result"] = user_turn.state
         await finish_session(session.id, state, winner_user_id=user.id if user_turn.state == "win" else None)
-        await record_game_result(user.id, game.code, user_turn.state or "draw")
+        await record_game_result(user.id, game.code, user_turn.state or "draw", variant_key=str(state["board_size"]))
         await callback.message.edit_text(
             render_status_text(state, lang),
             reply_markup=board_keyboard(
@@ -722,7 +727,7 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         state["status"] = "finished"
         state["result"] = bot_turn.state
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, bot_turn.state or "draw")
+        await record_game_result(user.id, game.code, bot_turn.state or "draw", variant_key=str(state["board_size"]))
         await callback.message.edit_text(
             render_status_text(state, lang),
             reply_markup=board_keyboard(

@@ -30,7 +30,7 @@ def wordle_menu_keyboard(lang, chat_type=None):
 
 def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool = False) -> str:
     size = state["size"]
-    title = f"{lang['game-wordle']} · {size} {lang['wrd-letters']}"
+    title = f"{lang['icon-wordle']} {lang['game-wordle']} · {size} {lang['wrd-letters']}"
 
     lines = [title, ""]
     for entry in state["history"]:
@@ -55,9 +55,13 @@ def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool
     return "\n".join(lines)
 
 
+def _wrd_menu_text(lang: dict) -> str:
+    return f"{lang['icon-wordle']} *{lang['game-wordle']}*"
+
+
 async def open_wordle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(lang["game-wordle"], reply_markup=wordle_menu_keyboard(lang, chat_type=message.chat.type))
+    await message.answer(_wrd_menu_text(lang), reply_markup=wordle_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_message_id: int | None = None) -> None:
@@ -92,7 +96,7 @@ async def open_wordle_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-wordle"], reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _wrd_menu_text(lang), reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -106,14 +110,15 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    game_title = f"{lang['icon-stat']} *{lang['game-wordle']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-wordle"], reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-wordle']}* | *{lang['help-ttl']}*\n\n{lang['help-wordle']}", reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

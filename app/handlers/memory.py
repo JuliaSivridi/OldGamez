@@ -30,8 +30,8 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_game_stats_text,
-    get_game_stat,
+    format_variant_stats_text,
+    get_all_game_stats,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -55,13 +55,13 @@ def memory_menu_keyboard(lang: dict, chat_type=None):
 def _mem_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("memory_size", 4))
     rows, cols = GRID_DIMS[size]
-    return f"{lang['game-mem']}\n{lang['setting-size']}: {lang[str(rows)]}✖️{lang[str(cols)]}"
+    return f"{lang['icon-mem']} *{lang['game-mem']}*\n{lang['setting-size']}: {lang[str(rows)]}✖️{lang[str(cols)]}"
 
 
 def render_text(lang: dict, state: dict, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
     total_pairs = len(state["cards"]) // 2
-    header = f"{lang['game-mem']} · {rows}×{cols}"
+    header = f"{lang['icon-mem']} {lang['game-mem']} · {rows}×{cols}"
     if final:
         return f"{header}\n\n{lang['game-win']}\n{lang['mem-win']}{state['moves']}{lang['mem-win2']}"
     return f"{header}\n\n{lang['mem-moves']}{state['moves']}  {lang['mem-found']}{state['found']}/{total_pairs}"
@@ -70,7 +70,7 @@ def render_text(lang: dict, state: dict, final: bool = False) -> str:
 def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
     total_pairs = len(state["cards"]) // 2
-    header = f"{lang['game-mem']} · {rows}×{cols}"
+    header = f"{lang['icon-mem']} {lang['game-mem']} · {rows}×{cols}"
 
     is_p1 = viewer_id == state["p1_id"]
     my_found = state["p1_found"] if is_p1 else state["p2_found"]
@@ -95,7 +95,7 @@ def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = Fals
 def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
     total_pairs = len(state["cards"]) // 2
-    header = f"{lang['game-mem']} · {rows}×{cols}"
+    header = f"{lang['icon-mem']} {lang['game-mem']} · {rows}×{cols}"
     p1_id, p2_id = state["p1_id"], state["p2_id"]
     p1_name = player_names.get(p1_id, str(p1_id))
     p2_name = player_names.get(p2_id, str(p2_id))
@@ -263,15 +263,18 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "draws", "losses"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0)
+    variant_labels = {str(s): f"{r}×{c}" for s, (r, c) in GRID_DIMS.items()}
+    game_title = f"{lang['icon-stat']} *{lang['game-mem']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses", "draws"], has_best_score=True)
     await safe_edit(callback.message, text, reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-mem"], reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-mem']}* | *{lang['help-ttl']}*\n\n{lang['help-mem']}", reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -359,7 +362,7 @@ async def _flip_solo(callback: CallbackQuery, session, user, lang: dict, idx: in
         if state["found"] == total_pairs:
             state["status"] = "won"
             await finish_session(session.id, state, winner_user_id=user.id)
-            await record_game_result(user.id, game.code, "win")
+            await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state["moves"])
             await callback.message.edit_text(
                 render_text(lang, state, final=True),
                 reply_markup=board_keyboard(session.id, state, False),
@@ -444,9 +447,10 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
             p1_result = "win" if p1f > p2f else ("loss" if p1f < p2f else "draw")
             p2_result = "win" if p2f > p1f else ("loss" if p2f < p1f else "draw")
             state["status"] = "finished"
+            vk = str(state["size"])
             await finish_session(session.id, state, winner_user_id=winner_id)
-            await record_game_result(state["p1_id"], game.code, p1_result)
-            await record_game_result(state["p2_id"], game.code, p2_result)
+            await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
+            await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
             await _sync_mem_duel(callback.bot, session.id, state, final=True)
             await delete_guest_join_msg(callback.bot, state)
             await open_memory_menu(callback.message, user, lang)
@@ -544,9 +548,10 @@ async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: i
             p1_result = "win" if p1f > p2f else ("loss" if p1f < p2f else "draw")
             p2_result = "win" if p2f > p1f else ("loss" if p2f < p1f else "draw")
             state["status"] = "finished"
+            vk = str(state["size"])
             await finish_session(session.id, state, winner_user_id=winner_id)
-            await record_game_result(state["p1_id"], game.code, p1_result)
-            await record_game_result(state["p2_id"], game.code, p2_result)
+            await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
+            await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
             await callback.message.edit_text(
                 render_group_text(group_lang, state, player_names, final=True),
                 reply_markup=board_keyboard(session.id, state, False),

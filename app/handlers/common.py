@@ -32,21 +32,21 @@ GAME_CODE_RPS = "ropasci"
 GAME_CODE_RPSSL = "rpssl"
 
 # random does not have per-game stats (it's a collection of utilities, not a scored game)
-GAME_STATS_ORDER: list[tuple[str, str]] = [
-    (GAME_CODE_TICTACTOE, "menu-xo"),
-    (GAME_CODE_FOURINROW, "menu-four"),
-    (GAME_CODE_BATTLESHIP, "menu-sea"),
-    (GAME_CODE_MINESWEEPER, "menu-mines"),
-    (GAME_CODE_LIGHTSOUT, "menu-lightsout"),
-    (GAME_CODE_NPUZZLE, "menu-npuzzle"),
-    (GAME_CODE_MASTERMIND, "menu-mastermind"),
-    (GAME_CODE_BULLSCOWS, "menu-bullscows"),
-    (GAME_CODE_WORDLE, "menu-wordle"),
-    (GAME_CODE_HANGMAN, "menu-hang"),
-    (GAME_CODE_MEMORY, "menu-mem"),
-    (GAME_CODE_BLACKJACK, "menu-bj"),
-    (GAME_CODE_RPS, "menu-rps"),
-    (GAME_CODE_RPSSL, "menu-rpssl"),
+GAME_STATS_ORDER: list[tuple[str, str, str]] = [
+    (GAME_CODE_TICTACTOE, "icon-xo", "game-xo"),
+    (GAME_CODE_FOURINROW, "icon-four", "game-four"),
+    (GAME_CODE_BATTLESHIP, "icon-sea", "game-sea"),
+    (GAME_CODE_MINESWEEPER, "icon-mines", "game-mines"),
+    (GAME_CODE_LIGHTSOUT, "icon-lightsout", "game-lightsout"),
+    (GAME_CODE_NPUZZLE, "icon-npuzzle", "game-npuzzle"),
+    (GAME_CODE_MASTERMIND, "icon-mastermind", "game-mastermind"),
+    (GAME_CODE_BULLSCOWS, "icon-bullscows", "game-bullscows"),
+    (GAME_CODE_WORDLE, "icon-wordle", "game-wordle"),
+    (GAME_CODE_HANGMAN, "icon-hang", "game-hang"),
+    (GAME_CODE_MEMORY, "icon-mem", "game-mem"),
+    (GAME_CODE_BLACKJACK, "icon-bj", "game-bj"),
+    (GAME_CODE_RPS, "icon-rps", "game-rps"),
+    (GAME_CODE_RPSSL, "icon-rpssl", "game-rpssl"),
 ]
 
 # Registry: game_code -> "module:function" for the open_X_menu function.
@@ -186,14 +186,14 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
 
-    game_codes = [code for code, _ in GAME_STATS_ORDER]
+    game_codes = [code for code, _, _ in GAME_STATS_ORDER]
     stats_map = await get_game_stats_bulk(user.id, game_codes)
 
     stats_lines = [
         f"{lang['stat-col-played']:<8}{lang['stat-col-wins']:<8}{lang['stat-col-losses']:<8}{lang['stat-col-draws']:<8}",
     ]
     total_played = total_wins = total_losses = total_draws = 0
-    for game_code, label_key in GAME_STATS_ORDER:
+    for game_code, icon_key, name_key in GAME_STATS_ORDER:
         stat = stats_map.get(game_code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
@@ -203,7 +203,8 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         total_wins += wins
         total_losses += losses
         total_draws += draws
-        stats_lines.append(f"`{lang[label_key]}`")
+        label = f"{lang[icon_key]} {lang[name_key]}"
+        stats_lines.append(f"`{label}`")
         stats_lines.append(f"`{played:<6}{wins:<5}{losses:<5}{draws:<5}`")
 
     stats_lines.append(f"\n`{lang['stat-sum']}`")

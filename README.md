@@ -18,7 +18,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 🐂 Bulls and Cows | ✅ | | |
 | 📝 Wordle | ✅ | | |
 | 😵 Hangman | ✅ | | |
-| 🧠 Memory | ✅ | | |
+| 🧠 Memory | ✅ | ✅ | ✅ |
 | 🃏 Blackjack | ✅ | ✅ | |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 | ✊ Rock Paper Scissors | ✅ | ✅ | ✅ |
@@ -34,7 +34,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 - **Group match** — start a game in a group, a second player joins by tapping a button
 
 **Stats & language**
-- Per-game statistics: games played, wins, losses, draws
+- Per-game statistics broken down by difficulty or board size: games played, wins, losses, draws; best score (moves/taps) tracked for Lights Out, N-Puzzle, and Memory
 - Three interface languages: 🇬🇧 English, 🇫🇮 Finnish, 🇷🇺 Russian — switchable with `/lang`
 
 **Infrastructure**

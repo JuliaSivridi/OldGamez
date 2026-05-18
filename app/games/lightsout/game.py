@@ -69,9 +69,10 @@ class LightsOutGame:
             if not any(cells):
                 continue
             if _is_solvable(cells, size):
-                return {"size": size, "cells": cells, "status": "active"}
+                return {"size": size, "cells": cells, "taps": 0, "status": "active"}
 
     def press(self, state: dict, idx: int) -> dict:
+        state["taps"] = state.get("taps", 0) + 1
         cells = list(state["cells"])
         self._toggle(cells, idx, state["size"])
         state["cells"] = cells

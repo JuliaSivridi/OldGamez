@@ -14,8 +14,8 @@ from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    format_game_stats_text,
-    get_game_stat,
+    format_variant_stats_text,
+    get_all_game_stats,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -46,14 +46,14 @@ async def start_lightsout_game(message: Message, user, lang: dict[str, str], siz
         initial_state=state,
     )
     await message.answer(
-        f"{lang['game-lightsout']}{size}×{size}",
+        f"{lang['icon-lightsout']} {lang['game-lightsout']} {size}×{size}",
         reply_markup=board_keyboard(session.id, session.state["cells"], size, True, lang),
     )
 
 
 def _lto_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("lightsout_size", 5))
-    return f"{lang['game-lightsout']}\n{lang['setting-size']}: {size} × {size}"
+    return f"{lang['icon-lightsout']} *{lang['game-lightsout']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
 
 
 async def open_lightsout_menu(message: Message, user, lang) -> None:
@@ -102,15 +102,18 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0)
+    variant_labels = {str(s): f"{s}×{s}" for s in (4, 5, 6)}
+    game_title = f"{lang['icon-stat']} *{lang['game-lightsout']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"], has_best_score=True)
     await safe_edit(callback.message, text, reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-lightsout"], reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-lightsout']}* | *{lang['help-ttl']}*\n\n{lang['help-lightsout']}", reply_markup=lightsout_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -157,7 +160,7 @@ async def callback_press(callback: CallbackQuery) -> None:
     size = state["size"]
     if result["state"] == "win":
         await finish_session(session.id, state, winner_user_id=user.id)
-        await record_game_result(user.id, game.code, "win")
+        await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state.get("taps", 0))
         await callback.message.edit_text(
             lang["game-win"],
         )
@@ -170,7 +173,7 @@ async def callback_press(callback: CallbackQuery) -> None:
         return
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
-        f"{lang['game-lightsout']}{size}×{size}",
+        f"{lang['icon-lightsout']} {lang['game-lightsout']} {size}×{size}",
         reply_markup=board_keyboard(session.id, state["cells"], size, True, lang),
     )
 
@@ -189,7 +192,7 @@ async def callback_give_up(callback: CallbackQuery) -> None:
     state = dict(session.state)
     menu_msg_id = state.get("menu_message_id")
     await finish_session(session.id, state, winner_user_id=None)
-    await record_game_result(user.id, game.code, "loss")
+    await record_game_result(user.id, game.code, "loss", variant_key=str(state["size"]))
     await callback.message.edit_text(
         lang["game-lose"],
     )
@@ -222,7 +225,7 @@ async def callback_solve(callback: CallbackQuery) -> None:
         result = game.press(state, idx)
         state = result["game_state"]
         await callback.message.edit_text(
-            f"{lang['game-lightsout']}{size}×{size}",
+            f"{lang['icon-lightsout']} {lang['game-lightsout']} {size}×{size}",
             reply_markup=board_keyboard(session.id, state["cells"], size, False),  # animation step
         )
 

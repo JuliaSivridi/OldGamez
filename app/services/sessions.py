@@ -454,8 +454,50 @@ def format_game_stats_text(
         "losses": stat.losses if stat else 0,
         "draws": stat.draws if stat else 0,
     }
-    result = lang["stat-ttl"]
+    result = f"*{lang['stat-ttl']}*"
     for field in fields:
         label = lang[_STAT_FIELD_KEYS[field]]
         result += f"`{label}{str(values[field]).rjust(20 - len(label))}`"
     return result
+
+
+def format_variant_stats_text(
+    stats: list[GameStat],
+    lang: dict[str, str],
+    variant_labels: dict[str, str],
+    fields: list[str],
+    has_best_score: bool = False,
+) -> str:
+    _COL_KEYS = {
+        "played": "stat-col-played",
+        "wins": "stat-col-wins",
+        "losses": "stat-col-losses",
+        "draws": "stat-col-draws",
+    }
+    _VAL = {
+        "played": lambda s: s.played,
+        "wins": lambda s: s.wins,
+        "losses": lambda s: s.losses,
+        "draws": lambda s: s.draws,
+    }
+    active_cols = [f for f in fields if f in _VAL]
+    col_emojis = [lang[_COL_KEYS[f]] for f in active_cols]
+    if has_best_score:
+        col_emojis.append(lang.get("stat-col-best", "⚡"))
+
+    lbl_w = 5
+    col_w = 4
+    # emoji renders as 2 visual chars but counts as 1 in Python str len,
+    # so use (col_w - 2) trailing spaces to keep header columns visually aligned with data
+    header = " " * lbl_w + "".join(f"{e}{' ' * (col_w - 2)}" for e in col_emojis)
+    lines = [f"*{lang['stat-ttl']}*", "", f"`{header}`"]
+
+    for stat in stats:
+        label = variant_labels.get(stat.variant_key, stat.variant_key)
+        vals = [str(_VAL[f](stat)) for f in active_cols]
+        if has_best_score:
+            vals.append(str(stat.best_score) if stat.best_score is not None else "—")
+        row = f"{label:<{lbl_w}}" + "".join(f"{v:<{col_w}}" for v in vals)
+        lines.append(f"`{row}`")
+
+    return "\n".join(lines)

@@ -25,7 +25,7 @@ def render_game_text(lang: dict[str, str], state: dict, is_game_over: bool = Fal
     if is_game_over:
         return lang["game-win"] if is_win else lang["game-lose"]
 
-    lines = [f"{lang['game-sea']}     (\\/)_(0_0)_(\\/)"]
+    lines = [f"{lang['icon-sea']} {lang['game-sea']}     (\\/)_(0_0)_(\\/)"]
     for row in state["user_board"]:
         lines.append("".join(SYMBOLS[cell] for cell in row))
 
@@ -100,6 +100,10 @@ def battleship_menu_keyboard(lang: dict[str, str], chat_type=None):
     )
 
 
+def _sea_menu_text(lang: dict) -> str:
+    return f"{lang['icon-sea']} *{lang['game-sea']}*"
+
+
 def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, is_game_over: bool = False) -> str:
     if is_game_over:
         result = state.get("result")
@@ -109,7 +113,7 @@ def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, is_game
 
     is_p1 = viewer_id == state["p1_id"]
     own_board = state["p1_board"] if is_p1 else state["p2_board"]
-    lines = [lang["game-sea"]]
+    lines = [f"{lang['icon-sea']} {lang['game-sea']}"]
     for row in own_board:
         lines.append("".join(SYMBOLS[cell] for cell in row))
 
@@ -215,7 +219,7 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
                 try:
                     await callback.bot.send_message(
                         chat_id=msg_meta["chat_id"],
-                        text=other_lang["game-sea"],
+                        text=_sea_menu_text(other_lang),
                         reply_markup=battleship_menu_keyboard(other_lang),
                     )
                 except TelegramBadRequest:
@@ -232,7 +236,7 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
 async def open_battleship_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
-        lang["game-sea"],
+        _sea_menu_text(lang),
         reply_markup=battleship_menu_keyboard(lang, chat_type=message.chat.type),
     )
 
@@ -253,7 +257,7 @@ async def open_battleship_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, lang["game-sea"], reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, _sea_menu_text(lang), reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -279,14 +283,15 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    game_title = f"{lang['icon-stat']} *{lang['game-sea']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-sea"], reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-sea']}* | *{lang['help-ttl']}*\n\n{lang['help-sea']}", reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

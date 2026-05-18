@@ -176,7 +176,8 @@ async def _render_rps_duel_for_user(session, user_id: int, title_key: str,
         final = "p1_wins" if state["p1_wins"] >= state["wins_needed"] else "p2_wins"
     is_active = (session.status == SessionStatus.active
                  and not bool(state["current_p1"] if is_p1 else state["current_p2"]))
-    text = render_duel_text_for_viewer(lang[title_key], state, lang, user_id,
+    icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
+    text = render_duel_text_for_viewer(f"{lang[icon_key]} {lang[title_key]}", state, lang, user_id,
                                        my_name=my_name, opp_name=opp_name, final=final)
     markup = rps_game_keyboard(session.id, moves, is_active, lang, prefix)
     return text, markup
@@ -196,7 +197,8 @@ async def _sync_rps_duel_messages(bot, session, title_key: str, moves: list[str]
 def _rps_menu_text(lang: dict, user_settings: dict | None, title_key: str, settings_key: str = "rps_mode") -> str:
     wins_needed = int((user_settings or {}).get(settings_key, 1))
     mode_label = MODE_LABEL.get(wins_needed, "?")
-    return f"{lang[title_key]}\n{lang['setting-mode']}: {mode_label}"
+    icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
+    return f"*{lang[icon_key]} {lang[title_key]}*\n{lang['setting-mode']}: {mode_label}"
 
 
 async def open_ropasci_menu(message: Message, user, lang) -> None:
@@ -278,8 +280,9 @@ async def _join_rps_private_duel(message: Message, user, lang, session, g,
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
     host_user = await get_user_by_id(duel_state["p1_id"])
+    icon_key = f"icon-{prefix}"
     guest_msg = await message.answer(
-        render_duel_text_for_viewer(lang[f"game-{prefix}"], duel_state, lang, user.id,
+        render_duel_text_for_viewer(f"{lang[icon_key]} {lang[f'game-{prefix}']}", duel_state, lang, user.id,
                                     my_name=format_player_name(user),
                                     opp_name=format_player_name(host_user)),
         reply_markup=rps_game_keyboard(activated.id, moves, True, lang, prefix),
@@ -323,8 +326,9 @@ async def _handle_rps_group_join(callback: CallbackQuery, session_id: int, g, mo
 
     p1 = await get_user_by_id(duel_state["p1_id"])
     p2 = await get_user_by_id(duel_state["p2_id"])
+    icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
     await callback.message.edit_text(
-        render_multi_text(lang[title_key], duel_state, lang, format_player_name(p1), format_player_name(p2)),
+        render_multi_text(f"{lang[icon_key]} {lang[title_key]}", duel_state, lang, format_player_name(p1), format_player_name(p2)),
         reply_markup=rps_game_keyboard(session.id, moves, True, lang, prefix),
     )
     await callback.answer(lang["duel-join-ok"])
@@ -357,12 +361,14 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
         await record_game_result(winner_id, g.code, "win")
         await record_game_result(loser_id, g.code, "loss")
 
+        _icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
+        _title = f"{lang[_icon_key]} {lang[title_key]}"
         if session.mode == SessionMode.group_match:
             p1 = await get_user_by_id(state["p1_id"])
             p2 = await get_user_by_id(state["p2_id"])
             await safe_edit(
                 callback.message,
-                render_multi_text(lang[title_key], state, lang,
+                render_multi_text(_title, state, lang,
                                    format_player_name(p1), format_player_name(p2),
                                    final=result["state"]),
             )
@@ -376,24 +382,27 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
             other_user = await get_user_by_id(other_id)
             if other_user:
                 other_lang = get_language_pack(other_user.language_code)
+                _other_icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
                 msg_meta = get_duel_message_map(state).get(str(other_id))
                 if msg_meta:
                     try:
                         await callback.bot.send_message(
                             chat_id=msg_meta["chat_id"],
-                            text=other_lang[title_key],
+                            text=f"{other_lang[_other_icon_key]} {other_lang[title_key]}",
                             reply_markup=menu_kb_fn(other_lang),
                         )
                     except TelegramBadRequest:
                         pass
     else:  # "waiting" or "round_done"
+        _icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
+        _title = f"{lang[_icon_key]} {lang[title_key]}"
         if session.mode == SessionMode.group_match:
             p1 = await get_user_by_id(state["p1_id"])
             p2 = await get_user_by_id(state["p2_id"])
             await update_session_state(session.id, state, None)
             await safe_edit(
                 callback.message,
-                render_multi_text(lang[title_key], state, lang, format_player_name(p1), format_player_name(p2)),
+                render_multi_text(_title, state, lang, format_player_name(p1), format_player_name(p2)),
                 reply_markup=rps_game_keyboard(session.id, moves, True, lang, prefix),
             )
         else:
@@ -442,7 +451,7 @@ async def menu_new_game_rps(callback: CallbackQuery, user, lang) -> None:
     state["menu_message_id"] = callback.message.message_id
     session = await create_solo_session(user.id, callback.message.chat.id, game.code, state)
     await callback.message.answer(
-        render_text(lang["game-rps"], session.state, lang),
+        render_text(f"{lang['icon-rps']} {lang['game-rps']}", session.state, lang),
         reply_markup=rps_game_keyboard(session.id, _RPS_MOVES, True, lang, "rps"),
     )
     await callback.answer()
@@ -473,14 +482,15 @@ async def menu_rps_mode(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_rps_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
+    game_title = f"{lang['icon-stat']} *{lang['game-rps']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text, reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_rps_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-rps"],
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-rps']}* | *{lang['help-ttl']}*\n\n{lang['help-rps']}",
                     reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -526,10 +536,10 @@ async def callback_rps_move(callback: CallbackQuery) -> None:
     if result["state"] in ("win", "loss"):
         state["game_code"] = game.code
         await _finish_game(callback, session_id, state, result["state"],
-                           lang["game-rps"], _RPS_MOVES, "rps", lang, user, open_ropasci_menu)
+                           f"{lang['icon-rps']} {lang['game-rps']}", _RPS_MOVES, "rps", lang, user, open_ropasci_menu)
     else:
         await update_session_state(session_id, state, current_turn_user_id=user.id)
-        await safe_edit(callback.message, render_text(lang["game-rps"], state, lang),
+        await safe_edit(callback.message, render_text(f"{lang['icon-rps']} {lang['game-rps']}", state, lang),
                         reply_markup=rps_game_keyboard(session_id, _RPS_MOVES, True, lang, "rps"))
 
 
@@ -563,7 +573,7 @@ async def menu_new_game_rpssl(callback: CallbackQuery, user, lang) -> None:
     state["menu_message_id"] = callback.message.message_id
     session = await create_solo_session(user.id, callback.message.chat.id, rpssl_game.code, state)
     await callback.message.answer(
-        render_text(lang["game-rpssl"], session.state, lang),
+        render_text(f"{lang['icon-rpssl']} {lang['game-rpssl']}", session.state, lang),
         reply_markup=rps_game_keyboard(session.id, _RPSSL_MOVES, True, lang, "rpssl"),
     )
     await callback.answer()
@@ -594,7 +604,8 @@ async def menu_rpssl_mode(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("stat", rpssl_game.code))
 async def menu_rpssl_stats(callback: CallbackQuery, user, lang) -> None:
     stat = await get_game_stat(user.id, rpssl_game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
+    game_title = f"{lang['icon-stat']} *{lang['game-rpssl']}*"
+    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
     await safe_edit(callback.message, text,
                     reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
@@ -602,7 +613,7 @@ async def menu_rpssl_stats(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("help", rpssl_game.code))
 async def menu_rpssl_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-rpssl"],
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-rpssl']}* | *{lang['help-ttl']}*\n\n{lang['help-rpssl']}",
                     reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
@@ -648,10 +659,10 @@ async def callback_rpssl_move(callback: CallbackQuery) -> None:
     if result["state"] in ("win", "loss"):
         state["game_code"] = rpssl_game.code
         await _finish_game(callback, session_id, state, result["state"],
-                           lang["game-rpssl"], _RPSSL_MOVES, "rpssl", lang, user, open_rpssl_menu)
+                           f"{lang['icon-rpssl']} {lang['game-rpssl']}", _RPSSL_MOVES, "rpssl", lang, user, open_rpssl_menu)
     else:
         await update_session_state(session_id, state, current_turn_user_id=user.id)
-        await safe_edit(callback.message, render_text(lang["game-rpssl"], state, lang),
+        await safe_edit(callback.message, render_text(f"{lang['icon-rpssl']} {lang['game-rpssl']}", state, lang),
                         reply_markup=rps_game_keyboard(session_id, _RPSSL_MOVES, True, lang, "rpssl"))
 
 

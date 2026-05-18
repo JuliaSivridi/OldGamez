@@ -31,6 +31,7 @@ class NPuzzleGame:
         return {
             "size": size,
             "tiles": tiles,
+            "moves": 0,
             "status": "active",
         }
 
@@ -39,6 +40,7 @@ class NPuzzleGame:
         space_index = tiles.index(0)
         tiles[tile_index], tiles[space_index] = tiles[space_index], tiles[tile_index]
         state["tiles"] = tiles
+        state["moves"] = state.get("moves", 0) + 1
         if self.is_solved(tiles):
             state["status"] = "finished"
             return {"state": "win", "game_state": state}

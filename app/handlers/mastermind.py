@@ -13,8 +13,8 @@ from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    format_game_stats_text,
-    get_game_stat,
+    format_variant_stats_text,
+    get_all_game_stats,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -25,6 +25,8 @@ router = Router()
 
 BLANK = "⬛"
 
+_MA_TO_VARIANT = {10: "easy", 12: "normal", 18: "hard"}
+
 
 def mastermind_menu_keyboard(lang, chat_type=None):
     return game_menu_keyboard(lang, game_code=game.code, extra_setting_key="cmplx", chat_type=chat_type)
@@ -34,7 +36,7 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
     size = state["size"]
     colors = state["colors"]
     n_colors = len(colors)
-    title = f"{lang['game-mastermind']} · {n_colors} {lang['mm-colors']} {lang['mm-on']} {size} {lang['mm-positions']}"
+    title = f"{lang['icon-mastermind']} {lang['game-mastermind']} · {n_colors} {lang['mm-colors']} {lang['mm-on']} {size} {lang['mm-positions']}"
 
     lines = [title, ""]
     for entry in state["history"]:
@@ -60,7 +62,7 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
 
 def _mm_menu_text(lang: dict, user_settings: dict | None) -> str:
     cmplx = (user_settings or {}).get("mastermind_cmplx", "easy")
-    return f"{lang['game-mastermind']}\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+    return f"{lang['icon-mastermind']} *{lang['game-mastermind']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
 
 
 async def open_mastermind_menu(message: Message, user, lang) -> None:
@@ -116,17 +118,23 @@ async def menu_cmplx(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
+_DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
+
+
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: _DIFFICULTY_ORDER.get(s.variant_key, 9))
+    variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
+    game_title = f"{lang['icon-stat']} *{lang['game-mastermind']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-mastermind"], reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-mastermind']}* | *{lang['help-ttl']}*\n\n{lang['help-mastermind']}", reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -204,7 +212,7 @@ async def callback_submit(callback: CallbackQuery) -> None:
     state = result["game_state"]
     if result["state"] in ("win", "loss"):
         await finish_session(session.id, state, winner_user_id=user.id if result["state"] == "win" else None)
-        await record_game_result(user.id, game.code, result["state"])
+        await record_game_result(user.id, game.code, result["state"], variant_key=_MA_TO_VARIANT.get(state["max_attempts"], "easy"))
         menu_msg_id = state.get("menu_message_id")
         await callback.message.edit_text(
             render_text(lang, state, final=result["state"]),

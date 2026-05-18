@@ -1,6 +1,6 @@
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
+from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.db.models import SessionStatus
@@ -13,9 +13,9 @@ from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    format_game_stats_text,
+    format_variant_stats_text,
     get_active_solo_session,
-    get_game_stat,
+    get_all_game_stats,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -41,19 +41,11 @@ def cmplx_keyboard(lang: dict[str, str], back_callback: str):
 
 def render_game_text(lang: dict[str, str], state: dict) -> str:
     return (
-        f"{lang['game-mines']} | {lang['mines-regime']}"
+        f"{lang['icon-mines']} {lang['game-mines']} | {lang['mines-regime']}"
         f"{lang['mode-dig'] if state['is_dig'] else lang['mode-flag']}\n"
         f"{lang['mines-count']}{state['mines_count']} | {lang['mines-mark']}{game.count_marks(state['cover'])}"
     )
 
-
-def render_stat_text(lang: dict[str, str], played: int, wins: int, losses: int) -> str:
-    return (
-        lang["stat-ttl"]
-        + f"`{lang['stat-all']}{str(played).rjust(20 - len(lang['stat-all']))}`"
-        + f"`{lang['stat-win']}{str(wins).rjust(20 - len(lang['stat-win']))}`"
-        + f"`{lang['stat-lose']}{str(losses).rjust(20 - len(lang['stat-lose']))}`"
-    )
 
 
 async def start_minesweeper_game(message: Message, user, lang: dict[str, str], mines_count: int, menu_message_id: int | None = None) -> None:
@@ -82,12 +74,13 @@ def minesweeper_menu_keyboard(lang: dict[str, str], chat_type=None):
 
 
 _MINES_TO_CMPLX = {8: "easy", 12: "norm", 16: "hard"}
+_MINES_TO_VARIANT = {8: "easy", 12: "normal", 16: "hard"}
 
 
 def _mines_menu_text(lang: dict, user_settings: dict | None) -> str:
     mines = int((user_settings or {}).get("minesweeper_mines", 12))
     cmplx = _MINES_TO_CMPLX.get(mines, "norm")
-    return f"{lang['game-mines']}\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
+    return f"{lang['icon-mines']} *{lang['game-mines']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
 
 
 async def open_minesweeper_menu(message: Message, user, lang) -> None:
@@ -134,17 +127,23 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
+_DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
+
+
 @router.callback_query(GameCallbackFilter("stat", game.code))
 async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    text = format_game_stats_text(stat, lang, ["played", "wins", "losses"])
+    stats = await get_all_game_stats(user.id, game.code)
+    stats.sort(key=lambda s: _DIFFICULTY_ORDER.get(s.variant_key, 9))
+    variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
+    game_title = f"{lang['icon-stat']} *{lang['game-mines']}*"
+    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
     await safe_edit(callback.message, text, reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("help", game.code))
 async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang["help-mines"], reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-mines']}* | *{lang['help-ttl']}*\n\n{lang['help-mines']}", reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
@@ -223,7 +222,7 @@ async def callback_move(callback: CallbackQuery) -> None:
 
     if result["state"] == "loss":
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, "loss")
+        await record_game_result(user.id, game.code, "loss", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
         await callback.message.edit_text(
             lang["game-lose"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
@@ -238,7 +237,7 @@ async def callback_move(callback: CallbackQuery) -> None:
 
     if result["state"] == "win":
         await finish_session(session.id, state, winner_user_id=user.id)
-        await record_game_result(user.id, game.code, "win")
+        await record_game_result(user.id, game.code, "win", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
         await callback.message.edit_text(
             lang["game-win"],
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
