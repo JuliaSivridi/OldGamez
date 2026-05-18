@@ -23,9 +23,8 @@ def tiles_keyboard(
     row_sizes = []
 
     if active and lang is not None:
-        builder.button(text=lang["lto-solve"], callback_data=f"npz:solve:{session_id}", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["lto-give-up"], callback_data=f"npz:give_up:{session_id}", style=ButtonStyle.DANGER)
-        row_sizes.append(2)
+        row_sizes.append(1)
 
     space_pos = tiles.index(0)
     for idx, tile in enumerate(tiles):

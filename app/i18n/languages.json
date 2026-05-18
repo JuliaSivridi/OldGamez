@@ -40,7 +40,7 @@
     "lto-solve": "⚡️ Solve", "lto-give-up": "🏳️ Give up",
 
     "menu-npuzzle": "🧩 N-puzzle", "game-npuzzle": "🧩 N-puzzle game ",
-    "help-npuzzle": "ℹ️ *N-puzzle*\n\n*Goal of the game* - arrange the tiles in the correct order: left -> right, top -> bottom, with the empty space in the bottom-right corner \n\nMove the tiles using the empty space to restore the correct order of numbers\n\n😎 Using ⚡️ Solve does not count as a win in statistics",
+    "help-npuzzle": "ℹ️ *N-puzzle*\n\n*Goal of the game* - arrange the tiles in the correct order: left -> right, top -> bottom, with the empty space in the bottom-right corner \n\nMove the tiles using the empty space to restore the correct order of numbers",
 
     "btn-delete": "⬅️ Delete", "btn-submit": "✅ Ready",
 
@@ -126,7 +126,7 @@
     "lto-solve": "⚡️ Ratkaise", "lto-give-up": "🏳️ Luovutan",
 
     "menu-npuzzle": "🧩 N-pulmapeli", "game-npuzzle": "🧩 N-pulmapeli ",
-    "help-npuzzle": "ℹ️ *N-pulmapeli*\n\n*Tavoite* - järjestää palat oikeaan järjestykseen: vasemmalta oikealle, ylhäältä alas, tyhjä ruutu oikeassa alakulmassa \n\nSiirrä paloja tyhjän ruudun avulla ja palauta numeroiden oikea järjestys\n\n😎 ⚡️ Ratkaise-toiminnon käyttäminen ei tilastoidu voittona",
+    "help-npuzzle": "ℹ️ *N-pulmapeli*\n\n*Tavoite* - järjestää palat oikeaan järjestykseen: vasemmalta oikealle, ylhäältä alas, tyhjä ruutu oikeassa alakulmassa \n\nSiirrä paloja tyhjän ruudun avulla ja palauta numeroiden oikea järjestys",
 
     "btn-delete": "⬅️ Poista", "btn-submit": "✅ Valmis",
 
@@ -212,7 +212,7 @@
     "lto-solve": "⚡️ Решить", "lto-give-up": "🏳️ Сдаться",
 
     "menu-npuzzle": "🧩 Пятнашки", "game-npuzzle": "🧩 Пятнашки ",
-    "help-npuzzle": "ℹ️ *Пятнашки*\n\n*Цель игры* - расположить тайлы в правильном порядке: слева -> направо, сверху -> вниз, с пустым местом в правом нижнем углу \n\nПеремещайте тайлы, используя пустое место, чтобы восстановить правильный порядок цифр\n\n😎 Использование ⚡️ Решить не засчитывается как победа в статистике",
+    "help-npuzzle": "ℹ️ *Пятнашки*\n\n*Цель игры* - расположить тайлы в правильном порядке: слева -> направо, сверху -> вниз, с пустым местом в правом нижнем углу \n\nПеремещайте тайлы, используя пустое место, чтобы восстановить правильный порядок цифр",
 
     "btn-delete": "⬅️ Удалить", "btn-submit": "✅ Готово",
 

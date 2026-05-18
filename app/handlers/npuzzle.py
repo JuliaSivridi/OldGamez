@@ -1,5 +1,3 @@
-import asyncio
-
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
@@ -194,41 +192,3 @@ async def callback_give_up(callback: CallbackQuery) -> None:
     await open_npuzzle_menu(callback.message, user, lang)
 
 
-@router.callback_query(F.data.startswith("npz:solve:"))
-async def callback_solve(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-    session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
-        return
-    state = dict(session.state)
-    size = state["size"]
-    menu_msg_id = state.get("menu_message_id")
-
-    solution = game.solve(state)
-
-    for tile_idx in solution:
-        await asyncio.sleep(0.5)
-        result = game.move(state, tile_idx)
-        state = result["game_state"]
-        await callback.message.edit_text(
-            f"{lang['game-npuzzle']}{size}x{size}",
-            reply_markup=tiles_keyboard(session.id, state["tiles"], size, active=False),
-        )
-
-    await callback.message.edit_text(
-        lang["game-win"],
-        reply_markup=tiles_keyboard(session.id, state["tiles"], size, active=False),
-    )
-    await finish_session(session.id, state, winner_user_id=None)
-    # No stat recorded — solver was used
-    if menu_msg_id:
-        try:
-            await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
-        except Exception:
-            pass
-    await open_npuzzle_menu(callback.message, user, lang)
