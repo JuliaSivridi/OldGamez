@@ -14,7 +14,7 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
+from app.keyboards.menus import main_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,
@@ -36,28 +36,13 @@ from app.services.sessions import (
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 
-
 router = Router()
-
-
-def tictactoe_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_setting_key="size",
-        extra_duel_key="duel",
-        extra_group_key="group",
-        chat_type=chat_type,
-    )
-
 
 def get_duel_player_ids(state: dict) -> list[int | None]:
     return [state.get("player_x_id"), state.get("player_o_id")]
 
-
 def get_player_symbol(state: dict, user_id: int) -> str:
     return "x" if state.get("player_x_id") == user_id else "o"
-
 
 def render_group_status_text(
     state: dict,
@@ -83,7 +68,6 @@ def render_group_status_text(
         f"{lang['xo-win-need']}{win_length}\n\n"
         f"{lang['group-turn']} {current_symbol} {current_name}"
     )
-
 
 def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | None = None) -> str:
     board_size = state["board_size"]
@@ -128,7 +112,6 @@ def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | 
         f"{current_symbol} {turn_line}"
     )
 
-
 async def render_duel_message_for_user(session, user_id: int) -> tuple[str, object]:
     user = await get_user_by_id(user_id)
     if user is None:
@@ -157,7 +140,6 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
     )
     return text, markup
 
-
 async def sync_duel_messages(bot, session) -> None:
     state = dict(session.state or {})
     await broadcast_private_duel_update(
@@ -166,7 +148,6 @@ async def sync_duel_messages(bot, session) -> None:
         get_duel_message_map(state),
         lambda user_id: render_duel_message_for_user(session, user_id),
     )
-
 
 async def send_tictactoe_menu_to_other_duel_players(
     bot,
@@ -191,11 +172,10 @@ async def send_tictactoe_menu_to_other_duel_players(
             await bot.send_message(
                 chat_id=message_meta["chat_id"],
                 text=f"{lang['icon-xo']} {lang['game-xo']}",
-                reply_markup=tictactoe_menu_keyboard(lang, chat_type=chat_type),
+                reply_markup=get_game_keyboard(game.code, lang, chat_type=chat_type),
             )
         except TelegramBadRequest:
             pass
-
 
 async def start_tictactoe_game(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(board_size=size)
@@ -219,7 +199,6 @@ async def start_tictactoe_game(message: Message, user, lang: dict[str, str], siz
         ),
     )
 
-
 async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], size: int) -> None:
     state = {
         "board_size": size,
@@ -240,12 +219,11 @@ async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], siz
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
 
-
 async def start_tictactoe_group(message: Message, user, lang: dict[str, str], size: int) -> None:
     if message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
         await message.answer(
             lang["group-only"],
-            reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
         )
         return
 
@@ -266,13 +244,12 @@ async def start_tictactoe_group(message: Message, user, lang: dict[str, str], si
     )
     await update_session_state(session.id, state, None)
 
-
 async def join_private_duel(message: Message, user, lang: dict[str, str], session) -> None:
     state = dict(session.state or {})
     if session.created_by_user_id == user.id:
         await message.answer(
             lang["duel-self"],
-            reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
         )
         return
 
@@ -300,7 +277,7 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
 
     join_ok_msg = await message.answer(
         lang["duel-join-ok"],
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
     guest_message = await message.answer(
@@ -318,21 +295,16 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
     if session is not None:
         await sync_duel_messages(message.bot, session)
 
-
 def _xo_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("tictactoe_size", 3))
     return f"{lang['icon-xo']} *{lang['game-xo']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
-
 
 async def open_tictactoe_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _xo_menu_text(lang, user.settings),
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
@@ -340,20 +312,17 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_tictactoe_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
     await start_tictactoe_duel(callback.message, user, lang, size)
     await callback.answer()
 
-
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
     await start_tictactoe_group(callback.message, user, lang, size)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
@@ -362,8 +331,6 @@ async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
     text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:xo"))
     await callback.answer()
-
-
 
 @router.callback_query(F.data.startswith("ttt:size:"))
 async def callback_tictactoe_size(callback: CallbackQuery) -> None:
@@ -380,9 +347,8 @@ async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         _xo_menu_text(lang, updated_settings),
-        reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
     )
-
 
 @router.callback_query(F.data.startswith("ttt:group_join:"))
 async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:
@@ -446,11 +412,9 @@ async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:
     )
     await callback.answer(lang["duel-join-ok"])
 
-
 @router.callback_query(F.data == "ttt:noop")
 async def callback_tictactoe_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("ttt:move:"))
 async def callback_tictactoe_move(callback: CallbackQuery) -> None:

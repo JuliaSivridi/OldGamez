@@ -8,7 +8,6 @@ from app.games.wordle.keyboards import game_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
-from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
@@ -19,11 +18,6 @@ from app.services.sessions import (
 from app.services.users import update_user_settings, upsert_user
 
 router = Router()
-
-
-def wordle_menu_keyboard(lang, chat_type=None):
-    return game_menu_keyboard(lang, game_code=game.code, chat_type=chat_type)
-
 
 def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool = False) -> str:
     size = state["size"]
@@ -51,15 +45,12 @@ def render_text(lang: dict, state: dict, final: str | None = None, invalid: bool
 
     return "\n".join(lines)
 
-
 def _wrd_menu_text(lang: dict) -> str:
     return f"{lang['icon-wordle']} *{lang['game-wordle']}*"
 
-
 async def open_wordle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(_wrd_menu_text(lang), reply_markup=wordle_menu_keyboard(lang, chat_type=message.chat.type))
-
+    await message.answer(_wrd_menu_text(lang), reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
 
 async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(lang_code=lang_code)
@@ -76,21 +67,15 @@ async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_m
         reply_markup=game_keyboard(session.id, session.state, True, lang),
     )
 
-
-
-
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     lang_code = normalize_language_code(user.language_code)
     await start_wordle_game(callback.message, user, lang, lang_code, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
-
 @router.callback_query(F.data == "wrd:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("wrd:letter:"))
 async def callback_letter(callback: CallbackQuery) -> None:
@@ -110,7 +95,6 @@ async def callback_letter(callback: CallbackQuery) -> None:
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
-
 @router.callback_query(F.data.startswith("wrd:hint:"))
 async def callback_hint(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -127,7 +111,6 @@ async def callback_hint(callback: CallbackQuery) -> None:
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
-
 @router.callback_query(F.data.startswith("wrd:back:"))
 async def callback_back(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -143,7 +126,6 @@ async def callback_back(callback: CallbackQuery) -> None:
     state = game.backspace(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
-
 
 @router.callback_query(F.data.startswith("wrd:submit:"))
 async def callback_submit(callback: CallbackQuery) -> None:

@@ -14,7 +14,6 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
-from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,
@@ -37,23 +36,10 @@ from app.services.users import format_player_name, get_user_by_id, update_user_s
 
 router = Router()
 
-
-def memory_menu_keyboard(lang: dict, chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_setting_key="size",
-        extra_duel_key="duel",
-        extra_group_key="group",
-        chat_type=chat_type,
-    )
-
-
 def _mem_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("memory_size", 4))
     rows, cols = GRID_DIMS[size]
     return f"{lang['icon-mem']} *{lang['game-mem']}*\n{lang['setting-size']}: {lang[str(rows)]}✖️{lang[str(cols)]}"
-
 
 def render_text(lang: dict, state: dict, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
@@ -62,7 +48,6 @@ def render_text(lang: dict, state: dict, final: bool = False) -> str:
     if final:
         return f"{header}\n\n{lang['game-win']}\n{lang['mem-win']}{state['moves']}{lang['mem-win2']}"
     return f"{header}\n\n{lang['mem-moves']}{state['moves']}  {lang['mem-found']}{state['found']}/{total_pairs}"
-
 
 def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
@@ -88,7 +73,6 @@ def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = Fals
     turn_line = lang["mem-your-turn"] if state.get("current_turn_user_id") == viewer_id else lang["mem-opp-turn"]
     return f"{header}\n\n{score}\n{turn_line}"
 
-
 def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
     total_pairs = len(state["cards"]) // 2
@@ -109,7 +93,6 @@ def render_group_text(lang: dict, state: dict, player_names: dict[int, str], fin
     current_name = player_names.get(current_id, "?") if current_id else "?"
     return f"{header}\n\n{score}\n{lang['group-turn']} {current_name}"
 
-
 async def _sync_mem_duel(bot, session_id: int, state: dict, final: bool = False) -> None:
     p1_id = state["p1_id"]
     p2_id = state["p2_id"]
@@ -123,7 +106,6 @@ async def _sync_mem_duel(bot, session_id: int, state: dict, final: bool = False)
         return render_duel_text(lang, state, user_id, final=final), board_keyboard(session_id, state, is_active)
 
     await broadcast_private_duel_update(bot, [p1_id, p2_id], message_map, renderer)
-
 
 async def start_memory_game(message: Message, user, lang: dict, size: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(size=size)
@@ -140,14 +122,12 @@ async def start_memory_game(message: Message, user, lang: dict, size: int, menu_
         reply_markup=board_keyboard(session.id, state, True),
     )
 
-
 async def open_memory_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _mem_menu_text(lang, user.settings),
-        reply_markup=memory_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
 
 async def join_memory_duel(message: Message, user, lang: dict, session) -> None:
     state = dict(session.state or {})
@@ -172,7 +152,7 @@ async def join_memory_duel(message: Message, user, lang: dict, session) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     join_ok_msg = await message.answer(
         lang["duel-join-ok"],
-        reply_markup=memory_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
@@ -186,19 +166,15 @@ async def join_memory_duel(message: Message, user, lang: dict, session) -> None:
     if updated:
         await _sync_mem_duel(message.bot, activated.id, dict(updated.state))
 
-
-
-
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
     await start_memory_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
 async def start_memory_group(message: Message, user, lang: dict, size: int, menu_message_id: int | None = None) -> None:
     if message.chat.type not in ("group", "supergroup"):
-        await message.answer(lang["group-only"], reply_markup=memory_menu_keyboard(lang, chat_type=message.chat.type))
+        await message.answer(lang["group-only"], reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
         return
     state: dict = {"status": "pending", "size": size}
     if menu_message_id:
@@ -206,13 +182,11 @@ async def start_memory_group(message: Message, user, lang: dict, size: int, menu
     session = await create_group_match_session(user.id, message.chat.id, game.code, state)
     await message.answer(lang["group-wait"], reply_markup=group_duel_keyboard(lang, f"mem:group_join:{session.id}"))
 
-
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
     await start_memory_group(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
@@ -227,7 +201,6 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     await update_session_state(session.id, state, None)
     await callback.answer()
 
-
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
@@ -236,8 +209,6 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
     text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:mem"))
     await callback.answer()
-
-
 
 @router.callback_query(F.data.startswith("mem:size:"))
 async def callback_set_size(callback: CallbackQuery) -> None:
@@ -253,14 +224,12 @@ async def callback_set_size(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         _mem_menu_text(lang, updated),
-        reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
     )
-
 
 @router.callback_query(F.data == "mem:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("mem:flip:"))
 async def callback_flip(callback: CallbackQuery) -> None:
@@ -285,7 +254,6 @@ async def callback_flip(callback: CallbackQuery) -> None:
         await _flip_group(callback, session, user, lang, idx)
     else:
         await _flip_solo(callback, session, user, lang, idx)
-
 
 async def _flip_solo(callback: CallbackQuery, session, user, lang: dict, idx: int) -> None:
     if session.created_by_user_id != user.id:
@@ -357,7 +325,6 @@ async def _flip_solo(callback: CallbackQuery, session, user, lang: dict, idx: in
 
     await callback.answer()
 
-
 async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: int) -> None:
     state = dict(session.state)
 
@@ -425,7 +392,7 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
                         await callback.bot.send_message(
                             chat_id=msg_meta["chat_id"],
                             text=_mem_menu_text(other_lang, other_user.settings),
-                            reply_markup=memory_menu_keyboard(other_lang),
+                            reply_markup=get_game_keyboard(game.code, other_lang),
                         )
                     except Exception:
                         pass
@@ -448,7 +415,6 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
             await _sync_mem_duel(callback.bot, session.id, state)
         except Exception:
             pass
-
 
 async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: int) -> None:
     state = dict(session.state)
@@ -552,7 +518,6 @@ async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: i
             )
         except Exception:
             pass
-
 
 @router.callback_query(F.data.startswith("mem:group_join:"))
 async def callback_memory_group_join(callback: CallbackQuery) -> None:

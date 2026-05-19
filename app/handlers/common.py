@@ -248,6 +248,11 @@ def _get_menu_handler(game_code: str) -> Callable | None:
     return _load_fn(g.menu_fn) if g else None
 
 
+def get_game_keyboard(game_code: str, lang: dict, chat_type=None) -> InlineKeyboardMarkup | None:
+    g = _GAMES_BY_CODE.get(game_code)
+    return _get_game_keyboard(g, lang, chat_type) if g else None
+
+
 def _get_game_keyboard(g: GameConfig, lang: dict, chat_type=None) -> InlineKeyboardMarkup | None:
     if g.keyboard is None:
         return None

@@ -9,13 +9,10 @@ from app.games.hangman.keyboards import letters_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
-from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
-
 router = Router()
-
 
 def cmplx_keyboard(lang: dict[str, str], back_callback: str):
     b = InlineKeyboardBuilder()
@@ -29,7 +26,6 @@ def cmplx_keyboard(lang: dict[str, str], back_callback: str):
     b.adjust(3, 1)
     return b.as_markup()
 
-
 def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> str:
     if final == 'win':
         return f"{lang['game-win']}\n<b>{state['word']}</b>"
@@ -40,7 +36,6 @@ def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> 
         f"{lang['icon-hang']} {lang['game-hang']} | {lang['hang-lives']}{state['lives']}\n"
         f"<code>{' '.join(state['guess'])}</code>"
     )
-
 
 async def start_hangman_game(message: Message, user, lang: dict[str, str], lives: int, menu_message_id: int | None = None) -> None:
     lang_code = normalize_language_code(user.language_code)
@@ -59,42 +54,26 @@ async def start_hangman_game(message: Message, user, lang: dict[str, str], lives
         parse_mode=ParseMode.HTML,
     )
 
-
-def hangman_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_setting_key="cmplx",
-        chat_type=chat_type,
-    )
-
-
 _LIVES_TO_CMPLX = {15: "easy", 10: "norm", 5: "hard"}
 _LIVES_TO_VARIANT = {15: "easy", 10: "normal", 5: "hard"}
-
 
 def _hang_menu_text(lang: dict, user_settings: dict | None) -> str:
     lives = int((user_settings or {}).get("hangman_lives", 10))
     cmplx = _LIVES_TO_CMPLX.get(lives, "norm")
     return f"{lang['icon-hang']} *{lang['game-hang']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
 
-
 async def open_hangman_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _hang_menu_text(lang, user.settings),
-        reply_markup=hangman_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     lives = int((user.settings or {}).get('hangman_lives', 10))
     await start_hangman_game(callback.message, user, lang, lives=lives, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("cmplx", game.code))
 async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
@@ -104,15 +83,11 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:hang"))
     await callback.answer()
 
-
 _DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
-
-
 
 @router.callback_query(F.data == 'hng:noop')
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith('hng:cmplx:'))
 async def callback_cmplx(callback: CallbackQuery) -> None:
@@ -128,9 +103,8 @@ async def callback_cmplx(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         _hang_menu_text(lang, updated),
-        reply_markup=hangman_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
     )
-
 
 @router.callback_query(F.data.startswith('hng:letter:'))
 @router.callback_query(F.data.startswith('hng:hint:'))

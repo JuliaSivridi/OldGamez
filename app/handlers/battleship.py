@@ -11,14 +11,11 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
-from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
-
 router = Router()
-
 
 def render_game_text(lang: dict[str, str], state: dict, is_game_over: bool = False, is_win: bool = False) -> str:
     if is_game_over:
@@ -34,7 +31,6 @@ def render_game_text(lang: dict[str, str], state: dict, is_game_over: bool = Fal
     lines.append(f"{turn_icon}{turn_line}")
     return "\n".join(lines)
 
-
 async def redraw(callback_message: Message, session_id: int, lang: dict[str, str], state: dict, is_game_over: bool = False, is_win: bool = False) -> None:
     await callback_message.edit_text(
         render_game_text(lang, state, is_game_over, is_win),
@@ -47,7 +43,6 @@ async def redraw(callback_message: Message, session_id: int, lang: dict[str, str
         ),
         parse_mode=None,
     )
-
 
 async def run_computer_turns(callback_message: Message, session_id: int, lang: dict[str, str], state: dict) -> tuple[dict, str]:
     while state["current_turn"] == "bot" and state["status"] == "active":
@@ -63,7 +58,6 @@ async def run_computer_turns(callback_message: Message, session_id: int, lang: d
         await redraw(callback_message, session_id, lang, state)
 
     return state, "play"
-
 
 async def start_battleship_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state()
@@ -89,19 +83,8 @@ async def start_battleship_game(message: Message, user, lang: dict[str, str], me
             return
         await update_session_state(session.id, state, current_turn_user_id=user.id)
 
-
-def battleship_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_duel_key="duel",
-        chat_type=chat_type,
-    )
-
-
 def _sea_menu_text(lang: dict) -> str:
     return f"{lang['icon-sea']} *{lang['game-sea']}*"
-
 
 def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, is_game_over: bool = False) -> str:
     if is_game_over:
@@ -123,7 +106,6 @@ def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, is_game
     lines.append(f"{turn_icon} {turn_line}")
     return "\n".join(lines)
 
-
 async def _render_battleship_duel_for_user(session, user_id: int) -> tuple[str, InlineKeyboardMarkup]:
     user = await get_user_by_id(user_id)
     lang = get_language_pack(user.language_code if user else "en")
@@ -137,7 +119,6 @@ async def _render_battleship_duel_for_user(session, user_id: int) -> tuple[str, 
     markup = board_keyboard(session.id, opp_cover, opp_board, is_active, is_game_over)
     return text, markup
 
-
 async def _sync_battleship_duel_messages(bot, session) -> None:
     state = dict(session.state or {})
     player_ids = [state.get("p1_id"), state.get("p2_id")]
@@ -145,7 +126,6 @@ async def _sync_battleship_duel_messages(bot, session) -> None:
         bot, player_ids, get_duel_message_map(state),
         lambda uid: _render_battleship_duel_for_user(session, uid),
     )
-
 
 async def join_battleship_duel(message: Message, user, lang, session) -> None:
     state = dict(session.state or {})
@@ -165,7 +145,7 @@ async def join_battleship_duel(message: Message, user, lang, session) -> None:
         return
 
     await update_user_settings(user.id, {"current_game": game.code})
-    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=battleship_menu_keyboard(lang, chat_type=message.chat.type))
+    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
     is_p1 = user.id == duel_state["p1_id"]
@@ -181,7 +161,6 @@ async def join_battleship_duel(message: Message, user, lang, session) -> None:
     updated = await update_session_state(activated.id, duel_state, None)
     if updated:
         await _sync_battleship_duel_messages(message.bot, updated)
-
 
 async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, row: int, col: int) -> None:
     state = dict(session.state)
@@ -219,7 +198,7 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
                     await callback.bot.send_message(
                         chat_id=msg_meta["chat_id"],
                         text=_sea_menu_text(other_lang),
-                        reply_markup=battleship_menu_keyboard(other_lang),
+                        reply_markup=get_game_keyboard(game.code, other_lang),
                     )
                 except TelegramBadRequest:
                     pass
@@ -231,22 +210,17 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
         await _sync_battleship_duel_messages(callback.bot, updated)
     await callback.answer()
 
-
 async def open_battleship_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _sea_menu_text(lang),
-        reply_markup=battleship_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_battleship_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
@@ -260,12 +234,9 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     await update_session_state(session.id, state, None)
     await callback.answer()
 
-
-
 @router.callback_query(F.data == "sea:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("sea:try:"))
 async def callback_shot(callback: CallbackQuery) -> None:

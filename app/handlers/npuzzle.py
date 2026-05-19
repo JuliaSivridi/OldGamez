@@ -7,13 +7,10 @@ from app.games.npuzzle.keyboards import size_keyboard, tiles_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
-from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 
-
 router = Router()
-
 
 async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(size=size)
@@ -30,37 +27,22 @@ async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size:
         reply_markup=tiles_keyboard(session.id, session.state["tiles"], size, active=True, lang=lang),
     )
 
-
-def npuzzle_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_setting_key="size",
-        chat_type=chat_type,
-    )
-
-
 def _npz_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("npuzzle_size", 3))
     return f"{lang['icon-npuzzle']} *{lang['game-npuzzle']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
-
 
 async def open_npuzzle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _npz_menu_text(lang, user.settings),
-        reply_markup=npuzzle_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
     await start_npuzzle_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
@@ -70,12 +52,9 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:npuzzle"))
     await callback.answer()
 
-
-
 @router.callback_query(F.data == "npz:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("npz:size:"))
 async def callback_size(callback: CallbackQuery) -> None:
@@ -91,9 +70,8 @@ async def callback_size(callback: CallbackQuery) -> None:
     await safe_edit(
         callback.message,
         _npz_menu_text(lang, updated),
-        reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
     )
-
 
 @router.callback_query(F.data.startswith("npz:move:"))
 async def callback_move(callback: CallbackQuery) -> None:
@@ -132,7 +110,6 @@ async def callback_move(callback: CallbackQuery) -> None:
         reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"], active=True, lang=lang),
     )
 
-
 @router.callback_query(F.data.startswith("npz:give_up:"))
 async def callback_give_up(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -158,5 +135,4 @@ async def callback_give_up(callback: CallbackQuery) -> None:
         except Exception:
             pass
     await open_npuzzle_menu(callback.message, user, lang)
-
 

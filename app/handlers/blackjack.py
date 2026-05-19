@@ -12,16 +12,13 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
-from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
 GROUP_JOIN_TIMEOUT = 60  # seconds
 
-
 router = Router()
-
 
 def _write_cards(cards: list[dict], lang: dict | None = None) -> str:
     lines: list[str] = []
@@ -31,7 +28,6 @@ def _write_cards(cards: list[dict], lang: dict | None = None) -> str:
         text_suit = lang.get(card["suit"], card.get("text_suit", card["suit"])) if lang else card.get("text_suit", card["suit"])
         lines.append(f"\n{card['suit']}{rank_emoji} {text_rank} {text_suit}")
     return "".join(lines)
-
 
 def render_game_text(lang: dict[str, str], state: dict, game_over_message: str | None = None) -> str:
     comp_cards = state["comp_cards"]
@@ -47,7 +43,6 @@ def render_game_text(lang: dict[str, str], state: dict, game_over_message: str |
     if game_over_message:
         text += game_over_message
     return text
-
 
 def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, final: bool = False) -> str:
     is_p1 = viewer_id == state["p1_id"]
@@ -87,7 +82,6 @@ def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, final: 
 
     return text
 
-
 async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], user, message: Message) -> None:
     menu_msg_id = state.get("menu_message_id")
     state = game.dealer_finish(state, lang)
@@ -103,7 +97,6 @@ async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], u
         except Exception:
             pass
     await open_blackjack_menu(message, user, lang)
-
 
 async def start_blackjack_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state(lang)
@@ -127,17 +120,6 @@ async def start_blackjack_game(message: Message, user, lang: dict[str, str], men
         return
     await message.answer(render_game_text(lang, state), parse_mode="Markdown", reply_markup=game_keyboard(session.id, lang, True))
 
-
-def blackjack_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_duel_key="duel",
-        extra_group_key="group",
-        chat_type=chat_type,
-    )
-
-
 async def _render_bj_duel_for_user(session, user_id: int) -> tuple[str, InlineKeyboardMarkup | None]:
     user = await get_user_by_id(user_id)
     lang = get_language_pack(user.language_code if user else "en")
@@ -149,7 +131,6 @@ async def _render_bj_duel_for_user(session, user_id: int) -> tuple[str, InlineKe
     my_done = state.get("p1_done" if is_p1 else "p2_done", False)
     return render_duel_text_for_viewer(state, lang, user_id), game_keyboard(session.id, lang, is_active=not my_done)
 
-
 async def _sync_bj_duel_messages(bot, session) -> None:
     state = dict(session.state or {})
     player_ids = [state.get("p1_id"), state.get("p2_id")]
@@ -158,7 +139,6 @@ async def _sync_bj_duel_messages(bot, session) -> None:
         lambda uid: _render_bj_duel_for_user(session, uid),
         parse_mode="Markdown",
     )
-
 
 async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_message: Message, current_user, current_lang: dict) -> None:
     state = game.resolve_duel(state)
@@ -185,11 +165,10 @@ async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_mess
                 await bot.send_message(
                     chat_id=msg_meta["chat_id"],
                     text=_bj_menu_text(other_lang),
-                    reply_markup=blackjack_menu_keyboard(other_lang),
+                    reply_markup=get_game_keyboard(game.code, other_lang),
                 )
             except TelegramBadRequest:
                 pass
-
 
 async def join_blackjack_duel(message: Message, user, lang: dict, session) -> None:
     state = dict(session.state or {})
@@ -206,7 +185,7 @@ async def join_blackjack_duel(message: Message, user, lang: dict, session) -> No
         return
 
     await update_user_settings(user.id, {"current_game": game.code})
-    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type))
+    join_ok_msg = await message.answer(lang["duel-join-ok"], reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
 
     both_done = duel_state["p1_done"] and duel_state["p2_done"]
@@ -224,7 +203,6 @@ async def join_blackjack_duel(message: Message, user, lang: dict, session) -> No
         updated = await update_session_state(activated.id, duel_state, None)
         if updated:
             await _sync_bj_duel_messages(message.bot, updated)
-
 
 async def _handle_duel_action(callback: CallbackQuery, session, user, lang: dict, action: str) -> None:
     state = dict(session.state)
@@ -251,10 +229,8 @@ async def _handle_duel_action(callback: CallbackQuery, session, user, lang: dict
         if updated:
             await _sync_bj_duel_messages(callback.bot, updated)
 
-
 def _bj_menu_text(lang: dict) -> str:
     return f"{lang['icon-bj']} *{lang['game-bj']}*"
-
 
 # ── Group game helpers ─────────────────────────────────────────────────────────
 
@@ -266,7 +242,6 @@ def _write_cards_compact(cards: list[dict]) -> str:
         parts.append(f"{card['suit']}{rank_emoji}")
     return "  ".join(parts)
 
-
 def render_group_joining_text(state: dict, lang: dict) -> str:
     players = state["players"]
     names = "\n".join(f"• {p['name']}" for p in players)
@@ -276,7 +251,6 @@ def render_group_joining_text(state: dict, lang: dict) -> str:
         f"{names}\n\n"
         f"{lang['bj-grp-waiting']}"
     )
-
 
 def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> str:
     comp_cards = state["comp_cards"]
@@ -303,7 +277,6 @@ def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> s
 
     return "\n".join(lines)
 
-
 async def _begin_group_game(bot, session_id: int, state: dict, chat_id: int, message_id: int, lang: dict) -> None:
     """Deal cards and transition the group session from joining → playing."""
     player_infos = [(p["id"], p["name"]) for p in state["players"]]
@@ -329,7 +302,6 @@ async def _begin_group_game(bot, session_id: int, state: dict, chat_id: int, mes
     except TelegramBadRequest:
         pass
 
-
 async def _finish_group_game(bot, session_id: int, state: dict, lang: dict) -> None:
     state = game.resolve_group(state)
     winners = [p for p in state["players"] if state["results"].get(str(p["id"])) == "win"]
@@ -354,7 +326,6 @@ async def _finish_group_game(bot, session_id: int, state: dict, lang: dict) -> N
         except TelegramBadRequest:
             pass
 
-
 async def _group_join_timeout(bot, session_id: int, chat_id: int, message_id: int, lang_code: str) -> None:
     await asyncio.sleep(GROUP_JOIN_TIMEOUT)
     session = await get_session_by_id(session_id)
@@ -378,7 +349,6 @@ async def _group_join_timeout(bot, session_id: int, chat_id: int, message_id: in
             pass
         return
     await _begin_group_game(bot, session_id, state, chat_id, message_id, lang)
-
 
 async def start_group_blackjack(message: Message, user, lang: dict, menu_message_id: int | None = None) -> None:
     initial_state: dict = {
@@ -405,28 +375,22 @@ async def start_group_blackjack(message: Message, user, lang: dict, menu_message
     await update_session_state(session.id, state, current_turn_user_id=None)
     asyncio.create_task(_group_join_timeout(sent.bot, session.id, sent.chat.id, sent.message_id, user.language_code or "en"))
 
-
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _bj_menu_text(lang),
-        reply_markup=blackjack_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_blackjack_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     await start_group_blackjack(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
@@ -440,12 +404,9 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     await update_session_state(session.id, state, None)
     await callback.answer()
 
-
-
 @router.callback_query(F.data == "bj:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("bj:join:"))
 async def callback_group_join(callback: CallbackQuery) -> None:
@@ -499,7 +460,6 @@ async def callback_group_join(callback: CallbackQuery) -> None:
         pass
     await callback.answer()
 
-
 @router.callback_query(F.data.startswith("bj:hit:"))
 @router.callback_query(F.data.startswith("bj:stand:"))
 async def callback_game(callback: CallbackQuery) -> None:
@@ -540,7 +500,6 @@ async def callback_game(callback: CallbackQuery) -> None:
             return
 
     await finish_blackjack(session.id, state, lang, user, callback.message)
-
 
 async def _handle_group_action(callback: CallbackQuery, session, user, lang: dict, action: str) -> None:
     state = dict(session.state)

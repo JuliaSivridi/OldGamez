@@ -13,7 +13,7 @@ from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
+from app.keyboards.menus import main_menu_keyboard
 from app.services.duels import (
     broadcast_private_duel_update,
     build_duel_invite_text,
@@ -35,27 +35,13 @@ from app.services.sessions import (
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 
-
 router = Router()
-
-
-def four_menu_keyboard(lang: dict[str, str], chat_type=None):
-    return game_menu_keyboard(
-        lang,
-        game_code=game.code,
-        extra_duel_key="duel",
-        extra_group_key="group",
-        chat_type=chat_type,
-    )
-
 
 def get_duel_player_ids(state: dict) -> list[int | None]:
     return [state.get("player_red_id"), state.get("player_yellow_id")]
 
-
 def get_player_sign(state: dict, user_id: int) -> int:
     return 1 if state.get("player_red_id") == user_id else 2
-
 
 def render_group_status_text(
     lang: dict[str, str],
@@ -74,7 +60,6 @@ def render_group_status_text(
     current_symbol = SYMBOLS[1] if current_turn_user_id == state.get("player_red_id") else SYMBOLS[2]
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
     return f"{lang['icon-four']} {lang['game-four']}\n\n{lang['group-turn']} {current_symbol} {current_name}"
-
 
 def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = None) -> str:
     if state.get("player_red_id") and state.get("player_yellow_id"):
@@ -100,7 +85,6 @@ def render_text(lang: dict[str, str], state: dict, viewer_user_id: int | None = 
     turn_line = lang["turn-user"] if state["current_turn"] == "user" else lang["turn-comp"]
     return f"{lang['icon-four']} {lang['game-four']}\n\n{SYMBOLS[current_sign]} {turn_line}"
 
-
 def render_drop_text(lang: dict[str, str], sign: int, viewer_turn: str) -> str:
     if viewer_turn == "user":
         turn_line = lang["turn-user"]
@@ -109,7 +93,6 @@ def render_drop_text(lang: dict[str, str], sign: int, viewer_turn: str) -> str:
     else:
         turn_line = lang["turn-comp"]
     return f"{lang['icon-four']} {lang['game-four']}\n\n{SYMBOLS[sign]} {turn_line}"
-
 
 async def _run_drop_animation(
     message: Message,
@@ -124,7 +107,6 @@ async def _run_drop_animation(
         except Exception:
             pass
 
-
 async def animate_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], is_user: bool) -> None:
     await _run_drop_animation(
         message,
@@ -134,7 +116,6 @@ async def animate_drop(message: Message, session_id: int, board: list[list[int]]
         ),
         row,
     )
-
 
 async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None:
     state = dict(session.state or {})
@@ -156,7 +137,6 @@ async def animate_duel_drop(bot, session, sign: int, row: int, col: int) -> None
 
         await broadcast_private_duel_update(bot, player_ids, message_map, render_frame)
 
-
 async def animate_group_drop(message: Message, session_id: int, board: list[list[int]], sign: int, row: int, col: int, lang: dict[str, str], player_names: dict[int, str], state: dict) -> None:
     await _run_drop_animation(
         message,
@@ -166,7 +146,6 @@ async def animate_group_drop(message: Message, session_id: int, board: list[list
         ),
         row,
     )
-
 
 async def render_duel_message_for_user(session, user_id: int) -> tuple[str, object]:
     user = await get_user_by_id(user_id)
@@ -193,7 +172,6 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
     )
     return text, markup
 
-
 async def sync_duel_messages(bot, session) -> None:
     state = dict(session.state or {})
     await broadcast_private_duel_update(
@@ -202,7 +180,6 @@ async def sync_duel_messages(bot, session) -> None:
         get_duel_message_map(state),
         lambda user_id: render_duel_message_for_user(session, user_id),
     )
-
 
 async def send_four_menu_to_other_duel_players(
     bot,
@@ -227,11 +204,10 @@ async def send_four_menu_to_other_duel_players(
             await bot.send_message(
                 chat_id=message_meta["chat_id"],
                 text=_four_menu_text(lang),
-                reply_markup=four_menu_keyboard(lang, chat_type=chat_type),
+                reply_markup=get_game_keyboard(game.code, lang, chat_type=chat_type),
             )
         except TelegramBadRequest:
             pass
-
 
 async def start_four_game(message: Message, user, lang: dict[str, str], menu_message_id: int | None = None) -> None:
     state = game.new_game_state()
@@ -253,7 +229,6 @@ async def start_four_game(message: Message, user, lang: dict[str, str], menu_mes
         ),
     )
 
-
 async def start_four_duel(message: Message, user, lang: dict[str, str]) -> None:
     state = {"status": "pending", "message_ids": {}}
     session = await create_private_duel_invite(
@@ -269,12 +244,11 @@ async def start_four_duel(message: Message, user, lang: dict[str, str]) -> None:
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
 
-
 async def start_four_group(message: Message, user, lang: dict[str, str]) -> None:
     if message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
         await message.answer(
             lang["group-only"],
-            reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
         )
         return
 
@@ -293,13 +267,12 @@ async def start_four_group(message: Message, user, lang: dict[str, str]) -> None
     )
     await update_session_state(session.id, state, None)
 
-
 async def join_private_duel(message: Message, user, lang: dict[str, str], session) -> None:
     state = dict(session.state or {})
     if session.created_by_user_id == user.id:
         await message.answer(
             lang["duel-self"],
-            reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+            reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
         )
         return
 
@@ -326,7 +299,7 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
 
     join_ok_msg = await message.answer(
         lang["duel-join-ok"],
-        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
     duel_state["guest_join_msg"] = {"chat_id": join_ok_msg.chat.id, "message_id": join_ok_msg.message_id}
     guest_message = await message.answer(
@@ -343,44 +316,34 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
     if session is not None:
         await sync_duel_messages(message.bot, session)
 
-
 def _four_menu_text(lang: dict) -> str:
     return f"{lang['icon-four']} *{lang['game-four']}*"
-
 
 async def open_four_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
         _four_menu_text(lang),
-        reply_markup=four_menu_keyboard(lang, chat_type=message.chat.type),
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
-
-
-
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_four_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     await start_four_duel(callback.message, user, lang)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     await start_four_group(callback.message, user, lang)
     await callback.answer()
 
-
-
 @router.callback_query(F.data == "fir:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("fir:group_join:"))
 async def callback_four_group_join(callback: CallbackQuery) -> None:
@@ -441,7 +404,6 @@ async def callback_four_group_join(callback: CallbackQuery) -> None:
         ),
     )
     await callback.answer(lang["duel-join-ok"])
-
 
 @router.callback_query(F.data.startswith("fir:col:"))
 async def callback_col(callback: CallbackQuery) -> None:

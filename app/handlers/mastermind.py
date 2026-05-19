@@ -8,7 +8,6 @@ from app.games.mastermind.keyboards import cmplx_keyboard, game_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
-from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
@@ -23,11 +22,6 @@ router = Router()
 BLANK = "⬛"
 
 _MA_TO_VARIANT = {10: "easy", 12: "normal", 18: "hard"}
-
-
-def mastermind_menu_keyboard(lang, chat_type=None):
-    return game_menu_keyboard(lang, game_code=game.code, extra_setting_key="cmplx", chat_type=chat_type)
-
 
 def render_text(lang: dict, state: dict, final: str | None = None) -> str:
     size = state["size"]
@@ -56,16 +50,13 @@ def render_text(lang: dict, state: dict, final: str | None = None) -> str:
 
     return "\n".join(lines)
 
-
 def _mm_menu_text(lang: dict, user_settings: dict | None) -> str:
     cmplx = (user_settings or {}).get("mastermind_cmplx", "easy")
     return f"{lang['icon-mastermind']} *{lang['game-mastermind']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
 
-
 async def open_mastermind_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(_mm_menu_text(lang, user.settings), reply_markup=mastermind_menu_keyboard(lang, chat_type=message.chat.type))
-
+    await message.answer(_mm_menu_text(lang, user.settings), reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
 
 async def start_mastermind_game(message: Message, user, lang, difficulty: str, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(difficulty=difficulty)
@@ -79,15 +70,11 @@ async def start_mastermind_game(message: Message, user, lang, difficulty: str, m
     )
     await message.answer(render_text(lang, session.state), reply_markup=game_keyboard(session.id, session.state, True, lang))
 
-
-
-
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     difficulty = (user.settings or {}).get("mastermind_cmplx", "easy")
     await start_mastermind_game(callback.message, user, lang, difficulty, menu_message_id=callback.message.message_id)
     await callback.answer()
-
 
 @router.callback_query(GameCallbackFilter("cmplx", game.code))
 async def menu_cmplx(callback: CallbackQuery, user, lang) -> None:
@@ -96,15 +83,11 @@ async def menu_cmplx(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:mastermind"))
     await callback.answer()
 
-
 _DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
-
-
 
 @router.callback_query(F.data == "mm:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
 
 @router.callback_query(F.data.startswith("mm:cmplx:"))
 async def callback_cmplx(callback: CallbackQuery) -> None:
@@ -119,8 +102,7 @@ async def callback_cmplx(callback: CallbackQuery) -> None:
     await update_user_settings(user.id, {"mastermind_cmplx": difficulty, "current_game": game.code})
     updated = dict(user.settings or {})
     updated["mastermind_cmplx"] = difficulty
-    await safe_edit(callback.message, _mm_menu_text(lang, updated), reply_markup=mastermind_menu_keyboard(lang, chat_type=callback.message.chat.type))
-
+    await safe_edit(callback.message, _mm_menu_text(lang, updated), reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type))
 
 @router.callback_query(F.data.startswith("mm:color:"))
 async def callback_color(callback: CallbackQuery) -> None:
@@ -141,7 +123,6 @@ async def callback_color(callback: CallbackQuery) -> None:
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
 
-
 @router.callback_query(F.data.startswith("mm:back:"))
 async def callback_back(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -157,7 +138,6 @@ async def callback_back(callback: CallbackQuery) -> None:
     state = game.backspace(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
-
 
 @router.callback_query(F.data.startswith("mm:submit:"))
 async def callback_submit(callback: CallbackQuery) -> None:
