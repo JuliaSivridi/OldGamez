@@ -20,7 +20,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
     elif page == 1:
         ds = lang["menu-page-duel-solo"]
         s = lang["menu-page-solo"]
-        builder.button(text=f"{ds}  ·  {s} ➡", callback_data="menu:page:2")
+        builder.button(text=f"{ds}  ·  {s} ➡", callback_data="menu:page:2", style=ButtonStyle.PRIMARY)
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
         builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
         builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
@@ -33,11 +33,11 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
         builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(1, 2, 2, 2, 1, 2, 3)
+        builder.adjust(1, 2, 2, 1, 2, 2, 3)
     else:
         ds = lang["menu-page-duel-solo"]
         s = lang["menu-page-solo"]
-        builder.button(text=f"⬅ {ds}  ·  {s}", callback_data="menu:page:1")
+        builder.button(text=f"⬅ {ds}  ·  {s}", callback_data="menu:page:1", style=ButtonStyle.PRIMARY)
         builder.button(text=f"{lang['icon-mines']} {lang['menu-mines']}".strip(), callback_data="game:mines")
         builder.button(text=f"{lang['icon-rand']} {lang['menu-rand']}".strip(), callback_data="game:rand")
         builder.button(text=f"{lang['icon-lightsout']} {lang['menu-lightsout']}".strip(), callback_data="game:lightsout")
