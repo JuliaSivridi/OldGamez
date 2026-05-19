@@ -12,7 +12,7 @@ from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, format_game_stats_text, format_leaderboard_text, get_game_leaderboard, get_game_stat, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, format_leaderboard_text, get_game_leaderboard, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
 
@@ -295,17 +295,6 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     )
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    game_title = f"{lang['icon-stat']} *{lang['game-bj']}*"
-    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
-    await safe_edit(callback.message, text,
-        reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
     await callback.answer()
 
 

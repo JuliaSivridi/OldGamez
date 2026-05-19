@@ -14,9 +14,7 @@ from app.services.sessions import (
     create_solo_session,
     finish_session,
     format_leaderboard_text,
-    format_variant_stats_text,
     get_active_solo_session,
-    get_all_game_stats,
     get_game_leaderboard,
     get_session_by_id,
     record_game_result,
@@ -130,17 +128,6 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
 
 
 _DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
-
-
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stats = await get_all_game_stats(user.id, game.code)
-    stats.sort(key=lambda s: _DIFFICULTY_ORDER.get(s.variant_key, 9))
-    variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
-    game_title = f"{lang['icon-stat']} *{lang['game-mines']}*"
-    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
-    await safe_edit(callback.message, text, reply_markup=minesweeper_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("top", game.code))

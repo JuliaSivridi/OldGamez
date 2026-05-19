@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field as dc_field
 from importlib import import_module
 from typing import Callable
 
@@ -10,7 +11,15 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
 from app.keyboards.menus import game_menu_keyboard, duel_menu_keyboard, main_menu_keyboard
-from app.services.sessions import format_leaderboard_text, get_game_stats_bulk, get_global_leaderboard
+from app.services.sessions import (
+    format_game_stats_text,
+    format_leaderboard_text,
+    format_variant_stats_text,
+    get_all_game_stats,
+    get_game_stat,
+    get_game_stats_bulk,
+    get_global_leaderboard,
+)
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
 router = Router()
@@ -51,6 +60,107 @@ GAME_STATS_ORDER: list[tuple[str, str, str]] = [
 
 # Registry: game_code -> "module:function" for the open_X_menu function.
 # Add a new entry here when a new game is added.
+_DIFFICULTY_SORT: Callable = lambda s: {"easy": 0, "normal": 1, "hard": 2}.get(s.variant_key, 9)
+_DIGIT_SORT: Callable = lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0
+_DIFFICULTY_LABELS: Callable = lambda lang: {
+    "easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]
+}
+
+
+def _memory_labels(lang: dict) -> dict:
+    from app.games.memory.game import GRID_DIMS
+    return {str(s): f"{r}×{c}" for s, (r, c) in GRID_DIMS.items()}
+
+
+@dataclass
+class StatConfig:
+    name_key: str
+    variant: bool
+    fields: list[str]
+    sort_key: Callable = dc_field(default_factory=lambda: _DIGIT_SORT)
+    variant_labels: Callable = dc_field(default_factory=lambda lang: {})
+    has_best_score: bool = False
+
+
+GAME_STAT_REGISTRY: dict[str, StatConfig] = {
+    "tic_tac_toe": StatConfig(
+        name_key="game-xo", variant=True,
+        fields=["played", "wins", "losses", "draws"],
+        sort_key=_DIGIT_SORT,
+        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
+    ),
+    "four_in_row": StatConfig(
+        name_key="game-four", variant=False,
+        fields=["played", "wins", "losses", "draws"],
+    ),
+    "battleship": StatConfig(
+        name_key="game-sea", variant=False,
+        fields=["played", "wins", "losses"],
+    ),
+    "minesweeper": StatConfig(
+        name_key="game-mines", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIFFICULTY_SORT,
+        variant_labels=_DIFFICULTY_LABELS,
+    ),
+    "lightsout": StatConfig(
+        name_key="game-lightsout", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIGIT_SORT,
+        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in (4, 5, 6)},
+        has_best_score=True,
+    ),
+    "npuzzle": StatConfig(
+        name_key="game-npuzzle", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIGIT_SORT,
+        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
+        has_best_score=True,
+    ),
+    "mastermind": StatConfig(
+        name_key="game-mastermind", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIFFICULTY_SORT,
+        variant_labels=_DIFFICULTY_LABELS,
+    ),
+    "bullscows": StatConfig(
+        name_key="game-bullscows", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIFFICULTY_SORT,
+        variant_labels=_DIFFICULTY_LABELS,
+    ),
+    "wordle": StatConfig(
+        name_key="game-wordle", variant=False,
+        fields=["played", "wins", "losses"],
+    ),
+    "hangman": StatConfig(
+        name_key="game-hang", variant=True,
+        fields=["played", "wins", "losses"],
+        sort_key=_DIFFICULTY_SORT,
+        variant_labels=_DIFFICULTY_LABELS,
+    ),
+    "memory": StatConfig(
+        name_key="game-mem", variant=True,
+        fields=["played", "wins", "losses", "draws"],
+        sort_key=_DIGIT_SORT,
+        variant_labels=_memory_labels,
+        has_best_score=True,
+    ),
+    "blackjack": StatConfig(
+        name_key="game-bj", variant=False,
+        fields=["played", "wins", "losses", "draws"],
+    ),
+    "ropasci": StatConfig(
+        name_key="game-rps", variant=False,
+        fields=["played", "wins", "losses", "draws"],
+    ),
+    "rpssl": StatConfig(
+        name_key="game-rpssl", variant=False,
+        fields=["played", "wins", "losses", "draws"],
+    ),
+}
+
+
 GAME_HELP_REGISTRY: dict[str, tuple[str, str]] = {
     "tic_tac_toe": ("game-xo",         "help-xo"),
     "four_in_row": ("game-four",        "help-four"),
@@ -275,6 +385,31 @@ async def cmd_lang_command(message: Message) -> None:
         lang["lang-ask"],
         reply_markup=language_keyboard(lang, chat_type=message.chat.type),
     )
+
+
+@router.callback_query(F.data.startswith("game:stat:"))
+async def callback_game_stat(callback: CallbackQuery, user, lang) -> None:
+    if callback.message is None:
+        return
+    game_code = callback.data.split(":", 2)[2]
+    config = GAME_STAT_REGISTRY.get(game_code)
+    keyboard_fn = _get_game_keyboard(game_code)
+    if config is None or keyboard_fn is None:
+        await callback.answer()
+        return
+    game_title = f"{lang['icon-stat']} *{lang[config.name_key]}*"
+    if config.variant:
+        stats = await get_all_game_stats(user.id, game_code)
+        stats.sort(key=config.sort_key)
+        labels = config.variant_labels(lang)
+        text = game_title + " | " + format_variant_stats_text(
+            stats, lang, labels, config.fields, has_best_score=config.has_best_score
+        )
+    else:
+        stat = await get_game_stat(user.id, game_code)
+        text = game_title + " | " + format_game_stats_text(stat, lang, config.fields)
+    await safe_edit(callback.message, text, reply_markup=keyboard_fn(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("game:help:"))

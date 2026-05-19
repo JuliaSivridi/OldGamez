@@ -30,10 +30,8 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_game_stats_text,
     format_leaderboard_text,
     get_game_leaderboard,
-    get_game_stat,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -396,15 +394,6 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     await start_four_group(callback.message, user, lang)
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    game_title = f"{lang['icon-stat']} *{lang['game-four']}*"
-    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
-    await safe_edit(callback.message, text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

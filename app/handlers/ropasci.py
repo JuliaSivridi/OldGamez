@@ -27,10 +27,8 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_game_stats_text,
     format_leaderboard_text,
     get_game_leaderboard,
-    get_game_stat,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -493,15 +491,6 @@ async def menu_rps_mode(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_rps_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    game_title = f"{lang['icon-stat']} *{lang['game-rps']}*"
-    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
-    await safe_edit(callback.message, text, reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
 @router.callback_query(GameCallbackFilter("top", game.code))
 async def menu_rps_top(callback: CallbackQuery, user, lang) -> None:
     entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
@@ -615,16 +604,6 @@ async def menu_rpssl_mode(callback: CallbackQuery, user, lang) -> None:
     wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
     text = f"{lang['chus-mode']}\n\n{lang['setting-mode']}: {MODE_LABEL.get(wins_needed, '?')}"
     await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(rpssl_game.code, "game:rpssl", lang))
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("stat", rpssl_game.code))
-async def menu_rpssl_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, rpssl_game.code)
-    game_title = f"{lang['icon-stat']} *{lang['game-rpssl']}*"
-    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses", "draws"])
-    await safe_edit(callback.message, text,
-                    reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

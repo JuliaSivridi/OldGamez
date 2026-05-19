@@ -13,10 +13,8 @@ from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    format_game_stats_text,
     format_leaderboard_text,
     get_game_leaderboard,
-    get_game_stat,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -106,15 +104,6 @@ async def open_wordle_callback(callback: CallbackQuery) -> None:
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     lang_code = normalize_language_code(user.language_code)
     await start_wordle_game(callback.message, user, lang, lang_code, menu_message_id=callback.message.message_id)
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stat = await get_game_stat(user.id, game.code)
-    game_title = f"{lang['icon-stat']} *{lang['game-wordle']}*"
-    text = game_title + " | " + format_game_stats_text(stat, lang, ["played", "wins", "losses"])
-    await safe_edit(callback.message, text, reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

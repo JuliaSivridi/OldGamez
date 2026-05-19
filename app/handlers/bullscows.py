@@ -14,8 +14,6 @@ from app.services.sessions import (
     create_solo_session,
     finish_session,
     format_leaderboard_text,
-    format_variant_stats_text,
-    get_all_game_stats,
     get_game_leaderboard,
     get_session_by_id,
     record_game_result,
@@ -129,17 +127,6 @@ async def menu_size(callback: CallbackQuery, user, lang) -> None:
     cmplx_key = _VARIANT_TO_CMPLX_KEY.get(variant, variant)
     text = f"{lang['chus-cmplx']}\n\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx_key}']}"
     await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:bullscows"))
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("stat", game.code))
-async def menu_stats(callback: CallbackQuery, user, lang) -> None:
-    stats = await get_all_game_stats(user.id, game.code)
-    stats.sort(key=lambda s: _DIFFICULTY_ORDER.get(s.variant_key, 9))
-    variant_labels = {"easy": lang["stat-easy"], "normal": lang["stat-normal"], "hard": lang["stat-hard"]}
-    game_title = f"{lang['icon-stat']} *{lang['game-bullscows']}*"
-    text = game_title + " | " + format_variant_stats_text(stats, lang, variant_labels, ["played", "wins", "losses"])
-    await safe_edit(callback.message, text, reply_markup=bullscows_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 
