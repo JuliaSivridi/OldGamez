@@ -192,6 +192,21 @@ async def activate_group_match_session(
         return game_session
 
 
+async def begin_group_session(session_id: int, state: dict) -> GameSession | None:
+    """Transition a pending group session to active with the given state (cards dealt)."""
+    async with SessionLocal() as session:
+        result = await session.execute(select(GameSession).where(GameSession.id == session_id))
+        game_session = result.scalar_one_or_none()
+        if game_session is None or game_session.status != SessionStatus.pending:
+            return None
+        game_session.status = SessionStatus.active
+        game_session.state = state
+        game_session.started_at = datetime.now(timezone.utc)
+        await session.commit()
+        await session.refresh(game_session)
+        return game_session
+
+
 async def get_joinable_private_duel(join_code: str) -> GameSession | None:
     async with SessionLocal() as session:
         result = await session.execute(

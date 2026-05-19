@@ -192,7 +192,7 @@ GAMES: list[GameConfig] = [
         cmds=["blackjack"],
         menu_fn="app.handlers.blackjack:open_blackjack_menu",
         open_suffix="bj", open_text_fn="app.handlers.blackjack:_bj_menu_text", open_needs_settings=False,
-        keyboard=KeyboardConfig(None, "duel", None),
+        keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
     ),
     GameConfig(

@@ -1,18 +1,23 @@
-﻿from aiogram import F, Router
+﻿import asyncio
+import time
+
+from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from app.db.models import SessionMode, SessionStatus
 from app.games.blackjack import game
-from app.games.blackjack.keyboards import game_keyboard
+from app.games.blackjack.keyboards import GROUP_MAX_PLAYERS, game_keyboard, group_join_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
+
+GROUP_JOIN_TIMEOUT = 60  # seconds
 
 
 router = Router()
@@ -250,6 +255,156 @@ def _bj_menu_text(lang: dict) -> str:
     return f"{lang['icon-bj']} *{lang['game-bj']}*"
 
 
+# ── Group game helpers ─────────────────────────────────────────────────────────
+
+def _write_cards_compact(cards: list[dict]) -> str:
+    """Compact single-line card display using only suit+rank emoji."""
+    parts = []
+    for card in cards:
+        rank_emoji = "🅰️" if card["rank"] == "!" else card["rank"]
+        parts.append(f"{card['suit']}{rank_emoji}")
+    return "  ".join(parts)
+
+
+def render_group_joining_text(state: dict, lang: dict) -> str:
+    players = state["players"]
+    names = "\n".join(f"• {p['name']}" for p in players)
+    return (
+        f"{lang['icon-bj']} *{lang['game-bj']}*\n\n"
+        f"👥 {len(players)}/{GROUP_MAX_PLAYERS}\n"
+        f"{names}\n\n"
+        f"{lang['bj-grp-waiting']}"
+    )
+
+
+def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> str:
+    comp_cards = state["comp_cards"]
+    comp_cost = state["comp_cost"]
+
+    if final:
+        dealer_line = f"🃏 *{lang['bj-grp-dealer']}*: {comp_cost}\n{_write_cards_compact(comp_cards)}"
+    else:
+        hidden = "❓"
+        dealer_line = f"🃏 *{lang['bj-grp-dealer']}*: {comp_cost} + {hidden}\n{_write_cards_compact(comp_cards)}  {hidden}"
+
+    lines = [f"{lang['icon-bj']} *{lang['game-bj']}*\n\n{dealer_line}"]
+
+    results = state.get("results", {})
+    for p in state["players"]:
+        cost = p["cost"]
+        pid_str = str(p["id"])
+        if final:
+            result = results.get(pid_str)
+            prefix = "🏆" if result == "win" else ("💥" if cost > 21 else "—")
+        else:
+            prefix = "💥" if cost > 21 else ("✅" if p["done"] else "👤")
+        lines.append(f"\n{prefix} {p['name']}: {cost}\n{_write_cards_compact(p['cards'])}")
+
+    return "\n".join(lines)
+
+
+async def _begin_group_game(bot, session_id: int, state: dict, chat_id: int, message_id: int, lang: dict) -> None:
+    """Deal cards and transition the group session from joining → playing."""
+    player_infos = [(p["id"], p["name"]) for p in state["players"]]
+    play_state = game.new_group_game_state(player_infos)
+    play_state["group_message_id"] = message_id
+    play_state["group_chat_id"] = chat_id
+    if "menu_message_id" in state:
+        play_state["menu_message_id"] = state["menu_message_id"]
+
+    started = await begin_group_session(session_id, play_state)
+    if started is None:
+        return  # already started by another join racing in
+
+    keyboard = game_keyboard(session_id, lang, is_active=True)
+    try:
+        await bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=render_group_playing_text(play_state, lang),
+            reply_markup=keyboard,
+            parse_mode="Markdown",
+        )
+    except TelegramBadRequest:
+        pass
+
+
+async def _finish_group_game(bot, session_id: int, state: dict, lang: dict) -> None:
+    state = game.resolve_group(state)
+    winners = [p for p in state["players"] if state["results"].get(str(p["id"])) == "win"]
+    winner_id = winners[0]["id"] if len(winners) == 1 else None
+    await finish_session(session_id, state, winner_user_id=winner_id)
+
+    for p in state["players"]:
+        result = state["results"].get(str(p["id"]), "loss")
+        await record_game_result(p["id"], game.code, result)
+
+    group_chat_id = state.get("group_chat_id")
+    group_msg_id = state.get("group_message_id")
+    if group_chat_id and group_msg_id:
+        try:
+            await bot.edit_message_text(
+                chat_id=group_chat_id,
+                message_id=group_msg_id,
+                text=render_group_playing_text(state, lang, final=True),
+                reply_markup=None,
+                parse_mode="Markdown",
+            )
+        except TelegramBadRequest:
+            pass
+
+
+async def _group_join_timeout(bot, session_id: int, chat_id: int, message_id: int, lang_code: str) -> None:
+    await asyncio.sleep(GROUP_JOIN_TIMEOUT)
+    session = await get_session_by_id(session_id)
+    if session is None or session.status != SessionStatus.pending:
+        return
+    state = dict(session.state)
+    if state.get("phase") != "joining":
+        return
+    lang = get_language_pack(lang_code)
+    players = state.get("players", [])
+    if len(players) < 2:
+        await finish_session(session_id, state, winner_user_id=None)
+        try:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=lang["bj-grp-cancelled"],
+                reply_markup=None,
+            )
+        except TelegramBadRequest:
+            pass
+        return
+    await _begin_group_game(bot, session_id, state, chat_id, message_id, lang)
+
+
+async def start_group_blackjack(message: Message, user, lang: dict, menu_message_id: int | None = None) -> None:
+    initial_state: dict = {
+        "phase": "joining",
+        "players": [{"id": user.id, "name": user.first_name or str(user.id)}],
+        "join_deadline": time.time() + GROUP_JOIN_TIMEOUT,
+    }
+    if menu_message_id:
+        initial_state["menu_message_id"] = menu_message_id
+    session = await create_group_match_session(
+        user_id=user.id,
+        telegram_chat_id=message.chat.id,
+        game_code=game.code,
+        initial_state=initial_state,
+    )
+    sent = await message.answer(
+        render_group_joining_text(initial_state, lang),
+        reply_markup=group_join_keyboard(session.id, 1, lang),
+        parse_mode="Markdown",
+    )
+    state = dict(session.state)
+    state["group_message_id"] = sent.message_id
+    state["group_chat_id"] = sent.chat.id
+    await update_session_state(session.id, state, current_turn_user_id=None)
+    asyncio.create_task(_group_join_timeout(sent.bot, session.id, sent.chat.id, sent.message_id, user.language_code or "en"))
+
+
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
     await message.answer(
@@ -263,6 +418,12 @@ async def open_blackjack_menu(message: Message, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_blackjack_game(callback.message, user, lang, menu_message_id=callback.message.message_id)
+    await callback.answer()
+
+
+@router.callback_query(GameCallbackFilter("group", game.code))
+async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
+    await start_group_blackjack(callback.message, user, lang, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 
@@ -282,6 +443,59 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(F.data == "bj:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("bj:join:"))
+async def callback_group_join(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    session_id = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    session = await get_session_by_id(session_id)
+    if session is None or session.status != SessionStatus.pending:
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+    state = dict(session.state)
+    if state.get("phase") != "joining":
+        await callback.answer()
+        return
+
+    # Check deadline
+    if time.time() > state.get("join_deadline", 0):
+        players = state.get("players", [])
+        lang_code = players[0]["id"] if players else "en"  # fallback
+        await _group_join_timeout(callback.bot, session_id, callback.message.chat.id, callback.message.message_id, user.language_code or "en")
+        await callback.answer()
+        return
+
+    players: list[dict] = state.get("players", [])
+    if any(p["id"] == user.id for p in players):
+        await callback.answer(lang["rps-chosen"], show_alert=True)
+        return
+    if len(players) >= GROUP_MAX_PLAYERS:
+        await callback.answer(lang["duel-full"], show_alert=True)
+        return
+
+    players.append({"id": user.id, "name": user.first_name or str(user.id)})
+    state["players"] = players
+    await update_user_settings(user.id, {"current_game": game.code})
+
+    if len(players) >= GROUP_MAX_PLAYERS:
+        await callback.answer()
+        await _begin_group_game(callback.bot, session_id, state, callback.message.chat.id, callback.message.message_id, lang)
+        return
+
+    await update_session_state(session_id, state, current_turn_user_id=None)
+    try:
+        await callback.message.edit_text(
+            render_group_joining_text(state, lang),
+            reply_markup=group_join_keyboard(session_id, len(players), lang),
+            parse_mode="Markdown",
+        )
+    except TelegramBadRequest:
+        pass
     await callback.answer()
 
 
@@ -305,6 +519,10 @@ async def callback_game(callback: CallbackQuery) -> None:
         await _handle_duel_action(callback, session, user, lang, action)
         return
 
+    if session.mode == SessionMode.group_match:
+        await _handle_group_action(callback, session, user, lang, action)
+        return
+
     await callback.answer()
     if session.created_by_user_id != user.id:
         return
@@ -321,3 +539,37 @@ async def callback_game(callback: CallbackQuery) -> None:
             return
 
     await finish_blackjack(session.id, state, lang, user, callback.message)
+
+
+async def _handle_group_action(callback: CallbackQuery, session, user, lang: dict, action: str) -> None:
+    state = dict(session.state)
+    players = state.get("players", [])
+    player = next((p for p in players if p["id"] == user.id), None)
+    if player is None:
+        await callback.answer(lang["duel-missing"], show_alert=True)
+        return
+    if player["done"]:
+        await callback.answer(lang["rps-chosen"], show_alert=True)
+        return
+
+    await callback.answer()
+    if action == "hit":
+        result = game.group_hit(state, user.id)
+    else:
+        result = game.group_stand(state, user.id)
+    state = result["game_state"]
+
+    if result["all_done"]:
+        await _finish_group_game(callback.bot, session.id, state, lang)
+        return
+
+    updated = await update_session_state(session.id, state, current_turn_user_id=None)
+    if updated:
+        try:
+            await callback.message.edit_text(
+                render_group_playing_text(state, lang),
+                reply_markup=game_keyboard(session.id, lang, is_active=True),
+                parse_mode="Markdown",
+            )
+        except TelegramBadRequest:
+            pass

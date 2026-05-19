@@ -153,3 +153,61 @@ class BlackjackGame:
         state["result"] = result
         state["status"] = "finished"
         return state
+
+    def new_group_game_state(self, player_infos: list[tuple[int, str]]) -> dict:
+        """Deal bare cards to each player and one card to dealer."""
+        players = []
+        for pid, name in player_infos:
+            cards = [self._random_card_bare(), self._random_card_bare()]
+            cost = self.cards_cost(cards)
+            players.append({"id": pid, "name": name, "cards": cards, "cost": cost, "done": cost >= 21})
+        comp_cards = [self._random_card_bare()]
+        return {
+            "phase": "playing",
+            "players": players,
+            "comp_cards": comp_cards,
+            "comp_cost": self.cards_cost(comp_cards),
+        }
+
+    def group_hit(self, state: dict, user_id: int) -> dict:
+        for p in state["players"]:
+            if p["id"] == user_id:
+                p["cards"].append(self._random_card_bare())
+                p["cost"] = self.cards_cost(p["cards"])
+                p["done"] = p["cost"] >= 21
+                break
+        all_done = all(p["done"] for p in state["players"])
+        return {"game_state": state, "all_done": all_done}
+
+    def group_stand(self, state: dict, user_id: int) -> dict:
+        for p in state["players"]:
+            if p["id"] == user_id:
+                p["done"] = True
+                break
+        all_done = all(p["done"] for p in state["players"])
+        return {"game_state": state, "all_done": all_done}
+
+    def resolve_group(self, state: dict) -> dict:
+        """Dealer finishes; winners = players with the highest non-busted hand."""
+        comp_cards = state["comp_cards"]
+        comp_cost = state["comp_cost"]
+        while comp_cost <= 17:
+            comp_cards.append(self._random_card_bare())
+            comp_cost = self.cards_cost(comp_cards)
+        state["comp_cards"] = comp_cards
+        state["comp_cost"] = comp_cost
+
+        valid = [p for p in state["players"] if p["cost"] <= 21]
+        winner_ids: set[int] = set()
+        if valid:
+            best = max(p["cost"] for p in valid)
+            # blackjack beats equal non-blackjack score
+            blackjacks = [p for p in valid if p["cost"] == best and self.is_blackjack(p["cards"], p["cost"])]
+            if blackjacks:
+                winner_ids = {p["id"] for p in blackjacks}
+            else:
+                winner_ids = {p["id"] for p in valid if p["cost"] == best}
+
+        state["results"] = {str(p["id"]): ("win" if p["id"] in winner_ids else "loss") for p in state["players"]}
+        state["phase"] = "finished"
+        return state
