@@ -320,14 +320,6 @@ async def menu_top(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-bj']}* | *{lang['help-ttl']}*\n\n{lang['help-bj']}",
-        reply_markup=blackjack_menu_keyboard(lang, chat_type=callback.message.chat.type),
-        parse_mode="Markdown")
-    await callback.answer()
-
-
 @router.callback_query(F.data == "bj:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()

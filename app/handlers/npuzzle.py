@@ -110,12 +110,6 @@ async def menu_top(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-npuzzle']}* | *{lang['help-ttl']}*\n\n{lang['help-npuzzle']}", reply_markup=npuzzle_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
 @router.callback_query(F.data == "npz:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()

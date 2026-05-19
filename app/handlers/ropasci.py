@@ -511,13 +511,6 @@ async def menu_rps_top(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_rps_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-rps']}* | *{lang['help-ttl']}*\n\n{lang['help-rps']}",
-                    reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
 @router.callback_query(F.data == "rps:noop")
 async def rps_noop(callback: CallbackQuery) -> None:
     await callback.answer()
@@ -641,13 +634,6 @@ async def menu_rpssl_top(callback: CallbackQuery, user, lang) -> None:
     title = f"*{lang['game-rpssl']}*"
     text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text,
-                    reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("help", rpssl_game.code))
-async def menu_rpssl_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-rpssl']}* | *{lang['help-ttl']}*\n\n{lang['help-rpssl']}",
                     reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 

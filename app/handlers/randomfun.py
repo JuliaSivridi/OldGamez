@@ -32,9 +32,8 @@ def random_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboard
     b.button(text=lang["menu-coin"], callback_data="rand:coin")
     b.button(text=lang["menu-card"], callback_data="rand:card")
     b.button(text=lang["menu-guess"], callback_data="rand:guess")
-    b.button(text=lang["menu-help"], callback_data=f"game:help:{game.code}")
     b.button(text=lang["main-back"], callback_data="main:back")
-    b.adjust(6, 2, 1, 2)
+    b.adjust(6, 2, 1, 1)
     return b.as_markup()
 
 
@@ -132,13 +131,6 @@ async def callback_guess(callback: CallbackQuery, state: FSMContext) -> None:
         reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await update_user_settings(user.id, {'current_game': game.code})
-    await callback.answer()
-
-
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, lang['help'],
-        reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
     await callback.answer()
 
 

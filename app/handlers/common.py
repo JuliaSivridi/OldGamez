@@ -51,6 +51,40 @@ GAME_STATS_ORDER: list[tuple[str, str, str]] = [
 
 # Registry: game_code -> "module:function" for the open_X_menu function.
 # Add a new entry here when a new game is added.
+GAME_HELP_REGISTRY: dict[str, tuple[str, str]] = {
+    "tic_tac_toe": ("game-xo",         "help-xo"),
+    "four_in_row": ("game-four",        "help-four"),
+    "battleship":  ("game-sea",         "help-sea"),
+    "minesweeper": ("game-mines",       "help-mines"),
+    "lightsout":   ("game-lightsout",   "help-lightsout"),
+    "npuzzle":     ("game-npuzzle",     "help-npuzzle"),
+    "mastermind":  ("game-mastermind",  "help-mastermind"),
+    "bullscows":   ("game-bullscows",   "help-bullscows"),
+    "wordle":      ("game-wordle",      "help-wordle"),
+    "hangman":     ("game-hang",        "help-hang"),
+    "memory":      ("game-mem",         "help-mem"),
+    "blackjack":   ("game-bj",          "help-bj"),
+    "ropasci":     ("game-rps",         "help-rps"),
+    "rpssl":       ("game-rpssl",       "help-rpssl"),
+}
+
+GAME_KEYBOARD_REGISTRY: dict[str, str] = {
+    "tic_tac_toe": "app.handlers.tictactoe:tictactoe_menu_keyboard",
+    "four_in_row": "app.handlers.fourinrow:four_menu_keyboard",
+    "battleship":  "app.handlers.battleship:battleship_menu_keyboard",
+    "minesweeper": "app.handlers.minesweeper:minesweeper_menu_keyboard",
+    "lightsout":   "app.handlers.lightsout:lightsout_menu_keyboard",
+    "npuzzle":     "app.handlers.npuzzle:npuzzle_menu_keyboard",
+    "mastermind":  "app.handlers.mastermind:mastermind_menu_keyboard",
+    "bullscows":   "app.handlers.bullscows:bullscows_menu_keyboard",
+    "wordle":      "app.handlers.wordle:wordle_menu_keyboard",
+    "hangman":     "app.handlers.hangman:hangman_menu_keyboard",
+    "memory":      "app.handlers.memory:memory_menu_keyboard",
+    "blackjack":   "app.handlers.blackjack:blackjack_menu_keyboard",
+    "ropasci":     "app.handlers.ropasci:rps_menu_keyboard",
+    "rpssl":       "app.handlers.ropasci:rpssl_menu_keyboard",
+}
+
 GAME_MENU_REGISTRY: dict[str, str] = {
     GAME_CODE_TICTACTOE: "app.handlers.tictactoe:open_tictactoe_menu",
     GAME_CODE_FOURINROW: "app.handlers.fourinrow:open_four_menu",
@@ -70,14 +104,27 @@ GAME_MENU_REGISTRY: dict[str, str] = {
 }
 
 
-def _get_menu_handler(game_code: str) -> Callable | None:
-    path = GAME_MENU_REGISTRY.get(game_code)
+@router.callback_query(F.data == "noop")
+async def noop_handler(callback: CallbackQuery) -> None:
+    await callback.answer()
+
+
+def _lazy_load(registry: dict[str, str], game_code: str) -> Callable | None:
+    path = registry.get(game_code)
     if path is None:
         return None
     module_path, func_name = path.split(":", 1)
     module = import_module(module_path)
-    handler = getattr(module, func_name, None)
-    return handler if callable(handler) else None
+    fn = getattr(module, func_name, None)
+    return fn if callable(fn) else None
+
+
+def _get_menu_handler(game_code: str) -> Callable | None:
+    return _lazy_load(GAME_MENU_REGISTRY, game_code)
+
+
+def _get_game_keyboard(game_code: str) -> Callable | None:
+    return _lazy_load(GAME_KEYBOARD_REGISTRY, game_code)
 
 
 def get_current_game(user) -> str | None:
@@ -228,6 +275,22 @@ async def cmd_lang_command(message: Message) -> None:
         lang["lang-ask"],
         reply_markup=language_keyboard(lang, chat_type=message.chat.type),
     )
+
+
+@router.callback_query(F.data.startswith("game:help:"))
+async def callback_game_help(callback: CallbackQuery, user, lang) -> None:
+    if callback.message is None:
+        return
+    game_code = callback.data.split(":", 2)[2]
+    info = GAME_HELP_REGISTRY.get(game_code)
+    keyboard_fn = _get_game_keyboard(game_code)
+    if info is None or keyboard_fn is None:
+        await callback.answer()
+        return
+    name_key, help_key = info
+    text = f"{lang['icon-info']} *{lang[name_key]}* | *{lang['help-ttl']}*\n\n{lang[help_key]}"
+    await safe_edit(callback.message, text, reply_markup=keyboard_fn(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
 @router.callback_query(F.data == "menu:top")

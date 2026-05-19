@@ -408,12 +408,6 @@ async def menu_top(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-xo']}* | *{lang['help-ttl']}*\n\n{lang['help-xo']}", reply_markup=tictactoe_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
 @router.callback_query(F.data.startswith("ttt:size:"))
 async def callback_tictactoe_size(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:

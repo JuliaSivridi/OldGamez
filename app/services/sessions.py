@@ -504,19 +504,19 @@ def format_variant_stats_text(
 
 
 GAME_VARIANT_POINTS: dict[str, dict[str, int]] = {
-    "tictactoe": {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
-    "npuzzle":   {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
-    "memory":    {"3": 1, "4": 1, "5": 5, "6": 5, "7": 25, "8": 25},
-    "lightsout": {"4": 1, "5": 5, "6": 25},
+    "tic_tac_toe": {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
+    "npuzzle":     {"3": 1, "4": 2, "5": 4, "6": 8, "7": 16, "8": 25},
+    "memory":      {"3": 1, "4": 1, "5": 5, "6": 5, "7": 25, "8": 25},
+    "lightsout":   {"4": 1, "5": 5, "6": 25},
     "minesweeper": {"easy": 1, "normal": 5, "hard": 25},
     "mastermind":  {"easy": 1, "normal": 5, "hard": 25},
     "hangman":     {"easy": 1, "normal": 5, "hard": 25},
     "bullscows":   {"easy": 1, "normal": 5, "hard": 25},
-    "fourinrow":   {"default": 1},
+    "four_in_row": {"default": 1},
     "battleship":  {"default": 1},
     "wordle":      {"default": 1},
     "blackjack":   {"default": 1},
-    "rps":         {"default": 1},
+    "ropasci":     {"default": 1},
     "rpssl":       {"default": 1},
 }
 

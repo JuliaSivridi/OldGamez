@@ -285,12 +285,6 @@ async def menu_top(callback: CallbackQuery, user, lang) -> None:
     await callback.answer()
 
 
-@router.callback_query(GameCallbackFilter("help", game.code))
-async def menu_help(callback: CallbackQuery, user, lang) -> None:
-    await safe_edit(callback.message, f"{lang['icon-info']} *{lang['game-mem']}* | *{lang['help-ttl']}*\n\n{lang['help-mem']}", reply_markup=memory_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
-
-
 @router.callback_query(F.data.startswith("mem:size:"))
 async def callback_set_size(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
