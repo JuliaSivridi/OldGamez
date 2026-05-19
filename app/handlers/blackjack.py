@@ -133,6 +133,7 @@ def blackjack_menu_keyboard(lang: dict[str, str], chat_type=None):
         lang,
         game_code=game.code,
         extra_duel_key="duel",
+        extra_group_key="group",
         chat_type=chat_type,
     )
 
