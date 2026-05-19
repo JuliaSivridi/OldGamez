@@ -10,7 +10,7 @@ from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard, profile_keyboard
 from app.services.sessions import (
     format_game_stats_text,
     format_leaderboard_text,
@@ -515,6 +515,25 @@ async def callback_menu_top(callback: CallbackQuery) -> None:
         text,
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
+    await callback.answer()
+
+
+def _profile_text(user) -> str:
+    name_parts = [p for p in [user.first_name, user.last_name] if p]
+    parts = [" ".join(name_parts) or str(user.telegram_user_id)]
+    if user.username:
+        parts.append(f"@{user.username}")
+    parts.append(f"#{user.telegram_user_id}")
+    return " — ".join(parts)
+
+
+@router.callback_query(F.data == "menu:profile")
+async def callback_menu_profile(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, _profile_text(user), reply_markup=profile_keyboard(lang))
     await callback.answer()
 
 

@@ -14,7 +14,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
-        builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.adjust(2, 2, 2, 2, 2)
     else:
@@ -37,7 +37,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-hang']} {lang['menu-hang']}".strip(), callback_data="game:hang")
         builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
-        builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
         builder.adjust(1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 3)
@@ -78,4 +78,12 @@ def game_menu_keyboard(
     layout.append(2)
 
     builder.adjust(*layout)
+    return builder.as_markup()
+
+
+def profile_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.SUCCESS)
+    builder.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
+    builder.adjust(2)
     return builder.as_markup()
