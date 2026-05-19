@@ -42,6 +42,15 @@ async def open_random_menu(message: Message, user, lang) -> None:
     await message.answer(f"{lang['icon-rand']} {lang['game-rand']}", reply_markup=random_menu_keyboard(lang, chat_type=message.chat.type))
 
 
+@router.callback_query(F.data == "game:rand")
+async def open_random_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await update_user_settings(user.id, {"current_game": game.code})
+    await safe_edit(callback.message, f"{lang['icon-rand']} {lang['game-rand']}", reply_markup=random_menu_keyboard(lang, chat_type=callback.message.chat.type))
+    await callback.answer()
 
 
 @router.callback_query(F.data.startswith("rand:emoji:"))
