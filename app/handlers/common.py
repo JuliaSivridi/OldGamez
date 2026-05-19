@@ -25,40 +25,6 @@ from app.services.users import get_user_setting, update_user_language, update_us
 
 router = Router()
 
-GAME_CODE_TICTACTOE = "tic_tac_toe"
-GAME_CODE_FOURINROW = "four_in_row"
-GAME_CODE_BATTLESHIP = "battleship"
-GAME_CODE_MINESWEEPER = "minesweeper"
-GAME_CODE_LIGHTSOUT = "lightsout"
-GAME_CODE_NPUZZLE = "npuzzle"
-GAME_CODE_MASTERMIND = "mastermind"
-GAME_CODE_BULLSCOWS = "bullscows"
-GAME_CODE_WORDLE = "wordle"
-GAME_CODE_HANGMAN = "hangman"
-GAME_CODE_MEMORY = "memory"
-GAME_CODE_BLACKJACK = "blackjack"
-GAME_CODE_RANDOM = "random"
-GAME_CODE_RPS = "ropasci"
-GAME_CODE_RPSSL = "rpssl"
-
-# random does not have per-game stats (it's a collection of utilities, not a scored game)
-GAME_STATS_ORDER: list[tuple[str, str, str]] = [
-    (GAME_CODE_TICTACTOE, "icon-xo", "game-xo"),
-    (GAME_CODE_FOURINROW, "icon-four", "game-four"),
-    (GAME_CODE_BATTLESHIP, "icon-sea", "game-sea"),
-    (GAME_CODE_MINESWEEPER, "icon-mines", "game-mines"),
-    (GAME_CODE_LIGHTSOUT, "icon-lightsout", "game-lightsout"),
-    (GAME_CODE_NPUZZLE, "icon-npuzzle", "game-npuzzle"),
-    (GAME_CODE_MASTERMIND, "icon-mastermind", "game-mastermind"),
-    (GAME_CODE_BULLSCOWS, "icon-bullscows", "game-bullscows"),
-    (GAME_CODE_WORDLE, "icon-wordle", "game-wordle"),
-    (GAME_CODE_HANGMAN, "icon-hang", "game-hang"),
-    (GAME_CODE_MEMORY, "icon-mem", "game-mem"),
-    (GAME_CODE_BLACKJACK, "icon-bj", "game-bj"),
-    (GAME_CODE_RPS, "icon-rps", "game-rps"),
-    (GAME_CODE_RPSSL, "icon-rpssl", "game-rpssl"),
-]
-
 _DIFFICULTY_SORT: Callable = lambda s: {"easy": 0, "normal": 1, "hard": 2}.get(s.variant_key, 9)
 _DIGIT_SORT: Callable = lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0
 _DIFFICULTY_LABELS: Callable = lambda lang: {
@@ -72,219 +38,197 @@ def _memory_labels(lang: dict) -> dict:
 
 
 @dataclass
-class StatConfig:
-    name_key: str
-    variant: bool
-    fields: list[str]
-    sort_key: Callable = dc_field(default_factory=lambda: _DIGIT_SORT)
-    variant_labels: Callable = dc_field(default_factory=lambda lang: {})
-    has_best_score: bool = False
-
-
-GAME_STAT_REGISTRY: dict[str, StatConfig] = {
-    "tic_tac_toe": StatConfig(
-        name_key="game-xo", variant=True,
-        fields=["played", "wins", "losses", "draws"],
-        sort_key=_DIGIT_SORT,
-        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
-    ),
-    "four_in_row": StatConfig(
-        name_key="game-four", variant=False,
-        fields=["played", "wins", "losses", "draws"],
-    ),
-    "battleship": StatConfig(
-        name_key="game-sea", variant=False,
-        fields=["played", "wins", "losses"],
-    ),
-    "minesweeper": StatConfig(
-        name_key="game-mines", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIFFICULTY_SORT,
-        variant_labels=_DIFFICULTY_LABELS,
-    ),
-    "lightsout": StatConfig(
-        name_key="game-lightsout", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIGIT_SORT,
-        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in (4, 5, 6)},
-        has_best_score=True,
-    ),
-    "npuzzle": StatConfig(
-        name_key="game-npuzzle", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIGIT_SORT,
-        variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
-        has_best_score=True,
-    ),
-    "mastermind": StatConfig(
-        name_key="game-mastermind", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIFFICULTY_SORT,
-        variant_labels=_DIFFICULTY_LABELS,
-    ),
-    "bullscows": StatConfig(
-        name_key="game-bullscows", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIFFICULTY_SORT,
-        variant_labels=_DIFFICULTY_LABELS,
-    ),
-    "wordle": StatConfig(
-        name_key="game-wordle", variant=False,
-        fields=["played", "wins", "losses"],
-    ),
-    "hangman": StatConfig(
-        name_key="game-hang", variant=True,
-        fields=["played", "wins", "losses"],
-        sort_key=_DIFFICULTY_SORT,
-        variant_labels=_DIFFICULTY_LABELS,
-    ),
-    "memory": StatConfig(
-        name_key="game-mem", variant=True,
-        fields=["played", "wins", "losses", "draws"],
-        sort_key=_DIGIT_SORT,
-        variant_labels=_memory_labels,
-        has_best_score=True,
-    ),
-    "blackjack": StatConfig(
-        name_key="game-bj", variant=False,
-        fields=["played", "wins", "losses", "draws"],
-    ),
-    "ropasci": StatConfig(
-        name_key="game-rps", variant=False,
-        fields=["played", "wins", "losses", "draws"],
-    ),
-    "rpssl": StatConfig(
-        name_key="game-rpssl", variant=False,
-        fields=["played", "wins", "losses", "draws"],
-    ),
-}
-
-
-GAME_HELP_REGISTRY: dict[str, tuple[str, str]] = {
-    "tic_tac_toe": ("game-xo",         "help-xo"),
-    "four_in_row": ("game-four",        "help-four"),
-    "battleship":  ("game-sea",         "help-sea"),
-    "minesweeper": ("game-mines",       "help-mines"),
-    "lightsout":   ("game-lightsout",   "help-lightsout"),
-    "npuzzle":     ("game-npuzzle",     "help-npuzzle"),
-    "mastermind":  ("game-mastermind",  "help-mastermind"),
-    "bullscows":   ("game-bullscows",   "help-bullscows"),
-    "wordle":      ("game-wordle",      "help-wordle"),
-    "hangman":     ("game-hang",        "help-hang"),
-    "memory":      ("game-mem",         "help-mem"),
-    "blackjack":   ("game-bj",          "help-bj"),
-    "ropasci":     ("game-rps",         "help-rps"),
-    "rpssl":       ("game-rpssl",       "help-rpssl"),
-}
-
-
-@dataclass
 class KeyboardConfig:
-    game_code: str
     extra_setting_key: str | None = None
     extra_duel_key: str | None = None
     extra_group_key: str | None = None
 
 
-GAME_KEYBOARD_CONFIG: dict[str, KeyboardConfig] = {
-    "tic_tac_toe": KeyboardConfig("tic_tac_toe", "size",  "duel", "group"),
-    "four_in_row": KeyboardConfig("four_in_row",  None,   "duel", "group"),
-    "battleship":  KeyboardConfig("battleship",   None,   "duel",  None),
-    "minesweeper": KeyboardConfig("minesweeper",  "cmplx", None,   None),
-    "lightsout":   KeyboardConfig("lightsout",    "size",  None,   None),
-    "npuzzle":     KeyboardConfig("npuzzle",      "size",  None,   None),
-    "mastermind":  KeyboardConfig("mastermind",   "cmplx", None,   None),
-    "bullscows":   KeyboardConfig("bullscows",    "cmplx", None,   None),
-    "wordle":      KeyboardConfig("wordle",        None,   None,   None),
-    "hangman":     KeyboardConfig("hangman",      "cmplx", None,   None),
-    "memory":      KeyboardConfig("memory",       "size",  "duel", "group"),
-    "blackjack":   KeyboardConfig("blackjack",     None,   "duel",  None),
-    "ropasci":     KeyboardConfig("ropasci",      "mode",  "duel", "group"),
-    "rpssl":       KeyboardConfig("rpssl",        "mode",  "duel", "group"),
-}
+@dataclass
+class StatConfig:
+    variant: bool
+    fields: list[str]
+    sort_key: Callable = dc_field(default_factory=lambda: _DIGIT_SORT)
+    variant_labels: Callable = dc_field(default_factory=lambda: (lambda lang: {}))
+    has_best_score: bool = False
 
 
-GAME_TOP_REGISTRY: dict[str, str] = {
-    "tic_tac_toe": "game-xo",
-    "four_in_row": "game-four",
-    "battleship":  "game-sea",
-    "minesweeper": "game-mines",
-    "lightsout":   "game-lightsout",
-    "npuzzle":     "game-npuzzle",
-    "mastermind":  "game-mastermind",
-    "bullscows":   "game-bullscows",
-    "wordle":      "game-wordle",
-    "hangman":     "game-hang",
-    "memory":      "game-mem",
-    "blackjack":   "game-bj",
-    "ropasci":     "game-rps",
-    "rpssl":       "game-rpssl",
-}
+@dataclass
+class GameConfig:
+    code: str
+    icon_key: str
+    name_key: str
+    help_key: str
+    cmds: list[str]
+    menu_fn: str                      # "module:function" for open_X_menu
+    open_suffix: str | None           # "xo" → matches callback "game:xo"; None = no open callback
+    open_text_fn: str | None          # "module:function" for menu text; None if open_suffix is None
+    open_needs_settings: bool = False
+    keyboard: KeyboardConfig | None = None
+    stat: StatConfig | None = None    # None for games without stats (random)
 
 
-# (callback_suffix, text_func_path, needs_user_settings)
-GAME_OPEN_REGISTRY: dict[str, tuple[str, str, bool]] = {
-    "tic_tac_toe": ("xo",         "app.handlers.tictactoe:_xo_menu_text",    True),
-    "four_in_row": ("four",       "app.handlers.fourinrow:_four_menu_text",   False),
-    "battleship":  ("sea",        "app.handlers.battleship:_sea_menu_text",   False),
-    "minesweeper": ("mines",      "app.handlers.minesweeper:_mines_menu_text", True),
-    "lightsout":   ("lightsout",  "app.handlers.lightsout:_lto_menu_text",    True),
-    "npuzzle":     ("npuzzle",    "app.handlers.npuzzle:_npz_menu_text",      True),
-    "mastermind":  ("mastermind", "app.handlers.mastermind:_mm_menu_text",    True),
-    "bullscows":   ("bullscows",  "app.handlers.bullscows:_bc_menu_text",     True),
-    "wordle":      ("wordle",     "app.handlers.wordle:_wrd_menu_text",       False),
-    "hangman":     ("hang",       "app.handlers.hangman:_hang_menu_text",     True),
-    "memory":      ("mem",        "app.handlers.memory:_mem_menu_text",       True),
-    "blackjack":   ("bj",         "app.handlers.blackjack:_bj_menu_text",    False),
-    "ropasci":     ("rps",        "app.handlers.ropasci:_ropasci_cb_text",    True),
-    "rpssl":       ("rpssl",      "app.handlers.ropasci:_rpssl_cb_text",      True),
-}
+GAMES: list[GameConfig] = [
+    GameConfig(
+        code="tic_tac_toe", icon_key="icon-xo", name_key="game-xo", help_key="help-xo",
+        cmds=["tictactoe", "xo"],
+        menu_fn="app.handlers.tictactoe:open_tictactoe_menu",
+        open_suffix="xo", open_text_fn="app.handlers.tictactoe:_xo_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("size", "duel", "group"),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses", "draws"],
+            sort_key=_DIGIT_SORT,
+            variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
+        ),
+    ),
+    GameConfig(
+        code="four_in_row", icon_key="icon-four", name_key="game-four", help_key="help-four",
+        cmds=["fourinrow"],
+        menu_fn="app.handlers.fourinrow:open_four_menu",
+        open_suffix="four", open_text_fn="app.handlers.fourinrow:_four_menu_text", open_needs_settings=False,
+        keyboard=KeyboardConfig(None, "duel", "group"),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+    ),
+    GameConfig(
+        code="battleship", icon_key="icon-sea", name_key="game-sea", help_key="help-sea",
+        cmds=["battleship"],
+        menu_fn="app.handlers.battleship:open_battleship_menu",
+        open_suffix="sea", open_text_fn="app.handlers.battleship:_sea_menu_text", open_needs_settings=False,
+        keyboard=KeyboardConfig(None, "duel", None),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+    ),
+    GameConfig(
+        code="minesweeper", icon_key="icon-mines", name_key="game-mines", help_key="help-mines",
+        cmds=["minesweeper"],
+        menu_fn="app.handlers.minesweeper:open_minesweeper_menu",
+        open_suffix="mines", open_text_fn="app.handlers.minesweeper:_mines_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("cmplx", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
+        ),
+    ),
+    GameConfig(
+        code="lightsout", icon_key="icon-lightsout", name_key="game-lightsout", help_key="help-lightsout",
+        cmds=["lightsout"],
+        menu_fn="app.handlers.lightsout:open_lightsout_menu",
+        open_suffix="lightsout", open_text_fn="app.handlers.lightsout:_lto_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("size", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIGIT_SORT,
+            variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in (4, 5, 6)},
+            has_best_score=True,
+        ),
+    ),
+    GameConfig(
+        code="npuzzle", icon_key="icon-npuzzle", name_key="game-npuzzle", help_key="help-npuzzle",
+        cmds=["npuzzle"],
+        menu_fn="app.handlers.npuzzle:open_npuzzle_menu",
+        open_suffix="npuzzle", open_text_fn="app.handlers.npuzzle:_npz_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("size", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIGIT_SORT,
+            variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
+            has_best_score=True,
+        ),
+    ),
+    GameConfig(
+        code="mastermind", icon_key="icon-mastermind", name_key="game-mastermind", help_key="help-mastermind",
+        cmds=["mastermind"],
+        menu_fn="app.handlers.mastermind:open_mastermind_menu",
+        open_suffix="mastermind", open_text_fn="app.handlers.mastermind:_mm_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("cmplx", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
+        ),
+    ),
+    GameConfig(
+        code="bullscows", icon_key="icon-bullscows", name_key="game-bullscows", help_key="help-bullscows",
+        cmds=["bullscows"],
+        menu_fn="app.handlers.bullscows:open_bullscows_menu",
+        open_suffix="bullscows", open_text_fn="app.handlers.bullscows:_bc_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("cmplx", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
+        ),
+    ),
+    GameConfig(
+        code="wordle", icon_key="icon-wordle", name_key="game-wordle", help_key="help-wordle",
+        cmds=["wordle"],
+        menu_fn="app.handlers.wordle:open_wordle_menu",
+        open_suffix="wordle", open_text_fn="app.handlers.wordle:_wrd_menu_text", open_needs_settings=False,
+        keyboard=KeyboardConfig(None, None, None),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+    ),
+    GameConfig(
+        code="hangman", icon_key="icon-hang", name_key="game-hang", help_key="help-hang",
+        cmds=["hangman"],
+        menu_fn="app.handlers.hangman:open_hangman_menu",
+        open_suffix="hang", open_text_fn="app.handlers.hangman:_hang_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("cmplx", None, None),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses"],
+            sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
+        ),
+    ),
+    GameConfig(
+        code="memory", icon_key="icon-mem", name_key="game-mem", help_key="help-mem",
+        cmds=["memory"],
+        menu_fn="app.handlers.memory:open_memory_menu",
+        open_suffix="mem", open_text_fn="app.handlers.memory:_mem_menu_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("size", "duel", "group"),
+        stat=StatConfig(
+            variant=True, fields=["played", "wins", "losses", "draws"],
+            sort_key=_DIGIT_SORT, variant_labels=_memory_labels,
+            has_best_score=True,
+        ),
+    ),
+    GameConfig(
+        code="blackjack", icon_key="icon-bj", name_key="game-bj", help_key="help-bj",
+        cmds=["blackjack"],
+        menu_fn="app.handlers.blackjack:open_blackjack_menu",
+        open_suffix="bj", open_text_fn="app.handlers.blackjack:_bj_menu_text", open_needs_settings=False,
+        keyboard=KeyboardConfig(None, "duel", None),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+    ),
+    GameConfig(
+        code="ropasci", icon_key="icon-rps", name_key="game-rps", help_key="help-rps",
+        cmds=["rps"],
+        menu_fn="app.handlers.ropasci:open_ropasci_menu",
+        open_suffix="rps", open_text_fn="app.handlers.ropasci:_ropasci_cb_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("mode", "duel", "group"),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+    ),
+    GameConfig(
+        code="rpssl", icon_key="icon-rpssl", name_key="game-rpssl", help_key="help-rpssl",
+        cmds=["rpssl"],
+        menu_fn="app.handlers.ropasci:open_rpssl_menu",
+        open_suffix="rpssl", open_text_fn="app.handlers.ropasci:_rpssl_cb_text", open_needs_settings=True,
+        keyboard=KeyboardConfig("mode", "duel", "group"),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+    ),
+    GameConfig(
+        code="random", icon_key="icon-rand", name_key="game-rand", help_key="help-rand",
+        cmds=["random"],
+        menu_fn="app.handlers.randomfun:open_random_menu",
+        open_suffix=None, open_text_fn=None,  # uses random_menu_keyboard, handled in randomfun.py
+        keyboard=None, stat=None,
+    ),
+]
 
+# Lookup indices built once at startup
+_GAMES_BY_CODE: dict[str, GameConfig] = {g.code: g for g in GAMES}
 _GAME_OPEN_SUFFIXES: frozenset[str] = frozenset(
-    f"game:{v[0]}" for v in GAME_OPEN_REGISTRY.values()
+    f"game:{g.open_suffix}" for g in GAMES if g.open_suffix
 )
-_GAME_OPEN_BY_SUFFIX: dict[str, str] = {
-    v[0]: k for k, v in GAME_OPEN_REGISTRY.items()
+_GAME_OPEN_BY_SUFFIX: dict[str, GameConfig] = {
+    g.open_suffix: g for g in GAMES if g.open_suffix
 }
-
-
-GAME_COMMAND_MAP: dict[str, str] = {
-    "tictactoe":   "tic_tac_toe",
-    "xo":          "tic_tac_toe",
-    "fourinrow":   "four_in_row",
-    "battleship":  "battleship",
-    "minesweeper": "minesweeper",
-    "lightsout":   "lightsout",
-    "npuzzle":     "npuzzle",
-    "mastermind":  "mastermind",
-    "bullscows":   "bullscows",
-    "wordle":      "wordle",
-    "hangman":     "hangman",
-    "memory":      "memory",
-    "blackjack":   "blackjack",
-    "rps":         "ropasci",
-    "rpssl":       "rpssl",
-    "random":      "random",
-}
-
-
-GAME_MENU_REGISTRY: dict[str, str] = {
-    GAME_CODE_TICTACTOE: "app.handlers.tictactoe:open_tictactoe_menu",
-    GAME_CODE_FOURINROW: "app.handlers.fourinrow:open_four_menu",
-    GAME_CODE_BATTLESHIP: "app.handlers.battleship:open_battleship_menu",
-    GAME_CODE_MINESWEEPER: "app.handlers.minesweeper:open_minesweeper_menu",
-    GAME_CODE_LIGHTSOUT: "app.handlers.lightsout:open_lightsout_menu",
-    GAME_CODE_NPUZZLE: "app.handlers.npuzzle:open_npuzzle_menu",
-    GAME_CODE_MASTERMIND: "app.handlers.mastermind:open_mastermind_menu",
-    GAME_CODE_BULLSCOWS: "app.handlers.bullscows:open_bullscows_menu",
-    GAME_CODE_WORDLE: "app.handlers.wordle:open_wordle_menu",
-    GAME_CODE_HANGMAN: "app.handlers.hangman:open_hangman_menu",
-    GAME_CODE_MEMORY: "app.handlers.memory:open_memory_menu",
-    GAME_CODE_BLACKJACK: "app.handlers.blackjack:open_blackjack_menu",
-    GAME_CODE_RANDOM: "app.handlers.randomfun:open_random_menu",
-    GAME_CODE_RPS: "app.handlers.ropasci:open_ropasci_menu",
-    GAME_CODE_RPSSL: "app.handlers.ropasci:open_rpssl_menu",
-}
+GAME_COMMAND_MAP: dict[str, str] = {cmd: g.code for g in GAMES for cmd in g.cmds}
 
 
 @router.callback_query(F.data == "noop")
@@ -299,25 +243,21 @@ def _load_fn(path: str) -> Callable | None:
     return fn if callable(fn) else None
 
 
-def _lazy_load(registry: dict[str, str], game_code: str) -> Callable | None:
-    path = registry.get(game_code)
-    return _load_fn(path) if path else None
-
-
 def _get_menu_handler(game_code: str) -> Callable | None:
-    return _lazy_load(GAME_MENU_REGISTRY, game_code)
+    g = _GAMES_BY_CODE.get(game_code)
+    return _load_fn(g.menu_fn) if g else None
 
 
-def _get_game_keyboard(game_code: str, lang: dict, chat_type=None) -> InlineKeyboardMarkup | None:
-    config = GAME_KEYBOARD_CONFIG.get(game_code)
-    if config is None:
+def _get_game_keyboard(g: GameConfig, lang: dict, chat_type=None) -> InlineKeyboardMarkup | None:
+    if g.keyboard is None:
         return None
+    kb = g.keyboard
     return game_menu_keyboard(
         lang,
-        game_code=config.game_code,
-        extra_setting_key=config.extra_setting_key,
-        extra_duel_key=config.extra_duel_key,
-        extra_group_key=config.extra_group_key,
+        game_code=g.code,
+        extra_setting_key=kb.extra_setting_key,
+        extra_duel_key=kb.extra_duel_key,
+        extra_group_key=kb.extra_group_key,
         chat_type=chat_type,
     )
 
@@ -395,18 +335,17 @@ async def open_game_callback(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     suffix = callback.data[5:]  # strip "game:"
-    game_code = _GAME_OPEN_BY_SUFFIX[suffix]
-    _, text_path, needs_settings = GAME_OPEN_REGISTRY[game_code]
-    text_fn = _load_fn(text_path)
+    g = _GAME_OPEN_BY_SUFFIX[suffix]
+    text_fn = _load_fn(g.open_text_fn)
     if text_fn is None:
         await callback.answer()
         return
-    text = text_fn(lang, user.settings) if needs_settings else text_fn(lang)
-    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    text = text_fn(lang, user.settings) if g.open_needs_settings else text_fn(lang)
+    markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
         return
-    await update_user_settings(user.id, {"current_game": game_code})
+    await update_user_settings(user.id, {"current_game": g.code})
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
@@ -441,15 +380,15 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
 
-    game_codes = [code for code, _, _ in GAME_STATS_ORDER]
-    stats_map = await get_game_stats_bulk(user.id, game_codes)
+    stat_games = [g for g in GAMES if g.stat is not None]
+    stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
 
     stats_lines = [
         f"{lang['stat-col-played']:<8}{lang['stat-col-wins']:<8}{lang['stat-col-losses']:<8}{lang['stat-col-draws']:<8}",
     ]
     total_played = total_wins = total_losses = total_draws = 0
-    for game_code, icon_key, name_key in GAME_STATS_ORDER:
-        stat = stats_map.get(game_code)
+    for g in stat_games:
+        stat = stats_map.get(g.code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
         losses = stat.losses if stat is not None else 0
@@ -458,7 +397,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         total_wins += wins
         total_losses += losses
         total_draws += draws
-        label = f"{lang[icon_key]} {lang[name_key]}"
+        label = f"{lang[g.icon_key]} {lang[g.name_key]}"
         stats_lines.append(f"`{label}`")
         stats_lines.append(f"`{played:<6}{wins:<5}{losses:<5}{draws:<5}`")
 
@@ -492,25 +431,25 @@ async def callback_game_stat(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
-    config = GAME_STAT_REGISTRY.get(game_code)
-    if config is None:
+    g = _GAMES_BY_CODE.get(game_code)
+    if g is None or g.stat is None:
         await callback.answer()
         return
-    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
         return
-    game_title = f"{lang['icon-stat']} *{lang[config.name_key]}*"
-    if config.variant:
+    game_title = f"{lang['icon-stat']} *{lang[g.name_key]}*"
+    if g.stat.variant:
         stats = await get_all_game_stats(user.id, game_code)
-        stats.sort(key=config.sort_key)
-        labels = config.variant_labels(lang)
+        stats.sort(key=g.stat.sort_key)
+        labels = g.stat.variant_labels(lang)
         text = game_title + " | " + format_variant_stats_text(
-            stats, lang, labels, config.fields, has_best_score=config.has_best_score
+            stats, lang, labels, g.stat.fields, has_best_score=g.stat.has_best_score
         )
     else:
         stat = await get_game_stat(user.id, game_code)
-        text = game_title + " | " + format_game_stats_text(stat, lang, config.fields)
+        text = game_title + " | " + format_game_stats_text(stat, lang, g.stat.fields)
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
@@ -522,16 +461,15 @@ async def callback_game_help(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
-    info = GAME_HELP_REGISTRY.get(game_code)
-    if info is None:
+    g = _GAMES_BY_CODE.get(game_code)
+    if g is None:
         await callback.answer()
         return
-    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
         return
-    name_key, help_key = info
-    text = f"{lang['icon-info']} *{lang[name_key]}* | *{lang['help-ttl']}*\n\n{lang[help_key]}"
+    text = f"{lang['icon-info']} *{lang[g.name_key]}* | *{lang['help-ttl']}*\n\n{lang[g.help_key]}"
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
@@ -543,16 +481,16 @@ async def callback_game_top(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
-    name_key = GAME_TOP_REGISTRY.get(game_code)
-    if name_key is None:
+    g = _GAMES_BY_CODE.get(game_code)
+    if g is None:
         await callback.answer()
         return
-    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
         return
     entries, viewer_entry = await get_game_leaderboard(game_code, viewer_user_id=user.id)
-    title = f"*{lang[name_key]}*"
+    title = f"*{lang[g.name_key]}*"
     text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
