@@ -563,6 +563,31 @@ def _extract_viewer_entry(
     return None
 
 
+async def get_user_rankings(user_id: int) -> list[tuple[str, int]]:
+    """Returns [(game_code, position)] sorted by position asc, for all games where user has ranked."""
+    async with SessionLocal() as db:
+        rows = (await db.execute(
+            select(GameStat.user_id, GameStat.game_code, GameStat.variant_key, GameStat.wins)
+            .where(GameStat.wins > 0)
+        )).all()
+
+    by_game: dict[str, dict[int, int]] = {}
+    for row in rows:
+        pts = GAME_VARIANT_POINTS.get(row.game_code, {}).get(row.variant_key, 1)
+        uid_map = by_game.setdefault(row.game_code, {})
+        uid_map[row.user_id] = uid_map.get(row.user_id, 0) + row.wins * pts
+
+    results: list[tuple[str, int]] = []
+    for game_code, ratings in by_game.items():
+        if user_id not in ratings:
+            continue
+        my_score = ratings[user_id]
+        pos = sum(1 for score in ratings.values() if score > my_score) + 1
+        results.append((game_code, pos))
+
+    return sorted(results, key=lambda x: x[1])
+
+
 async def get_game_leaderboard(
     game_code: str,
     limit: int = 10,

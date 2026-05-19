@@ -10,8 +10,9 @@ from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard, profile_keyboard
+from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard, profile_keyboard, rankings_keyboard
 from app.services.sessions import (
+    _TOP_MEDALS,
     format_game_stats_text,
     format_leaderboard_text,
     format_variant_stats_text,
@@ -20,6 +21,7 @@ from app.services.sessions import (
     get_game_stat,
     get_game_stats_bulk,
     get_global_leaderboard,
+    get_user_rankings,
 )
 from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
 
@@ -518,12 +520,12 @@ async def callback_menu_top(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-def _profile_text(user) -> str:
+def _user_identity_line(user) -> str:
     name_parts = [p for p in [user.first_name, user.last_name] if p]
     parts = [" ".join(name_parts) or str(user.telegram_user_id)]
     if user.username:
         parts.append(f"@{user.username}")
-    parts.append(f"#{user.telegram_user_id}")
+    parts.append(f"#`{user.telegram_user_id}`")
     return " — ".join(parts)
 
 
@@ -533,7 +535,31 @@ async def callback_menu_profile(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, _profile_text(user), reply_markup=profile_keyboard(lang))
+    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await callback.answer()
+
+
+@router.callback_query(F.data == "profile:rankings")
+async def callback_profile_rankings(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    rankings = await get_user_rankings(user.id)
+
+    if not rankings:
+        body = lang["profile-rankings-empty"]
+    else:
+        lines = [f"*{lang['menu-rankings']}*", ""]
+        for game_code, pos in rankings:
+            g = _GAMES_BY_CODE.get(game_code)
+            game_name = lang[g.name_key] if g else game_code
+            medal = _TOP_MEDALS[pos - 1] if pos <= len(_TOP_MEDALS) else f"#{pos}"
+            lines.append(f"{medal}  {game_name}")
+        body = "\n".join(lines)
+
+    text = _user_identity_line(user) + "\n\n" + body
+    await safe_edit(callback.message, text, parse_mode="Markdown", reply_markup=rankings_keyboard(lang))
     await callback.answer()
 
 
