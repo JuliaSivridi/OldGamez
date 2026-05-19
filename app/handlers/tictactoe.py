@@ -35,6 +35,7 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
@@ -56,12 +57,12 @@ def render_group_status_text(
         if state.get("result") == "draw":
             return lang["game-draw"]
         winner_id = state.get("winner_user_id")
-        winner_symbol = "❌" if winner_id == state.get("player_x_id") else "⭕"
+        winner_symbol = lang["icon-xo-x"] if winner_id == state.get("player_x_id") else lang["icon-xo-o"]
         winner_name = player_names.get(winner_id, str(winner_id or ""))
         return f"{lang['group-winner']} {winner_symbol} {winner_name}"
 
     current_turn_user_id = state.get("current_turn_user_id")
-    current_symbol = "❌" if current_turn_user_id == state.get("player_x_id") else "⭕"
+    current_symbol = lang["icon-xo-x"] if current_turn_user_id == state.get("player_x_id") else lang["icon-xo-o"]
     current_name = player_names.get(current_turn_user_id, str(current_turn_user_id or ""))
     return (
         f"{lang['icon-xo']} {lang['game-xo']} {board_size}x{board_size}"
@@ -74,8 +75,8 @@ def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | 
     win_length = state["win_length"]
 
     if state.get("player_x_id") and state.get("player_o_id"):
-        x_symbol = "❌"
-        o_symbol = "⭕️"
+        x_symbol = lang["icon-xo-x"]
+        o_symbol = lang["icon-xo-o"]
         current_turn_user_id = state.get("current_turn_user_id")
         current_symbol = x_symbol if current_turn_user_id == state.get("player_x_id") else o_symbol
 
@@ -93,8 +94,8 @@ def render_status_text(state: dict, lang: dict[str, str], viewer_user_id: int | 
             f"{current_symbol} {turn_line}"
         )
 
-    user_symbol = "❌" if state["user_symbol"] == "x" else "⭕️"
-    bot_symbol = "⭕️" if state["user_symbol"] == "x" else "❌"
+    user_symbol = lang["icon-xo-x"] if state["user_symbol"] == "x" else lang["icon-xo-o"]
+    bot_symbol = lang["icon-xo-o"] if state["user_symbol"] == "x" else lang["icon-xo-x"]
 
     if state["status"] == "finished":
         result = state.get("result")
@@ -297,7 +298,7 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
 
 def _xo_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("tictactoe_size", 3))
-    return f"{lang['icon-xo']} *{lang['game-xo']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
+    return f"{lang['icon-xo']} *{lang['game-xo']}*\n{lang['setting-size']}: {lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
 
 async def open_tictactoe_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
@@ -327,7 +328,7 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    cur = f"{lang[str(size)]}✖️{lang[str(size)]}"
+    cur = f"{lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
     text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:xo"))
     await callback.answer()

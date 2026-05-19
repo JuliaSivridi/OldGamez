@@ -14,6 +14,7 @@ from app.keyboards.duels import duel_invite_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
@@ -101,7 +102,7 @@ def render_duel_text_for_viewer(state: dict, lang: dict, viewer_id: int, is_game
 
     is_my_turn = state.get("current_turn_user_id") == viewer_id
     turn_line = lang["turn-user"] if is_my_turn else lang["turn-friend"]
-    turn_icon = "🙂" if is_my_turn else "👤"
+    turn_icon = lang["stat-normal"] if is_my_turn else lang["icon-user"]
     lines.append("")
     lines.append(f"{turn_icon} {turn_line}")
     return "\n".join(lines)

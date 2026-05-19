@@ -17,6 +17,7 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
@@ -37,7 +38,7 @@ async def start_lightsout_game(message: Message, user, lang: dict[str, str], siz
 
 def _lto_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("lightsout_size", 5))
-    return f"{lang['icon-lightsout']} *{lang['game-lightsout']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
+    return f"{lang['icon-lightsout']} *{lang['game-lightsout']}*\n{lang['setting-size']}: {lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
 
 async def open_lightsout_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
@@ -55,7 +56,7 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("lightsout_size", 5))
-    cur = f"{lang[str(size)]}✖️{lang[str(size)]}"
+    cur = f"{lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
     text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:lightsout"))
     await callback.answer()

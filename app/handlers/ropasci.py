@@ -30,6 +30,7 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
@@ -67,7 +68,7 @@ def render_text(title: str, state: dict, lang: dict, final: str | None = None) -
         r = lang[f"rps-{entry['result']}"]
         lines.append(f"{r}  {u} — {c}")
     lines.append("")
-    lines.append(f"👤 {state['user_wins']}  :  {state['comp_wins']} 🤖")
+    lines.append(f"{lang['icon-user']} {state['user_wins']}  :  {state['comp_wins']} {lang['icon-bot']}")
     if final == "win":
         lines.append(lang["game-win"])
     elif final == "loss":
@@ -84,19 +85,19 @@ def render_multi_text(title: str, state: dict, lang: dict,
         p2m = lang[f"rps-{entry['p2']}"]
         r = entry["result"]
         if r == "p1_win":
-            p1e, p2e = lang["rps-win"], lang["rps-loss"]
+            p1e, p2e = lang["icon-win"], lang["icon-lose"]
         elif r == "p2_win":
-            p1e, p2e = lang["rps-loss"], lang["rps-win"]
+            p1e, p2e = lang["icon-lose"], lang["icon-win"]
         else:
-            p1e, p2e = lang["rps-draw"], lang["rps-draw"]
+            p1e, p2e = lang["icon-draw"], lang["icon-draw"]
         lines.append(f"{p1e}  {p1m} — {p2m}  {p2e}")
     lines.append("")
     p1_wins = state["p1_wins"]
     p2_wins = state["p2_wins"]
     if final == "p1_wins":
-        lines.append(f"🏆 {p1_name} {p1_wins} : {p2_wins} {p2_name} 💀")
+        lines.append(f"{lang['icon-win']} {p1_name} {p1_wins} : {p2_wins} {p2_name} {lang['icon-lose']}")
     elif final == "p2_wins":
-        lines.append(f"💀 {p1_name} {p1_wins} : {p2_wins} {p2_name} 🏆")
+        lines.append(f"{lang['icon-lose']} {p1_name} {p1_wins} : {p2_wins} {p2_name} {lang['icon-win']}")
     else:
         p1_icon = lang["rps-chosen"] if state.get("current_p1") else lang["rps-make-choice"]
         p2_icon = lang["rps-chosen"] if state.get("current_p2") else lang["rps-make-choice"]
@@ -116,11 +117,11 @@ def render_duel_text_for_viewer(title: str, state: dict, lang: dict,
         opp_move = lang[f"rps-{entry['p2'] if is_p1 else entry['p1']}"]
         r = entry["result"]
         if r == "draw":
-            emoji = lang["rps-draw"]
+            emoji = lang["icon-draw"]
         elif (r == "p1_win") == is_p1:
-            emoji = lang["rps-win"]
+            emoji = lang["icon-win"]
         else:
-            emoji = lang["rps-loss"]
+            emoji = lang["icon-lose"]
         lines.append(f"{emoji}  {my_move} — {opp_move}")
     lines.append("")
     my_wins = state["p1_wins"] if is_p1 else state["p2_wins"]

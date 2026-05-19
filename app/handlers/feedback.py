@@ -78,9 +78,14 @@ async def handle_feedback_text(message: Message, state: FSMContext) -> None:
         name = " ".join(filter(None, [tg.first_name, tg.last_name]))
         mention = f"@{tg.username}" if tg.username else f"id={tg.id}"
         try:
+            dev_lang = get_language_pack("en")
+            notify_text = dev_lang["feedback-notify"].format(
+                name=name, mention=mention, lang_code=user.language_code
+            )
             await message.bot.send_message(
                 settings.feedback_chat_id,
-                f"📨 *Feedback* от {name} ({mention}) · `{user.language_code}`",
+                notify_text,
+                parse_mode="Markdown",
             )
             await message.forward(settings.feedback_chat_id)
         except Exception:

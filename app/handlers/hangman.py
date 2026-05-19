@@ -11,6 +11,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
 from app.services.sessions import create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 

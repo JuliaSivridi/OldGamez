@@ -33,13 +33,14 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
 def _mem_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("memory_size", 4))
     rows, cols = GRID_DIMS[size]
-    return f"{lang['icon-mem']} *{lang['game-mem']}*\n{lang['setting-size']}: {lang[str(rows)]}✖️{lang[str(cols)]}"
+    return f"{lang['icon-mem']} *{lang['game-mem']}*\n{lang['setting-size']}: {lang[str(rows)]}{lang['sep-x']}{lang[str(cols)]}"
 
 def render_text(lang: dict, state: dict, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]

@@ -15,6 +15,7 @@ from app.keyboards.duels import duel_invite_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
 from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 GROUP_JOIN_TIMEOUT = 60  # seconds
 
@@ -247,7 +248,7 @@ def render_group_joining_text(state: dict, lang: dict) -> str:
     names = "\n".join(f"• {p['name']}" for p in players)
     return (
         f"{lang['icon-bj']} *{lang['game-bj']}*\n\n"
-        f"👥 {len(players)}/{GROUP_MAX_PLAYERS}\n"
+        f"{lang['icon-grp']} {len(players)}/{GROUP_MAX_PLAYERS}\n"
         f"{names}\n\n"
         f"{lang['bj-grp-waiting']}"
     )
@@ -255,12 +256,16 @@ def render_group_joining_text(state: dict, lang: dict) -> str:
 def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> str:
     comp_cards = state["comp_cards"]
     comp_cost = state["comp_cost"]
+    dealer_icon = lang["icon-bj"]
+    closed_icon = lang.get("card-closed-icon", "❓🃏")
 
     if final:
-        dealer_line = f"🃏 *{lang['bj-grp-dealer']}*: {comp_cost}\n{_write_cards_compact(comp_cards)}"
+        dealer_line = f"{dealer_icon} *{lang['bj-grp-dealer']}*: {comp_cost}\n{_write_cards_compact(comp_cards)}"
     else:
-        hidden = "❓"
-        dealer_line = f"🃏 *{lang['bj-grp-dealer']}*: {comp_cost} + {hidden}\n{_write_cards_compact(comp_cards)}  {hidden}"
+        dealer_line = (
+            f"{dealer_icon} *{lang['bj-grp-dealer']}*: ?\n"
+            + "  ".join(closed_icon for _ in comp_cards)
+        )
 
     lines = [f"{lang['icon-bj']} *{lang['game-bj']}*\n\n{dealer_line}"]
 
@@ -270,10 +275,16 @@ def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> s
         pid_str = str(p["id"])
         if final:
             result = results.get(pid_str)
-            prefix = "🏆" if result == "win" else ("💥" if cost > 21 else "—")
+            prefix = lang["icon-win"] if result == "win" else lang["icon-lose"]
         else:
-            prefix = "💥" if cost > 21 else ("✅" if p["done"] else "👤")
+            prefix = lang["icon-lose"] if cost > 21 else (lang["icon-ok"] if p["done"] else lang["icon-user"])
         lines.append(f"\n{prefix} {p['name']}: {cost}\n{_write_cards_compact(p['cards'])}")
+
+    if final:
+        winners = [p for p in state["players"] if results.get(str(p["id"])) == "win"]
+        if winners:
+            names = ", ".join(p["name"] for p in winners)
+            lines.append(f"\n\n{lang['icon-win']} {lang['bj-grp-winner'].format(name=names)}")
 
     return "\n".join(lines)
 
@@ -321,6 +332,21 @@ async def _finish_group_game(bot, session_id: int, state: dict, lang: dict) -> N
                 message_id=group_msg_id,
                 text=render_group_playing_text(state, lang, final=True),
                 reply_markup=None,
+                parse_mode="Markdown",
+            )
+        except TelegramBadRequest:
+            pass
+        menu_msg_id = state.get("menu_message_id")
+        if menu_msg_id:
+            try:
+                await bot.delete_message(group_chat_id, menu_msg_id)
+            except Exception:
+                pass
+        try:
+            await bot.send_message(
+                chat_id=group_chat_id,
+                text=_bj_menu_text(lang),
+                reply_markup=get_game_keyboard(game.code, lang, chat_type="group"),
                 parse_mode="Markdown",
             )
         except TelegramBadRequest:

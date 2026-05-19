@@ -19,7 +19,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | 📝 Wordle | ✅ | | |
 | 😵 Hangman | ✅ | | |
 | 🧠 Memory | ✅ | ✅ | ✅ |
-| 🃏 Blackjack | ✅ | ✅ | |
+| 🃏 Blackjack | ✅ | ✅ | ✅ |
 | 🎲 Random fun (coin, card, dice, number) | ✅ | | |
 | ✊ Rock Paper Scissors | ✅ | ✅ | ✅ |
 | ✊ Rock Paper Scissors Lizard Spock 🖖 | ✅ | ✅ | ✅ |

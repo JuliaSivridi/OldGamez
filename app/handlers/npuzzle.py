@@ -9,6 +9,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.services.sessions import create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
@@ -29,7 +30,7 @@ async def start_npuzzle_game(message: Message, user, lang: dict[str, str], size:
 
 def _npz_menu_text(lang: dict, user_settings: dict | None) -> str:
     size = int((user_settings or {}).get("npuzzle_size", 3))
-    return f"{lang['icon-npuzzle']} *{lang['game-npuzzle']}*\n{lang['setting-size']}: {lang[str(size)]}✖️{lang[str(size)]}"
+    return f"{lang['icon-npuzzle']} *{lang['game-npuzzle']}*\n{lang['setting-size']}: {lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
 
 async def open_npuzzle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
@@ -47,7 +48,7 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("size", game.code))
 async def menu_size(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("npuzzle_size", 3))
-    cur = f"{lang[str(size)]}✖️{lang[str(size)]}"
+    cur = f"{lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
     text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
     await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:npuzzle"))
     await callback.answer()

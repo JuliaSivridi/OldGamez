@@ -16,6 +16,7 @@ from app.services.sessions import (
     update_session_state,
 )
 from app.services.users import update_user_settings, upsert_user
+from app.handlers.common import get_game_keyboard
 
 router = Router()
 
