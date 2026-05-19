@@ -1,8 +1,12 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+logger = logging.getLogger(__name__)
 
 from app.config import get_settings
 from app.handlers.utils import safe_edit
@@ -77,19 +81,22 @@ async def handle_feedback_text(message: Message, state: FSMContext) -> None:
         tg = message.from_user
         name = " ".join(filter(None, [tg.first_name, tg.last_name]))
         mention = f"@{tg.username}" if tg.username else f"id={tg.id}"
+        dev_lang = get_language_pack("en")
+        notify_text = dev_lang["feedback-notify"].format(
+            name=name, mention=mention, lang_code=user.language_code
+        )
         try:
-            dev_lang = get_language_pack("en")
-            notify_text = dev_lang["feedback-notify"].format(
-                name=name, mention=mention, lang_code=user.language_code
-            )
             await message.bot.send_message(
                 settings.feedback_chat_id,
                 notify_text,
                 parse_mode="Markdown",
             )
+        except Exception as e:
+            logger.error("Failed to send feedback notification: %s", e)
+        try:
             await message.forward(settings.feedback_chat_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to forward feedback message (privacy settings?): %s", e)
 
     await message.answer(
         lang["feedback-thanks"],

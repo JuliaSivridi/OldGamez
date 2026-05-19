@@ -83,10 +83,38 @@ def game_menu_keyboard(
 
 def profile_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text=lang["menu-rankings"], callback_data="profile:rankings", style=ButtonStyle.SUCCESS)
+    builder.button(text=lang["menu-name"], callback_data="profile:name")
+    builder.button(text=lang["menu-rankings"], callback_data="profile:rankings", style=ButtonStyle.PRIMARY)
     builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.SUCCESS)
     builder.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
-    builder.adjust(1, 2)
+    builder.adjust(2, 2)
+    return builder.as_markup()
+
+
+def display_name_keyboard(
+    lang: dict[str, str],
+    first_name: str | None,
+    last_name: str | None,
+    username: str | None,
+    purchased_anon: bool = False,
+) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    fn, ln, un = first_name or "", last_name or "", username or ""
+    if fn:
+        builder.button(text=fn, callback_data="profile:name:set:first")
+    if ln:
+        builder.button(text=ln, callback_data="profile:name:set:last")
+    if fn and ln:
+        builder.button(text=f"{fn} {ln}", callback_data="profile:name:set:first_last")
+        builder.button(text=f"{ln} {fn}", callback_data="profile:name:set:last_first")
+    if un:
+        builder.button(text=f"@{un}", callback_data="profile:name:set:username")
+    if purchased_anon:
+        builder.button(text="#####", callback_data="profile:name:set:anon")
+    else:
+        builder.button(text="##### · 5 ⭐", callback_data="profile:name:buy:anon")
+    builder.button(text=lang["main-back"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
+    builder.adjust(1)
     return builder.as_markup()
 
 

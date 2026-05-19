@@ -4,13 +4,13 @@ from typing import Callable
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject, CommandStart
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, LabeledPrice, Message, PreCheckoutQuery
 
 from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
-from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard, profile_keyboard, rankings_keyboard
+from app.keyboards.menus import display_name_keyboard, game_menu_keyboard, main_menu_keyboard, profile_keyboard, rankings_keyboard
 from app.services.sessions import (
     _TOP_MEDALS,
     format_game_stats_text,
@@ -23,7 +23,7 @@ from app.services.sessions import (
     get_global_leaderboard,
     get_user_rankings,
 )
-from app.services.users import get_user_setting, update_user_language, update_user_settings, upsert_user
+from app.services.users import get_display_name, get_user_setting, update_user_language, update_user_settings, upsert_user
 
 router = Router()
 
@@ -555,11 +555,75 @@ async def callback_profile_rankings(callback: CallbackQuery) -> None:
             g = _GAMES_BY_CODE.get(game_code)
             game_name = lang[g.name_key] if g else game_code
             medal = _TOP_MEDALS[pos - 1] if pos <= len(_TOP_MEDALS) else f"#{pos}"
-            lines.append(f"{medal}  {game_name}")
+            lines.append(f"{medal}  {lang[g.icon_key]} {game_name}")
         body = "\n".join(lines)
 
     text = _user_identity_line(user) + "\n\n" + body
     await safe_edit(callback.message, text, parse_mode="Markdown", reply_markup=rankings_keyboard(lang))
+    await callback.answer()
+
+
+@router.callback_query(F.data == "profile:name")
+async def callback_profile_name(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    purchased_anon = bool((user.settings or {}).get("purchased_anon"))
+    current = get_display_name(user)
+    text = lang["profile-name-ask"].format(value=current) + f"\n\n_{lang['profile-name-anon-hint']}_"
+    await safe_edit(
+        callback.message,
+        text,
+        parse_mode="Markdown",
+        reply_markup=display_name_keyboard(lang, user.first_name, user.last_name, user.username, purchased_anon),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "profile:name:buy:anon")
+async def callback_profile_name_buy_anon(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await callback.message.answer_invoice(
+        title=lang["anon-invoice-title"],
+        description=lang["anon-invoice-desc"],
+        payload="anon_purchase",
+        currency="XTR",
+        prices=[LabeledPrice(label=lang["anon-invoice-title"], amount=5)],
+    )
+    await callback.answer()
+
+
+@router.pre_checkout_query(lambda q: q.invoice_payload == "anon_purchase")
+async def pre_checkout_handler(query: PreCheckoutQuery) -> None:
+    await query.answer(ok=True)
+
+
+@router.message(F.successful_payment.invoice_payload == "anon_purchase")
+async def successful_payment_handler(message: Message) -> None:
+    if message.from_user is None or message.successful_payment is None:
+        return
+    user = await upsert_user(message.from_user)
+    user = await update_user_settings(user.id, {"purchased_anon": True, "display_name_format": "anon"})
+    lang = get_language_pack(user.language_code)
+    await message.answer(
+        lang["anon-purchase-ok"],
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+    )
+
+
+@router.callback_query(F.data.startswith("profile:name:set:"))
+async def callback_profile_name_set(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    fmt = callback.data.split(":", 3)[3]
+    user = await upsert_user(callback.from_user)
+    user = await update_user_settings(user.id, {"display_name_format": fmt})
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
     await callback.answer()
 
 

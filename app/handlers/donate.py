@@ -71,7 +71,7 @@ async def pre_checkout(query: PreCheckoutQuery) -> None:
     await query.answer(ok=True)
 
 
-@router.message(F.successful_payment)
+@router.message(F.successful_payment.invoice_payload.startswith("donate:"))
 async def payment_success(message: Message) -> None:
     if message.from_user is None:
         return

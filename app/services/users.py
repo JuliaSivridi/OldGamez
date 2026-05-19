@@ -6,10 +6,28 @@ from app.db.session import SessionLocal
 from app.i18n.translator import DEFAULT_LANGUAGE
 
 
+def get_display_name(user) -> str:
+    fmt = (user.settings or {}).get("display_name_format", "first")
+    fn = user.first_name or ""
+    ln = user.last_name or ""
+    un = user.username or ""
+    if fmt == "anon":
+        return "#####"
+    if fmt == "username" and un:
+        return f"@{un}"
+    if fmt == "last" and ln:
+        return ln
+    if fmt == "last_first" and ln and fn:
+        return f"{ln} {fn}"
+    if fmt == "first_last" and fn and ln:
+        return f"{fn} {ln}"
+    return fn or un or "?"
+
+
 def format_player_name(user: User | None) -> str:
     if user is None:
         return "Player"
-    return user.first_name or user.username or str(user.id)
+    return get_display_name(user)
 
 
 async def upsert_user(tg_user: TgUser) -> User:

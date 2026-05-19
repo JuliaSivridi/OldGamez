@@ -2,6 +2,7 @@
 
 import secrets
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 from dataclasses import dataclass, field as dc_field
 
@@ -10,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User
 from app.db.session import SessionLocal
+from app.services.users import get_display_name
 
 
 INVITE_TTL_DAYS = 7
@@ -541,11 +543,12 @@ _TOP_MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣
 def _build_ratings(rows, points_map: dict[str, int]) -> tuple[dict[int, int], dict[int, str]]:
     user_rating: dict[int, int] = {}
     user_name: dict[int, str] = {}
-    for user_id, first_name, username, variant_key, wins in rows:
+    for user_id, first_name, last_name, username, settings, variant_key, wins in rows:
         pts = points_map.get(variant_key, 1)
         user_rating[user_id] = user_rating.get(user_id, 0) + wins * pts
         if user_id not in user_name:
-            user_name[user_id] = first_name or username or "?"
+            pseudo = SimpleNamespace(first_name=first_name, last_name=last_name, username=username, settings=settings)
+            user_name[user_id] = get_display_name(pseudo)
     return user_rating, user_name
 
 
@@ -595,7 +598,7 @@ async def get_game_leaderboard(
 ) -> tuple[list[tuple[str, int]], tuple[int, str, int] | None]:
     async with SessionLocal() as db:
         rows = (await db.execute(
-            select(GameStat.user_id, User.first_name, User.username, GameStat.variant_key, GameStat.wins)
+            select(GameStat.user_id, User.first_name, User.last_name, User.username, User.settings, GameStat.variant_key, GameStat.wins)
             .join(User, User.id == GameStat.user_id)
             .where(GameStat.game_code == game_code, GameStat.wins > 0)
         )).all()
@@ -614,19 +617,20 @@ async def get_global_leaderboard(
 ) -> tuple[list[tuple[str, int]], tuple[int, str, int] | None]:
     async with SessionLocal() as db:
         rows = (await db.execute(
-            select(GameStat.user_id, User.first_name, User.username, GameStat.game_code, GameStat.variant_key, GameStat.wins)
+            select(GameStat.user_id, User.first_name, User.last_name, User.username, User.settings, GameStat.game_code, GameStat.variant_key, GameStat.wins)
             .join(User, User.id == GameStat.user_id)
             .where(GameStat.wins > 0)
         )).all()
 
     user_rating: dict[int, int] = {}
     user_name: dict[int, str] = {}
-    for user_id, first_name, username, game_code, variant_key, wins in rows:
+    for user_id, first_name, last_name, username, settings, game_code, variant_key, wins in rows:
         points_map = GAME_VARIANT_POINTS.get(game_code, {})
         pts = points_map.get(variant_key, 1)
         user_rating[user_id] = user_rating.get(user_id, 0) + wins * pts
         if user_id not in user_name:
-            user_name[user_id] = first_name or username or "?"
+            pseudo = SimpleNamespace(first_name=first_name, last_name=last_name, username=username, settings=settings)
+            user_name[user_id] = get_display_name(pseudo)
 
     ranked = sorted(user_rating.items(), key=lambda x: x[1], reverse=True)
     entries = [(user_name[uid], score) for uid, score in ranked[:limit]]

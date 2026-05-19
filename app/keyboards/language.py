@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -8,7 +9,7 @@ def language_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMar
     builder = InlineKeyboardBuilder()
     for label, code in LANGUAGE_CHOICES.items():
         builder.button(text=label, callback_data=f"lang:{code}")
-    builder.button(text=lang["main-back"], callback_data="main:back")
+    builder.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
     builder.adjust(3, 1)
     return builder.as_markup()
 
