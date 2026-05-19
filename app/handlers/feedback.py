@@ -3,6 +3,7 @@ import logging
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ButtonStyle
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -24,7 +25,7 @@ class FeedbackStates(StatesGroup):
 
 def _cancel_keyboard(lang: dict):
     builder = InlineKeyboardBuilder()
-    builder.button(text=lang["main-back"], callback_data="feedback:cancel")
+    builder.button(text=lang["main-back"], callback_data="feedback:cancel", style=ButtonStyle.SUCCESS)
     builder.adjust(1)
     return builder.as_markup()
 

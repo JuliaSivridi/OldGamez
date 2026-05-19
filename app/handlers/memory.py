@@ -139,6 +139,10 @@ async def join_memory_duel(message: Message, user, lang: dict, session) -> None:
     size = state.get("size", 4)
     duel_state = game.new_duel_state(session.created_by_user_id, user.id, size)
     duel_state["message_ids"] = get_duel_message_map(state)
+    if state.get("menu_message_id"):
+        duel_state["menu_message_id"] = state["menu_message_id"]
+    if state.get("menu_chat_id"):
+        duel_state["menu_chat_id"] = state["menu_chat_id"]
 
     first_player = random.choice([session.created_by_user_id, user.id])
     duel_state["current_turn_user_id"] = first_player
@@ -192,7 +196,7 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("memory_size", 4))
-    state: dict = {"status": "pending", "size": size, "message_ids": {}}
+    state: dict = {"status": "pending", "size": size, "message_ids": {}, "menu_message_id": callback.message.message_id, "menu_chat_id": callback.message.chat.id}
     session = await create_private_duel_invite(user.id, callback.message.chat.id, game.code, state)
     invite_msg = await callback.message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
@@ -382,6 +386,13 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
             await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
             await _sync_mem_duel(callback.bot, session.id, state, final=True)
             await delete_guest_join_msg(callback.bot, state)
+            menu_msg_id = state.get("menu_message_id")
+            menu_chat = state.get("menu_chat_id")
+            if menu_msg_id and menu_chat:
+                try:
+                    await callback.bot.delete_message(menu_chat, menu_msg_id)
+                except Exception:
+                    pass
             await open_memory_menu(callback.message, user, lang)
             other_id = state["p2_id"] if is_p1 else state["p1_id"]
             other_user = await get_user_by_id(other_id)
@@ -553,6 +564,8 @@ async def callback_memory_group_join(callback: CallbackQuery) -> None:
     duel_state = game.new_duel_state(session.created_by_user_id, user.id, size)
     first_player = random.choice([session.created_by_user_id, user.id])
     duel_state["current_turn_user_id"] = first_player
+    if original_state.get("menu_message_id"):
+        duel_state["menu_message_id"] = original_state["menu_message_id"]
 
     session = await activate_group_match_session(session_id, user.id, duel_state, first_player)
     if session is None:

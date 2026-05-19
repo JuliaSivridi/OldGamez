@@ -136,6 +136,10 @@ async def join_battleship_duel(message: Message, user, lang, session) -> None:
 
     duel_state = game.new_duel_state(session.created_by_user_id, user.id)
     duel_state["message_ids"] = get_duel_message_map(state)
+    if state.get("menu_message_id"):
+        duel_state["menu_message_id"] = state["menu_message_id"]
+    if state.get("menu_chat_id"):
+        duel_state["menu_chat_id"] = state["menu_chat_id"]
 
     activated = await activate_private_duel_session(
         session.id, user.id, duel_state,
@@ -188,6 +192,13 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
         if refreshed:
             await _sync_battleship_duel_messages(callback.bot, refreshed)
         await delete_guest_join_msg(callback.bot, state)
+        menu_msg_id = state.get("menu_message_id")
+        menu_chat = state.get("menu_chat_id")
+        if menu_msg_id and menu_chat:
+            try:
+                await callback.bot.delete_message(menu_chat, menu_msg_id)
+            except Exception:
+                pass
         await open_battleship_menu(callback.message, user, lang)
         other_id = state["p2_id"] if is_p1 else state["p1_id"]
         other_user = await get_user_by_id(other_id)
@@ -225,7 +236,7 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
-    state: dict = {"status": "pending", "message_ids": {}}
+    state: dict = {"status": "pending", "message_ids": {}, "menu_message_id": callback.message.message_id, "menu_chat_id": callback.message.chat.id}
     session = await create_private_duel_invite(user.id, callback.message.chat.id, game.code, state)
     invite_message = await callback.message.answer(
         build_duel_invite_text(lang, session.join_code or ""),

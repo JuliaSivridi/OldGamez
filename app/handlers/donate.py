@@ -23,7 +23,7 @@ def donate_keyboard(lang: dict) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for amount in DONATE_AMOUNTS:
         builder.button(text=f"⭐ {amount}", callback_data=f"donate:{amount}", style=ButtonStyle.PRIMARY)
-    builder.button(text=lang["main-back"], callback_data="main:back")
+    builder.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
     builder.adjust(2, 2, 1)
     return builder.as_markup()
 

@@ -200,13 +200,17 @@ async def start_tictactoe_game(message: Message, user, lang: dict[str, str], siz
         ),
     )
 
-async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], size: int) -> None:
+async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None, menu_chat_id: int | None = None) -> None:
     state = {
         "board_size": size,
         "status": "pending",
         "message_ids": {},
         "win_length": game.get_win_length(size),
     }
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
+    if menu_chat_id:
+        state["menu_chat_id"] = menu_chat_id
     session = await create_private_duel_invite(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -220,7 +224,7 @@ async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], siz
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
 
-async def start_tictactoe_group(message: Message, user, lang: dict[str, str], size: int) -> None:
+async def start_tictactoe_group(message: Message, user, lang: dict[str, str], size: int, menu_message_id: int | None = None) -> None:
     if message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
         await message.answer(
             lang["group-only"],
@@ -233,6 +237,8 @@ async def start_tictactoe_group(message: Message, user, lang: dict[str, str], si
         "status": "pending",
         "win_length": game.get_win_length(size),
     }
+    if menu_message_id:
+        state["menu_message_id"] = menu_message_id
     session = await create_group_match_session(
         user_id=user.id,
         telegram_chat_id=message.chat.id,
@@ -262,6 +268,10 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
         guest_user_id=user.id,
     )
     duel_state["message_ids"] = get_duel_message_map(state)
+    if state.get("menu_message_id"):
+        duel_state["menu_message_id"] = state["menu_message_id"]
+    if state.get("menu_chat_id"):
+        duel_state["menu_chat_id"] = state["menu_chat_id"]
 
     session = await activate_private_duel_session(
         session.id,
@@ -316,13 +326,13 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await start_tictactoe_duel(callback.message, user, lang, size)
+    await start_tictactoe_duel(callback.message, user, lang, size, menu_message_id=callback.message.message_id, menu_chat_id=callback.message.chat.id)
     await callback.answer()
 
 @router.callback_query(GameCallbackFilter("group", game.code))
 async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
-    await start_tictactoe_group(callback.message, user, lang, size)
+    await start_tictactoe_group(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
 @router.callback_query(GameCallbackFilter("size", game.code))
@@ -384,6 +394,8 @@ async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:
         host_user_id=session.created_by_user_id,
         guest_user_id=user.id,
     )
+    if original_state.get("menu_message_id"):
+        duel_state["menu_message_id"] = original_state["menu_message_id"]
     session = await activate_group_match_session(
         session.id,
         user.id,
@@ -491,6 +503,13 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
                     highlight=duel_turn.highlight,
                 ),
             )
+            menu_msg_id = state.get("menu_message_id")
+            if menu_msg_id:
+                try:
+                    await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
+                except Exception:
+                    pass
+            await open_tictactoe_menu(callback.message, user, lang)
             return
 
         next_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
@@ -559,6 +578,13 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
             await delete_guest_join_msg(callback.bot, state)
+            menu_msg_id = state.get("menu_message_id")
+            menu_chat = state.get("menu_chat_id")
+            if menu_msg_id and menu_chat:
+                try:
+                    await callback.bot.delete_message(menu_chat, menu_msg_id)
+                except Exception:
+                    pass
             await open_tictactoe_menu(callback.message, user, lang)
             await send_tictactoe_menu_to_other_duel_players(
                 callback.bot,

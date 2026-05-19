@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 MODE_LABEL: dict[int, str] = {1: "1 / 1", 2: "2 / 3", 3: "3 / 5"}
+MAX_ROUNDS: dict[int, int] = {1: 1, 2: 3, 3: 5}
 
 
 class _BaseRPS:
@@ -23,6 +24,7 @@ class _BaseRPS:
     def new_game_state(self, wins_needed: int) -> dict:
         return {
             "wins_needed": wins_needed,
+            "max_rounds": MAX_ROUNDS.get(wins_needed, wins_needed),
             "history": [],
             "user_wins": 0,
             "comp_wins": 0,
@@ -32,6 +34,7 @@ class _BaseRPS:
     def new_duel_state(self, wins_needed: int, p1_id: int, p2_id: int) -> dict:
         return {
             "wins_needed": wins_needed,
+            "max_rounds": MAX_ROUNDS.get(wins_needed, wins_needed),
             "history": [],
             "p1_id": p1_id,
             "p2_id": p2_id,
@@ -64,12 +67,25 @@ class _BaseRPS:
             state["p2_wins"] += 1
         state["current_p1"] = None
         state["current_p2"] = None
-        if state["p1_wins"] >= state["wins_needed"]:
+
+        max_rounds = state.get("max_rounds", state.get("wins_needed", 1))
+        rounds_played = len(state["history"])
+        remaining = max_rounds - rounds_played
+        p1w, p2w = state["p1_wins"], state["p2_wins"]
+
+        if p1w > p2w + remaining:
             state["status"] = "finished"
             return {"state": "p1_wins", "game_state": state}
-        if state["p2_wins"] >= state["wins_needed"]:
+        if p2w > p1w + remaining:
             state["status"] = "finished"
             return {"state": "p2_wins", "game_state": state}
+        if rounds_played >= max_rounds:
+            state["status"] = "finished"
+            if p1w > p2w:
+                return {"state": "p1_wins", "game_state": state}
+            if p2w > p1w:
+                return {"state": "p2_wins", "game_state": state}
+            return {"state": "draw", "game_state": state}
         return {"state": "round_done", "game_state": state}
 
     def make_move(self, state: dict, user_move: str) -> dict:
@@ -84,12 +100,24 @@ class _BaseRPS:
         elif result_data["result"] == "loss":
             state["comp_wins"] += 1
 
-        if state["user_wins"] >= state["wins_needed"]:
+        max_rounds = state.get("max_rounds", state.get("wins_needed", 1))
+        rounds_played = len(state["history"])
+        remaining = max_rounds - rounds_played
+        uw, cw = state["user_wins"], state["comp_wins"]
+
+        if uw > cw + remaining:
             state["status"] = "finished"
             return {"state": "win", "game_state": state}
-        if state["comp_wins"] >= state["wins_needed"]:
+        if cw > uw + remaining:
             state["status"] = "finished"
             return {"state": "loss", "game_state": state}
+        if rounds_played >= max_rounds:
+            state["status"] = "finished"
+            if uw > cw:
+                return {"state": "win", "game_state": state}
+            if cw > uw:
+                return {"state": "loss", "game_state": state}
+            return {"state": "draw", "game_state": state}
         return {"state": "play", "game_state": state}
 
 

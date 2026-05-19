@@ -155,6 +155,13 @@ async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_mess
     if refreshed:
         await _sync_bj_duel_messages(bot, refreshed)
     await delete_guest_join_msg(bot, state)
+    menu_msg_id = state.get("menu_message_id")
+    menu_chat = state.get("menu_chat_id")
+    if menu_msg_id and menu_chat:
+        try:
+            await bot.delete_message(menu_chat, menu_msg_id)
+        except Exception:
+            pass
     await open_blackjack_menu(current_message, current_user, current_lang)
     other_id = p2_id if current_user.id == p1_id else p1_id
     other_user = await get_user_by_id(other_id)
@@ -179,6 +186,10 @@ async def join_blackjack_duel(message: Message, user, lang: dict, session) -> No
 
     duel_state = game.new_duel_state(session.created_by_user_id, user.id)
     duel_state["message_ids"] = get_duel_message_map(state)
+    if state.get("menu_message_id"):
+        duel_state["menu_message_id"] = state["menu_message_id"]
+    if state.get("menu_chat_id"):
+        duel_state["menu_chat_id"] = state["menu_chat_id"]
 
     activated = await activate_private_duel_session(session.id, user.id, duel_state, current_turn_user_id=None)
     if activated is None:
@@ -296,6 +307,8 @@ async def _begin_group_game(bot, session_id: int, state: dict, chat_id: int, mes
     play_state["group_chat_id"] = chat_id
     if "menu_message_id" in state:
         play_state["menu_message_id"] = state["menu_message_id"]
+    if "initiator_lang" in state:
+        play_state["initiator_lang"] = state["initiator_lang"]
 
     started = await begin_group_session(session_id, play_state)
     if started is None:
@@ -313,7 +326,8 @@ async def _begin_group_game(bot, session_id: int, state: dict, chat_id: int, mes
     except TelegramBadRequest:
         pass
 
-async def _finish_group_game(bot, session_id: int, state: dict, lang: dict) -> None:
+async def _finish_group_game(bot, session_id: int, state: dict) -> None:
+    lang = get_language_pack(state.get("initiator_lang", "en"))
     state = game.resolve_group(state)
     winners = [p for p in state["players"] if state["results"].get(str(p["id"])) == "win"]
     winner_id = winners[0]["id"] if len(winners) == 1 else None
@@ -381,6 +395,7 @@ async def start_group_blackjack(message: Message, user, lang: dict, menu_message
         "phase": "joining",
         "players": [{"id": user.id, "name": get_display_name(user)}],
         "join_deadline": time.time() + GROUP_JOIN_TIMEOUT,
+        "initiator_lang": user.language_code or "en",
     }
     if menu_message_id:
         initial_state["menu_message_id"] = menu_message_id
@@ -420,7 +435,7 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
 
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
-    state: dict = {"status": "pending", "message_ids": {}}
+    state: dict = {"status": "pending", "message_ids": {}, "menu_message_id": callback.message.message_id, "menu_chat_id": callback.message.chat.id}
     session = await create_private_duel_invite(user.id, callback.message.chat.id, game.code, state)
     invite_message = await callback.message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
@@ -470,16 +485,17 @@ async def callback_group_join(callback: CallbackQuery) -> None:
     state["players"] = players
     await update_user_settings(user.id, {"current_game": game.code})
 
+    group_lang = get_language_pack(state.get("initiator_lang", user.language_code or "en"))
     if len(players) >= GROUP_MAX_PLAYERS:
         await callback.answer()
-        await _begin_group_game(callback.bot, session_id, state, callback.message.chat.id, callback.message.message_id, lang)
+        await _begin_group_game(callback.bot, session_id, state, callback.message.chat.id, callback.message.message_id, group_lang)
         return
 
     await update_session_state(session_id, state, current_turn_user_id=None)
     try:
         await callback.message.edit_text(
-            render_group_joining_text(state, lang),
-            reply_markup=group_join_keyboard(session_id, len(players), lang),
+            render_group_joining_text(state, group_lang),
+            reply_markup=group_join_keyboard(session_id, len(players), group_lang),
             parse_mode="Markdown",
         )
     except TelegramBadRequest:
@@ -546,15 +562,16 @@ async def _handle_group_action(callback: CallbackQuery, session, user, lang: dic
     state = result["game_state"]
 
     if result["all_done"]:
-        await _finish_group_game(callback.bot, session.id, state, lang)
+        await _finish_group_game(callback.bot, session.id, state)
         return
 
+    group_lang = get_language_pack(state.get("initiator_lang", user.language_code or "en"))
     updated = await update_session_state(session.id, state, current_turn_user_id=None)
     if updated:
         try:
             await callback.message.edit_text(
-                render_group_playing_text(state, lang),
-                reply_markup=game_keyboard(session.id, lang, is_active=True),
+                render_group_playing_text(state, group_lang),
+                reply_markup=game_keyboard(session.id, group_lang, is_active=True),
                 parse_mode="Markdown",
             )
         except TelegramBadRequest:
