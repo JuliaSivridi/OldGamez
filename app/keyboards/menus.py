@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMarkup:
+def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     if chat_type in ("group", "supergroup"):
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
@@ -17,8 +17,10 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.adjust(2, 2, 2, 2, 2)
-    else:
-        builder.button(text="─── Duel & Solo ───", callback_data="noop", style=ButtonStyle.PRIMARY)
+    elif page == 1:
+        ds = lang["menu-page-duel-solo"]
+        s = lang["menu-page-solo"]
+        builder.button(text=f"{ds}  ·  {s} ➡", callback_data="menu:page:2")
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
         builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
         builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
@@ -26,7 +28,16 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
         builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
-        builder.button(text="─── Solo ───", callback_data="noop", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-stat"], callback_data="menu:stats", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
+        builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
+        builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
+        builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
+        builder.adjust(1, 2, 2, 2, 1, 2, 3)
+    else:
+        ds = lang["menu-page-duel-solo"]
+        s = lang["menu-page-solo"]
+        builder.button(text=f"⬅ {ds}  ·  {s}", callback_data="menu:page:1")
         builder.button(text=f"{lang['icon-mines']} {lang['menu-mines']}".strip(), callback_data="game:mines")
         builder.button(text=f"{lang['icon-rand']} {lang['menu-rand']}".strip(), callback_data="game:rand")
         builder.button(text=f"{lang['icon-lightsout']} {lang['menu-lightsout']}".strip(), callback_data="game:lightsout")
@@ -40,7 +51,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 3)
+        builder.adjust(1, 2, 2, 2, 2, 2, 3)
     return builder.as_markup()
 
 

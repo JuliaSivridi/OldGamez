@@ -657,6 +657,21 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.callback_query(F.data.startswith("menu:page:"))
+async def callback_menu_page(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    page = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["main-ttl"],
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
+    )
+    await callback.answer()
+
+
 @router.callback_query(F.data == "main:back")
 async def callback_menu_back(callback: CallbackQuery) -> None:
     if callback.from_user is None:
