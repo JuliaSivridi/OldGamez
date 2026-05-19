@@ -2,6 +2,7 @@
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ButtonStyle
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -32,7 +33,7 @@ def random_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboard
     b.button(text=lang["menu-coin"], callback_data="rand:coin")
     b.button(text=lang["menu-card"], callback_data="rand:card")
     b.button(text=lang["menu-guess"], callback_data="rand:guess")
-    b.button(text=lang["main-back"], callback_data="main:back")
+    b.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
     b.adjust(6, 2, 1, 1)
     return b.as_markup()
 
