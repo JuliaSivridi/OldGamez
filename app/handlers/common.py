@@ -388,9 +388,11 @@ async def cmd_lang_command(message: Message) -> None:
 
 
 @router.callback_query(F.data.startswith("game:stat:"))
-async def callback_game_stat(callback: CallbackQuery, user, lang) -> None:
-    if callback.message is None:
+async def callback_game_stat(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
         return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
     config = GAME_STAT_REGISTRY.get(game_code)
     keyboard_fn = _get_game_keyboard(game_code)
@@ -413,9 +415,11 @@ async def callback_game_stat(callback: CallbackQuery, user, lang) -> None:
 
 
 @router.callback_query(F.data.startswith("game:help:"))
-async def callback_game_help(callback: CallbackQuery, user, lang) -> None:
-    if callback.message is None:
+async def callback_game_help(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
         return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
     info = GAME_HELP_REGISTRY.get(game_code)
     keyboard_fn = _get_game_keyboard(game_code)
