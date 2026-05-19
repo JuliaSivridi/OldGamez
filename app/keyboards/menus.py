@@ -7,6 +7,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
     builder = InlineKeyboardBuilder()
     if chat_type in ("group", "supergroup"):
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
+        builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
         builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
         builder.button(text=f"{lang['icon-mem']} {lang['menu-mem']}".strip(), callback_data="game:mem")
         builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
@@ -15,14 +16,14 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 1, 2, 2, 2)
+        builder.adjust(2, 2, 2, 2, 2)
     else:
         builder.button(text="─── Duel & Solo ───", callback_data="noop", style=ButtonStyle.PRIMARY)
         builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
-        builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
+        builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
         builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
         builder.button(text=f"{lang['icon-mem']} {lang['menu-mem']}".strip(), callback_data="game:mem")
-        builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
+        builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
         builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
         builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
         builder.button(text="─── Solo ───", callback_data="noop", style=ButtonStyle.PRIMARY)
@@ -39,7 +40,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None) -> InlineKeyboardMa
         builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(1, 2, 2, 3, 1, 2, 2, 2, 2, 2, 3)
+        builder.adjust(1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 3)
     return builder.as_markup()
 
 
