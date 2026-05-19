@@ -2,6 +2,7 @@ from aiogram import Dispatcher
 
 from app.handlers.battleship import router as battleship_router
 from app.handlers.blackjack import router as blackjack_router
+from app.handlers.middleware import NullGuardMiddleware
 from app.handlers.donate import router as donate_router
 from app.handlers.feedback import router as feedback_router
 from app.handlers.bullscows import router as bullscows_router
@@ -20,6 +21,8 @@ from app.handlers.wordle import router as wordle_router
 
 
 def register_routers(dispatcher: Dispatcher) -> None:
+    dispatcher.message.middleware(NullGuardMiddleware())
+    dispatcher.callback_query.middleware(NullGuardMiddleware())
     dispatcher.include_router(common_router)
     dispatcher.include_router(donate_router)
     dispatcher.include_router(feedback_router)

@@ -3,19 +3,20 @@ from importlib import import_module
 from typing import Callable
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
-from app.keyboards.menus import game_menu_keyboard, duel_menu_keyboard, main_menu_keyboard
+from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.sessions import (
     format_game_stats_text,
     format_leaderboard_text,
     format_variant_stats_text,
     get_all_game_stats,
+    get_game_leaderboard,
     get_game_stat,
     get_game_stats_bulk,
     get_global_leaderboard,
@@ -58,8 +59,6 @@ GAME_STATS_ORDER: list[tuple[str, str, str]] = [
     (GAME_CODE_RPSSL, "icon-rpssl", "game-rpssl"),
 ]
 
-# Registry: game_code -> "module:function" for the open_X_menu function.
-# Add a new entry here when a new game is added.
 _DIFFICULTY_SORT: Callable = lambda s: {"easy": 0, "normal": 1, "hard": 2}.get(s.variant_key, 9)
 _DIGIT_SORT: Callable = lambda s: int(s.variant_key) if s.variant_key.isdigit() else 0
 _DIFFICULTY_LABELS: Callable = lambda lang: {
@@ -178,22 +177,96 @@ GAME_HELP_REGISTRY: dict[str, tuple[str, str]] = {
     "rpssl":       ("game-rpssl",       "help-rpssl"),
 }
 
-GAME_KEYBOARD_REGISTRY: dict[str, str] = {
-    "tic_tac_toe": "app.handlers.tictactoe:tictactoe_menu_keyboard",
-    "four_in_row": "app.handlers.fourinrow:four_menu_keyboard",
-    "battleship":  "app.handlers.battleship:battleship_menu_keyboard",
-    "minesweeper": "app.handlers.minesweeper:minesweeper_menu_keyboard",
-    "lightsout":   "app.handlers.lightsout:lightsout_menu_keyboard",
-    "npuzzle":     "app.handlers.npuzzle:npuzzle_menu_keyboard",
-    "mastermind":  "app.handlers.mastermind:mastermind_menu_keyboard",
-    "bullscows":   "app.handlers.bullscows:bullscows_menu_keyboard",
-    "wordle":      "app.handlers.wordle:wordle_menu_keyboard",
-    "hangman":     "app.handlers.hangman:hangman_menu_keyboard",
-    "memory":      "app.handlers.memory:memory_menu_keyboard",
-    "blackjack":   "app.handlers.blackjack:blackjack_menu_keyboard",
-    "ropasci":     "app.handlers.ropasci:rps_menu_keyboard",
-    "rpssl":       "app.handlers.ropasci:rpssl_menu_keyboard",
+
+@dataclass
+class KeyboardConfig:
+    game_code: str
+    extra_setting_key: str | None = None
+    extra_duel_key: str | None = None
+    extra_group_key: str | None = None
+
+
+GAME_KEYBOARD_CONFIG: dict[str, KeyboardConfig] = {
+    "tic_tac_toe": KeyboardConfig("tic_tac_toe", "size",  "duel", "group"),
+    "four_in_row": KeyboardConfig("four_in_row",  None,   "duel", "group"),
+    "battleship":  KeyboardConfig("battleship",   None,   "duel",  None),
+    "minesweeper": KeyboardConfig("minesweeper",  "cmplx", None,   None),
+    "lightsout":   KeyboardConfig("lightsout",    "size",  None,   None),
+    "npuzzle":     KeyboardConfig("npuzzle",      "size",  None,   None),
+    "mastermind":  KeyboardConfig("mastermind",   "cmplx", None,   None),
+    "bullscows":   KeyboardConfig("bullscows",    "cmplx", None,   None),
+    "wordle":      KeyboardConfig("wordle",        None,   None,   None),
+    "hangman":     KeyboardConfig("hangman",      "cmplx", None,   None),
+    "memory":      KeyboardConfig("memory",       "size",  "duel", "group"),
+    "blackjack":   KeyboardConfig("blackjack",     None,   "duel",  None),
+    "ropasci":     KeyboardConfig("ropasci",      "mode",  "duel", "group"),
+    "rpssl":       KeyboardConfig("rpssl",        "mode",  "duel", "group"),
 }
+
+
+GAME_TOP_REGISTRY: dict[str, str] = {
+    "tic_tac_toe": "game-xo",
+    "four_in_row": "game-four",
+    "battleship":  "game-sea",
+    "minesweeper": "game-mines",
+    "lightsout":   "game-lightsout",
+    "npuzzle":     "game-npuzzle",
+    "mastermind":  "game-mastermind",
+    "bullscows":   "game-bullscows",
+    "wordle":      "game-wordle",
+    "hangman":     "game-hang",
+    "memory":      "game-mem",
+    "blackjack":   "game-bj",
+    "ropasci":     "game-rps",
+    "rpssl":       "game-rpssl",
+}
+
+
+# (callback_suffix, text_func_path, needs_user_settings)
+GAME_OPEN_REGISTRY: dict[str, tuple[str, str, bool]] = {
+    "tic_tac_toe": ("xo",         "app.handlers.tictactoe:_xo_menu_text",    True),
+    "four_in_row": ("four",       "app.handlers.fourinrow:_four_menu_text",   False),
+    "battleship":  ("sea",        "app.handlers.battleship:_sea_menu_text",   False),
+    "minesweeper": ("mines",      "app.handlers.minesweeper:_mines_menu_text", True),
+    "lightsout":   ("lightsout",  "app.handlers.lightsout:_lto_menu_text",    True),
+    "npuzzle":     ("npuzzle",    "app.handlers.npuzzle:_npz_menu_text",      True),
+    "mastermind":  ("mastermind", "app.handlers.mastermind:_mm_menu_text",    True),
+    "bullscows":   ("bullscows",  "app.handlers.bullscows:_bc_menu_text",     True),
+    "wordle":      ("wordle",     "app.handlers.wordle:_wrd_menu_text",       False),
+    "hangman":     ("hang",       "app.handlers.hangman:_hang_menu_text",     True),
+    "memory":      ("mem",        "app.handlers.memory:_mem_menu_text",       True),
+    "blackjack":   ("bj",         "app.handlers.blackjack:_bj_menu_text",    False),
+    "ropasci":     ("rps",        "app.handlers.ropasci:_ropasci_cb_text",    True),
+    "rpssl":       ("rpssl",      "app.handlers.ropasci:_rpssl_cb_text",      True),
+}
+
+_GAME_OPEN_SUFFIXES: frozenset[str] = frozenset(
+    f"game:{v[0]}" for v in GAME_OPEN_REGISTRY.values()
+)
+_GAME_OPEN_BY_SUFFIX: dict[str, str] = {
+    v[0]: k for k, v in GAME_OPEN_REGISTRY.items()
+}
+
+
+GAME_COMMAND_MAP: dict[str, str] = {
+    "tictactoe":   "tic_tac_toe",
+    "xo":          "tic_tac_toe",
+    "fourinrow":   "four_in_row",
+    "battleship":  "battleship",
+    "minesweeper": "minesweeper",
+    "lightsout":   "lightsout",
+    "npuzzle":     "npuzzle",
+    "mastermind":  "mastermind",
+    "bullscows":   "bullscows",
+    "wordle":      "wordle",
+    "hangman":     "hangman",
+    "memory":      "memory",
+    "blackjack":   "blackjack",
+    "rps":         "ropasci",
+    "rpssl":       "rpssl",
+    "random":      "random",
+}
+
 
 GAME_MENU_REGISTRY: dict[str, str] = {
     GAME_CODE_TICTACTOE: "app.handlers.tictactoe:open_tictactoe_menu",
@@ -219,22 +292,34 @@ async def noop_handler(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-def _lazy_load(registry: dict[str, str], game_code: str) -> Callable | None:
-    path = registry.get(game_code)
-    if path is None:
-        return None
+def _load_fn(path: str) -> Callable | None:
     module_path, func_name = path.split(":", 1)
     module = import_module(module_path)
     fn = getattr(module, func_name, None)
     return fn if callable(fn) else None
 
 
+def _lazy_load(registry: dict[str, str], game_code: str) -> Callable | None:
+    path = registry.get(game_code)
+    return _load_fn(path) if path else None
+
+
 def _get_menu_handler(game_code: str) -> Callable | None:
     return _lazy_load(GAME_MENU_REGISTRY, game_code)
 
 
-def _get_game_keyboard(game_code: str) -> Callable | None:
-    return _lazy_load(GAME_KEYBOARD_REGISTRY, game_code)
+def _get_game_keyboard(game_code: str, lang: dict, chat_type=None) -> InlineKeyboardMarkup | None:
+    config = GAME_KEYBOARD_CONFIG.get(game_code)
+    if config is None:
+        return None
+    return game_menu_keyboard(
+        lang,
+        game_code=config.game_code,
+        extra_setting_key=config.extra_setting_key,
+        extra_duel_key=config.extra_duel_key,
+        extra_group_key=config.extra_group_key,
+        chat_type=chat_type,
+    )
 
 
 def get_current_game(user) -> str | None:
@@ -290,6 +375,42 @@ async def cmd_start(message: Message) -> None:
     )
 
 
+@router.message(Command(*GAME_COMMAND_MAP.keys()))
+async def cmd_game(message: Message, command: CommandObject) -> None:
+    if message.from_user is None:
+        return
+    game_code = GAME_COMMAND_MAP.get(command.command)
+    handler = _get_menu_handler(game_code) if game_code else None
+    if handler is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await handler(message, user, lang)
+
+
+@router.callback_query(F.data.in_(_GAME_OPEN_SUFFIXES))
+async def open_game_callback(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    suffix = callback.data[5:]  # strip "game:"
+    game_code = _GAME_OPEN_BY_SUFFIX[suffix]
+    _, text_path, needs_settings = GAME_OPEN_REGISTRY[game_code]
+    text_fn = _load_fn(text_path)
+    if text_fn is None:
+        await callback.answer()
+        return
+    text = text_fn(lang, user.settings) if needs_settings else text_fn(lang)
+    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    if markup is None:
+        await callback.answer()
+        return
+    await update_user_settings(user.id, {"current_game": game_code})
+    await safe_edit(callback.message, text, reply_markup=markup)
+    await callback.answer()
+
+
 @router.callback_query(F.data == "menu:games")
 async def callback_menu_games(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -311,29 +432,6 @@ async def cmd_games_command(message: Message) -> None:
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
     await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
-
-
-@router.callback_query(F.data == "menu:duels")
-async def callback_menu_duels(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["game-ttl"],
-        reply_markup=duel_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.message(Command("duel"))
-async def cmd_duel_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], reply_markup=duel_menu_keyboard(lang, chat_type=message.chat.type))
 
 
 @router.callback_query(F.data == "menu:stats")
@@ -395,8 +493,11 @@ async def callback_game_stat(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
     config = GAME_STAT_REGISTRY.get(game_code)
-    keyboard_fn = _get_game_keyboard(game_code)
-    if config is None or keyboard_fn is None:
+    if config is None:
+        await callback.answer()
+        return
+    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    if markup is None:
         await callback.answer()
         return
     game_title = f"{lang['icon-stat']} *{lang[config.name_key]}*"
@@ -410,7 +511,7 @@ async def callback_game_stat(callback: CallbackQuery) -> None:
     else:
         stat = await get_game_stat(user.id, game_code)
         text = game_title + " | " + format_game_stats_text(stat, lang, config.fields)
-    await safe_edit(callback.message, text, reply_markup=keyboard_fn(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
 
@@ -422,13 +523,38 @@ async def callback_game_help(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     game_code = callback.data.split(":", 2)[2]
     info = GAME_HELP_REGISTRY.get(game_code)
-    keyboard_fn = _get_game_keyboard(game_code)
-    if info is None or keyboard_fn is None:
+    if info is None:
+        await callback.answer()
+        return
+    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    if markup is None:
         await callback.answer()
         return
     name_key, help_key = info
     text = f"{lang['icon-info']} *{lang[name_key]}* | *{lang['help-ttl']}*\n\n{lang[help_key]}"
-    await safe_edit(callback.message, text, reply_markup=keyboard_fn(lang, chat_type=callback.message.chat.type))
+    await safe_edit(callback.message, text, reply_markup=markup)
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("game:top:"))
+async def callback_game_top(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    game_code = callback.data.split(":", 2)[2]
+    name_key = GAME_TOP_REGISTRY.get(game_code)
+    if name_key is None:
+        await callback.answer()
+        return
+    markup = _get_game_keyboard(game_code, lang, chat_type=callback.message.chat.type)
+    if markup is None:
+        await callback.answer()
+        return
+    entries, viewer_entry = await get_game_leaderboard(game_code, viewer_user_id=user.id)
+    title = f"*{lang[name_key]}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
+    await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
 

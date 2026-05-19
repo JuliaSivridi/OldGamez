@@ -2,7 +2,6 @@
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from app.db.models import SessionMode, SessionStatus
@@ -14,7 +13,7 @@ from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.keyboards.menus import game_menu_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, format_leaderboard_text, get_game_leaderboard, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 
 
@@ -241,24 +240,6 @@ async def open_battleship_menu(message: Message, user, lang) -> None:
     )
 
 
-@router.message(Command("battleship"))
-async def cmd_battleship_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await open_battleship_menu(message, user, lang)
-
-
-@router.callback_query(F.data == "game:sea")
-async def open_battleship_callback(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, _sea_menu_text(lang), reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
@@ -279,14 +260,6 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     await update_session_state(session.id, state, None)
     await callback.answer()
 
-
-@router.callback_query(GameCallbackFilter("top", game.code))
-async def menu_top(callback: CallbackQuery, user, lang) -> None:
-    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
-    title = f"*{lang['game-sea']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(callback.message, text, reply_markup=battleship_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(F.data == "sea:noop")

@@ -4,7 +4,6 @@ from collections.abc import Callable
 from aiogram import F, Router
 from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
 from app.db.models import SessionMode, SessionStatus
@@ -30,8 +29,6 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_leaderboard_text,
-    get_game_leaderboard,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -359,24 +356,6 @@ async def open_four_menu(message: Message, user, lang) -> None:
     )
 
 
-@router.message(Command("fourinrow"))
-async def cmd_four_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await open_four_menu(message, user, lang)
-
-
-@router.callback_query(F.data == "game:four")
-async def open_four_callback(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, _four_menu_text(lang), reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
@@ -396,14 +375,6 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     await start_four_group(callback.message, user, lang)
     await callback.answer()
 
-
-@router.callback_query(GameCallbackFilter("top", game.code))
-async def menu_top(callback: CallbackQuery, user, lang) -> None:
-    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
-    title = f"*{lang['game-four']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(callback.message, text, reply_markup=four_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(F.data == "fir:noop")

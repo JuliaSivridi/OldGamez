@@ -1,5 +1,4 @@
 from aiogram import F, Router
-from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from app.db.models import SessionStatus
@@ -13,8 +12,6 @@ from app.keyboards.menus import game_menu_keyboard
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    format_leaderboard_text,
-    get_game_leaderboard,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -80,24 +77,6 @@ async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_m
     )
 
 
-@router.message(Command("wordle"))
-async def cmd_wordle(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await open_wordle_menu(message, user, lang)
-
-
-@router.callback_query(F.data == "game:wordle")
-async def open_wordle_callback(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, _wrd_menu_text(lang), reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
@@ -106,14 +85,6 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_wordle_game(callback.message, user, lang, lang_code, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-
-@router.callback_query(GameCallbackFilter("top", game.code))
-async def menu_top(callback: CallbackQuery, user, lang) -> None:
-    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
-    title = f"*{lang['game-wordle']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(callback.message, text, reply_markup=wordle_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(F.data == "wrd:noop")

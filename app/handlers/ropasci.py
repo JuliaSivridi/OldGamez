@@ -1,7 +1,6 @@
 from aiogram import F, Router
 from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -27,8 +26,6 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    format_leaderboard_text,
-    get_game_leaderboard,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -200,6 +197,14 @@ def _rps_menu_text(lang: dict, user_settings: dict | None, title_key: str, setti
     mode_label = MODE_LABEL.get(wins_needed, "?")
     icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
     return f"*{lang[icon_key]} {lang[title_key]}*\n{lang['setting-mode']}: {mode_label}"
+
+
+def _ropasci_cb_text(lang: dict, user_settings: dict | None) -> str:
+    return _rps_menu_text(lang, user_settings, "game-rps")
+
+
+def _rpssl_cb_text(lang: dict, user_settings: dict | None) -> str:
+    return _rps_menu_text(lang, user_settings, "game-rpssl", "rpssl_mode")
 
 
 async def open_ropasci_menu(message: Message, user, lang) -> None:
@@ -434,25 +439,6 @@ async def join_rpssl_private_duel(message: Message, user, lang, session) -> None
 
 # ── RPS ──────────────────────────────────────────────────────────────────────
 
-@router.message(Command("rps"))
-async def cmd_ropasci_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await open_ropasci_menu(message, user, lang)
-
-
-@router.callback_query(F.data == "game:rps")
-async def open_ropasci_callback(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"current_game": game.code})
-    await safe_edit(callback.message, _rps_menu_text(lang, user.settings, "game-rps"),
-                    reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
@@ -490,14 +476,6 @@ async def menu_rps_mode(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(game.code, "game:rps", lang))
     await callback.answer()
 
-
-@router.callback_query(GameCallbackFilter("top", game.code))
-async def menu_rps_top(callback: CallbackQuery, user, lang) -> None:
-    entries, viewer_entry = await get_game_leaderboard(game.code, viewer_user_id=user.id)
-    title = f"*{lang['game-rps']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(callback.message, text, reply_markup=rps_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(F.data == "rps:noop")
@@ -550,25 +528,6 @@ async def callback_rps_move(callback: CallbackQuery) -> None:
 
 # ── RPSSL ─────────────────────────────────────────────────────────────────────
 
-@router.message(Command("rpssl"))
-async def cmd_rpssl_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await open_rpssl_menu(message, user, lang)
-
-
-@router.callback_query(F.data == "game:rpssl")
-async def open_rpssl_callback(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"current_game": rpssl_game.code})
-    await safe_edit(callback.message, _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode"),
-                    reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(GameCallbackFilter("bot", rpssl_game.code))
@@ -606,15 +565,6 @@ async def menu_rpssl_mode(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(rpssl_game.code, "game:rpssl", lang))
     await callback.answer()
 
-
-@router.callback_query(GameCallbackFilter("top", rpssl_game.code))
-async def menu_rpssl_top(callback: CallbackQuery, user, lang) -> None:
-    entries, viewer_entry = await get_game_leaderboard(rpssl_game.code, viewer_user_id=user.id)
-    title = f"*{lang['game-rpssl']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(callback.message, text,
-                    reply_markup=rpssl_menu_keyboard(lang, chat_type=callback.message.chat.type))
-    await callback.answer()
 
 
 @router.callback_query(F.data == "rpssl:noop")
