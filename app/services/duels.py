@@ -20,11 +20,14 @@ def build_duel_link(join_code: str) -> str | None:
     return f"https://t.me/{settings.bot_username}?start=join_{join_code}"
 
 
-def build_duel_share_link(join_code: str) -> str | None:
+def build_duel_share_link(join_code: str, share_text: str | None = None) -> str | None:
     link = build_duel_link(join_code)
     if link is None:
         return None
-    return f"https://t.me/share/url?url={quote(link, safe='')}"
+    url = f"https://t.me/share/url?url={quote(link, safe='')}"
+    if share_text:
+        url += f"&text={quote(share_text, safe='')}"
+    return url
 
 
 def build_duel_invite_text(lang: dict[str, str], join_code: str) -> str:

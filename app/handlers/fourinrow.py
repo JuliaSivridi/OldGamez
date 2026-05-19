@@ -264,7 +264,7 @@ async def start_four_duel(message: Message, user, lang: dict[str, str]) -> None:
     )
     invite_message = await message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
-        reply_markup=duel_invite_keyboard(lang, session.join_code or ""),
+        reply_markup=duel_invite_keyboard(lang, session.join_code or "", game_name=lang["game-four"]),
     )
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)

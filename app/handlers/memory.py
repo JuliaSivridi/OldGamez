@@ -221,7 +221,7 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     session = await create_private_duel_invite(user.id, callback.message.chat.id, game.code, state)
     invite_msg = await callback.message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
-        reply_markup=duel_invite_keyboard(lang, session.join_code or ""),
+        reply_markup=duel_invite_keyboard(lang, session.join_code or "", game_name=lang["game-mem"]),
     )
     set_duel_message_ref(state, user.id, invite_msg)
     await update_session_state(session.id, state, None)

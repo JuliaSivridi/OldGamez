@@ -245,12 +245,12 @@ async def _finish_game(callback: CallbackQuery, session_id: int, state: dict, fi
 
 # ── Multiplayer helpers ───────────────────────────────────────────────────────
 
-async def _start_rps_duel(message: Message, user, lang, g, wins_needed: int) -> None:
+async def _start_rps_duel(message: Message, user, lang, g, wins_needed: int, name_key: str = "") -> None:
     state = {"wins_needed": wins_needed, "status": "pending", "message_ids": {}}
     session = await create_private_duel_invite(user.id, message.chat.id, g.code, state)
     invite_message = await message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
-        reply_markup=duel_invite_keyboard(lang, session.join_code or ""),
+        reply_markup=duel_invite_keyboard(lang, session.join_code or "", game_name=lang[name_key] if name_key else None),
     )
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
@@ -457,7 +457,7 @@ async def menu_new_game_rps(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("duel", game.code))
 async def menu_new_duel_rps(callback: CallbackQuery, user, lang) -> None:
     wins_needed = int((user.settings or {}).get("rps_mode", 1))
-    await _start_rps_duel(callback.message, user, lang, game, wins_needed)
+    await _start_rps_duel(callback.message, user, lang, game, wins_needed, name_key="game-rps")
     await callback.answer()
 
 
@@ -546,7 +546,7 @@ async def menu_new_game_rpssl(callback: CallbackQuery, user, lang) -> None:
 @router.callback_query(GameCallbackFilter("duel", rpssl_game.code))
 async def menu_new_duel_rpssl(callback: CallbackQuery, user, lang) -> None:
     wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
-    await _start_rps_duel(callback.message, user, lang, rpssl_game, wins_needed)
+    await _start_rps_duel(callback.message, user, lang, rpssl_game, wins_needed, name_key="game-rpssl")
     await callback.answer()
 
 

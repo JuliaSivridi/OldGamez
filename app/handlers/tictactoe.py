@@ -235,7 +235,7 @@ async def start_tictactoe_duel(message: Message, user, lang: dict[str, str], siz
     )
     invite_message = await message.answer(
         build_duel_invite_text(lang, session.join_code or ""),
-        reply_markup=duel_invite_keyboard(lang, session.join_code or ""),
+        reply_markup=duel_invite_keyboard(lang, session.join_code or "", game_name=lang["game-xo"]),
     )
     set_duel_message_ref(state, user.id, invite_message)
     await update_session_state(session.id, state, None)
