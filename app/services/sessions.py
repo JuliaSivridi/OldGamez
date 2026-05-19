@@ -600,7 +600,7 @@ def format_leaderboard_text(
     lang: dict[str, str],
     viewer_entry: tuple[int, str, int] | None = None,
 ) -> str:
-    header = f"🏆 {game_title} | *{lang['top-ttl']}*"
+    header = f"{lang['icon-top']} {game_title} | *{lang['top-ttl']}*"
     if not entries:
         return f"{header}\n\n{lang['top-empty']}"
     lines = [header, ""]
