@@ -13,7 +13,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state
 from app.services.users import get_display_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard
 
@@ -418,8 +418,9 @@ async def start_group_blackjack(message: Message, user, lang: dict, menu_message
 
 async def open_blackjack_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
+    streak = await get_game_streak_line(user.id, game.code, lang)
     await message.answer(
-        _bj_menu_text(lang),
+        _bj_menu_text(lang) + streak,
         reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
 

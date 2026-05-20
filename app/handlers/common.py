@@ -18,9 +18,11 @@ from app.services.sessions import (
     format_leaderboard_text,
     format_variant_stats_text,
     get_all_game_stats,
+    get_cross_game_streak_line,
     get_game_leaderboard,
     get_game_stat,
     get_game_stats_bulk,
+    get_game_streak_line,
     get_global_leaderboard,
     get_user_rankings,
 )
@@ -349,6 +351,8 @@ async def open_game_callback(callback: CallbackQuery) -> None:
         await callback.answer()
         return
     text = text_fn(lang, user.settings) if g.open_needs_settings else text_fn(lang)
+    if g.stat is not None:
+        text += await get_game_streak_line(user.id, g.code, lang)
     markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
@@ -391,6 +395,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stat_games = [g for g in GAMES if g.stat is not None]
     stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
 
+    cross_streak = get_cross_game_streak_line(user, lang)
     stats_lines = [
         f"{lang['stat-col-played']:<8}{lang['icon-win']:<8}{lang['icon-lose']:<8}{lang['icon-draw']:<8}",
     ]
@@ -411,7 +416,8 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
 
     stats_lines.append(f"\n`{lang['stat-sum']}`")
     stats_lines.append(f"`{total_played:<6}{total_wins:<5}{total_losses:<5}{total_draws:<5}`")
-    stats_text = f"*{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
+    streak_header = cross_streak + "\n\n" if cross_streak else ""
+    stats_text = f"*{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
     await safe_edit(
         callback.message,
         stats_text,
@@ -714,7 +720,7 @@ async def callback_menu_page(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     await safe_edit(
         callback.message,
-        lang["main-ttl"],
+        lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
     )
     await callback.answer()
@@ -729,7 +735,7 @@ async def callback_menu_back(callback: CallbackQuery) -> None:
     await update_user_settings(user.id, {"current_game": None})
     await safe_edit(
         callback.message,
-        lang["main-ttl"],
+        lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
         reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
     )
     await callback.answer()

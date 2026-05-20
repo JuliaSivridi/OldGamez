@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -64,7 +65,7 @@ def timezone_regions_keyboard(lang: dict) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for region in TIMEZONE_REGIONS:
         builder.button(text=region, callback_data=f"profile:tz:region:{region}")
-    builder.button(text=lang["main-back"], callback_data="menu:profile")
+    builder.button(text=lang["main-back"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
     builder.adjust(2)
     return builder.as_markup()
 
@@ -73,6 +74,6 @@ def timezone_cities_keyboard(region: str, lang: dict) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for tz in TIMEZONE_REGIONS.get(region, []):
         builder.button(text=_tz_label(tz), callback_data=f"profile:tz:set:{tz}")
-    builder.button(text=lang["main-back"], callback_data="profile:tz")
+    builder.button(text=lang["main-back"], callback_data="profile:tz", style=ButtonStyle.SUCCESS)
     builder.adjust(2)
     return builder.as_markup()

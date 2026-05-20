@@ -1,9 +1,9 @@
 ﻿from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 
-from sqlalchemy import JSON, BigInteger, DateTime, Enum as SqlEnum, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, Date, DateTime, Enum as SqlEnum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,6 +33,9 @@ class User(Base):
     last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10), default="ru")
     settings: Mapped[dict] = mapped_column(JSON, default=dict)
+    last_win_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    current_win_streak: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    best_win_streak: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -104,3 +107,15 @@ class GameStat(Base):
     losses: Mapped[int] = mapped_column(Integer, default=0)
     draws: Mapped[int] = mapped_column(Integer, default=0)
     best_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class UserGameStreak(Base):
+    __tablename__ = "user_game_streaks"
+    __table_args__ = (UniqueConstraint("user_id", "game_code", name="uq_user_game_streak"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    game_code: Mapped[str] = mapped_column(String(50), index=True)
+    last_win_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    current_win_streak: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    best_win_streak: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

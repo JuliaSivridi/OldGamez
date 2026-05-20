@@ -29,6 +29,7 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
+    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -332,8 +333,9 @@ def _four_menu_text(lang: dict) -> str:
 
 async def open_four_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
+    streak = await get_game_streak_line(user.id, game.code, lang)
     await message.answer(
-        _four_menu_text(lang),
+        _four_menu_text(lang) + streak,
         reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
 

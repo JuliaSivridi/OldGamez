@@ -11,6 +11,7 @@ from app.i18n.translator import get_language_pack, normalize_language_code
 from app.services.sessions import (
     create_solo_session,
     finish_session,
+    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -51,7 +52,8 @@ def _wrd_menu_text(lang: dict) -> str:
 
 async def open_wordle_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
-    await message.answer(_wrd_menu_text(lang), reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
+    streak = await get_game_streak_line(user.id, game.code, lang)
+    await message.answer(_wrd_menu_text(lang) + streak, reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type))
 
 async def start_wordle_game(message: Message, user, lang, lang_code: str, menu_message_id: int | None = None) -> None:
     state = game.new_game_state(lang_code=lang_code)

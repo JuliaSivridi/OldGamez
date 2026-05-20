@@ -1,15 +1,16 @@
 ﻿from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from dataclasses import dataclass, field as dc_field
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 
-from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User
+from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User, UserGameStreak
 from app.db.session import SessionLocal
 from app.services.users import get_display_name
 
@@ -352,6 +353,16 @@ class GameStatSummary:
     draws: int = 0
 
 
+def _compute_streak(
+    last_win_date: date | None, current: int, best: int, today: date
+) -> tuple[date, int, int]:
+    """Return (new_last_win_date, new_current_streak, new_best_streak)."""
+    if last_win_date == today:
+        return last_win_date, current, best  # already counted today
+    new_current = (current + 1) if last_win_date == today - timedelta(days=1) else 1
+    return today, new_current, max(best, new_current)
+
+
 async def record_game_result(
     user_id: int,
     game_code: str,
@@ -399,6 +410,54 @@ async def record_game_result(
             )
             .values(**values)
         )
+
+        if result == "win":
+            # Determine user's local "today"
+            user_row = await session.execute(
+                select(User).where(User.id == user_id).with_for_update()
+            )
+            user_obj = user_row.scalar_one_or_none()
+            tz_str = ((user_obj.settings or {}).get("timezone", "UTC")) if user_obj else "UTC"
+            try:
+                tz = ZoneInfo(tz_str)
+            except Exception:
+                tz = ZoneInfo("UTC")
+            today = datetime.now(tz).date()
+
+            # Per-game streak
+            gs_row = await session.execute(
+                select(UserGameStreak).where(
+                    UserGameStreak.user_id == user_id,
+                    UserGameStreak.game_code == game_code,
+                ).with_for_update()
+            )
+            gs = gs_row.scalar_one_or_none()
+            if gs is None:
+                session.add(UserGameStreak(
+                    user_id=user_id, game_code=game_code,
+                    last_win_date=today, current_win_streak=1, best_win_streak=1,
+                ))
+            else:
+                g_last, g_cur, g_best = _compute_streak(
+                    gs.last_win_date, gs.current_win_streak or 0, gs.best_win_streak or 0, today
+                )
+                await session.execute(
+                    update(UserGameStreak)
+                    .where(UserGameStreak.user_id == user_id, UserGameStreak.game_code == game_code)
+                    .values(last_win_date=g_last, current_win_streak=g_cur, best_win_streak=g_best)
+                )
+
+            # Cross-game streak
+            if user_obj:
+                u_last, u_cur, u_best = _compute_streak(
+                    user_obj.last_win_date, user_obj.current_win_streak or 0,
+                    user_obj.best_win_streak or 0, today
+                )
+                await session.execute(
+                    update(User).where(User.id == user_id)
+                    .values(last_win_date=u_last, current_win_streak=u_cur, best_win_streak=u_best)
+                )
+
         await session.commit()
 
 
@@ -656,3 +715,46 @@ def format_leaderboard_text(
         lines.append("...")
         lines.append(f"{pos}. {name} : {score}")
     return "\n".join(lines)
+
+
+# ── Streak display helpers ────────────────────────────────────────────────────
+
+def _format_streak_line(current: int, best: int, last_win_date: date | None, lang: dict) -> str:
+    """Format per-game or cross-game streak line. Returns '' when no data."""
+    parts: list[str] = []
+    if current > 0:
+        if best > current:
+            parts.append(f"🔥 {current}  ({lang['streak-best']}: {best})")
+        else:
+            parts.append(f"🔥 {current}")
+    if last_win_date:
+        parts.append(f"📅 {last_win_date.strftime('%d.%m.%Y')}")
+    return "\n" + "  ".join(parts) if parts else ""
+
+
+async def get_game_streak_line(user_id: int, game_code: str, lang: dict) -> str:
+    """Fetch per-game streak from DB and return formatted line (or '')."""
+    async with SessionLocal() as session:
+        row = await session.execute(
+            select(UserGameStreak).where(
+                UserGameStreak.user_id == user_id,
+                UserGameStreak.game_code == game_code,
+            )
+        )
+        gs = row.scalar_one_or_none()
+    if gs is None:
+        return ""
+    return _format_streak_line(gs.current_win_streak or 0, gs.best_win_streak or 0, gs.last_win_date, lang)
+
+
+def get_cross_game_streak_line(user, lang: dict, brief: bool = False) -> str:
+    """Return cross-game streak line from already-loaded User object.
+    brief=True → only current streak number (for main menu)."""
+    current = getattr(user, "current_win_streak", None) or 0
+    if not current:
+        return ""
+    if brief:
+        return f"\n🔥 {current}"
+    best = getattr(user, "best_win_streak", None) or 0
+    last_win_date = getattr(user, "last_win_date", None)
+    return _format_streak_line(current, best, last_win_date, lang)

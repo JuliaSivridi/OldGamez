@@ -25,6 +25,7 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
+    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
@@ -200,15 +201,17 @@ def _rpssl_cb_text(lang: dict, user_settings: dict | None) -> str:
 
 async def open_ropasci_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
+    streak = await get_game_streak_line(user.id, game.code, lang)
     await message.answer(
-        _rps_menu_text(lang, user.settings, "game-rps"),
+        _rps_menu_text(lang, user.settings, "game-rps") + streak,
         reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
 
 async def open_rpssl_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": rpssl_game.code})
+    streak = await get_game_streak_line(user.id, rpssl_game.code, lang)
     await message.answer(
-        _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode"),
+        _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode") + streak,
         reply_markup=get_game_keyboard(rpssl_game.code, lang, chat_type=message.chat.type),
     )
 

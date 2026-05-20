@@ -9,7 +9,7 @@ from app.games.hangman.keyboards import letters_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack, normalize_language_code
-from app.services.sessions import create_solo_session, finish_session, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state
 from app.services.users import update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard
 
@@ -65,8 +65,9 @@ def _hang_menu_text(lang: dict, user_settings: dict | None) -> str:
 
 async def open_hangman_menu(message: Message, user, lang) -> None:
     await update_user_settings(user.id, {"current_game": game.code})
+    streak = await get_game_streak_line(user.id, game.code, lang)
     await message.answer(
-        _hang_menu_text(lang, user.settings),
+        _hang_menu_text(lang, user.settings) + streak,
         reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
     )
 
