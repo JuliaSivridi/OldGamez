@@ -754,7 +754,7 @@ def get_cross_game_streak_line(user, lang: dict, brief: bool = False) -> str:
     if not current:
         return ""
     if brief:
-        return f"\n🔥 {current}"
+        return f"\n🔥 {lang.get('streak-label', 'Win streak')}: {current}"
     best = getattr(user, "best_win_streak", None) or 0
     last_win_date = getattr(user, "last_win_date", None)
     return _format_streak_line(current, best, last_win_date, lang)
