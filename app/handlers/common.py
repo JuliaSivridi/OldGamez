@@ -11,6 +11,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.language import language_keyboard
 from app.keyboards.menus import display_name_keyboard, game_menu_keyboard, main_menu_keyboard, profile_keyboard, rankings_keyboard
+from app.keyboards.timezone import TIMEZONE_REGIONS, timezone_cities_keyboard, timezone_regions_keyboard
 from app.services.sessions import (
     _TOP_MEDALS,
     format_game_stats_text,
@@ -526,7 +527,11 @@ def _user_identity_line(user) -> str:
     if user.username:
         parts.append(f"@{user.username}")
     parts.append(f"#`{user.telegram_user_id}`")
-    return " — ".join(parts)
+    line = " — ".join(parts)
+    tz = (user.settings or {}).get("timezone")
+    if tz:
+        line += f"\n🌍 {tz}"
+    return line
 
 
 @router.callback_query(F.data == "menu:profile")
@@ -625,6 +630,49 @@ async def callback_profile_name_set(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
     await callback.answer()
+
+
+@router.callback_query(F.data == "profile:tz")
+async def callback_profile_tz(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    current_tz = (user.settings or {}).get("timezone", "UTC")
+    text = f"{lang['profile-tz-region']}\n\n🌍 {current_tz}"
+    await safe_edit(callback.message, text, reply_markup=timezone_regions_keyboard(lang))
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("profile:tz:region:"))
+async def callback_profile_tz_region(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    region = callback.data[len("profile:tz:region:"):]
+    if region not in TIMEZONE_REGIONS:
+        await callback.answer()
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, lang["profile-tz-city"], reply_markup=timezone_cities_keyboard(region, lang))
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("profile:tz:set:"))
+async def callback_profile_tz_set(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    tz = callback.data[len("profile:tz:set:"):]
+    # Validate against our curated list
+    all_tz = [t for tzs in TIMEZONE_REGIONS.values() for t in tzs]
+    if tz not in all_tz:
+        await callback.answer()
+        return
+    user = await upsert_user(callback.from_user)
+    user = await update_user_settings(user.id, {"timezone": tz})
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await callback.answer(f"✅ {tz}")
 
 
 @router.callback_query(F.data == "menu:lang")

@@ -95,10 +95,11 @@ def game_menu_keyboard(
 def profile_keyboard(lang: dict[str, str]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text=lang["menu-name"], callback_data="profile:name")
+    builder.button(text=lang["menu-tz"], callback_data="profile:tz")
     builder.button(text=lang["menu-rankings"], callback_data="profile:rankings", style=ButtonStyle.PRIMARY)
     builder.button(text=lang["menu-lang"], callback_data="menu:lang", style=ButtonStyle.SUCCESS)
     builder.button(text=lang["main-back"], callback_data="main:back", style=ButtonStyle.SUCCESS)
-    builder.adjust(2, 2)
+    builder.adjust(2, 2, 1)
     return builder.as_markup()
 
 
