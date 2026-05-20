@@ -530,7 +530,7 @@ def format_game_stats_text(
         "losses": stat.losses if stat else 0,
         "draws": stat.draws if stat else 0,
     }
-    result = f"*{lang['stat-ttl']}*\n"
+    result = ""
     for field in fields:
         label = lang[_STAT_FIELD_KEYS[field]]
         result += f"`{label}{str(values[field]).rjust(20 - len(label))}`"
@@ -566,7 +566,7 @@ def format_variant_stats_text(
     # emoji renders as 2 visual chars but counts as 1 in Python str len,
     # so use (col_w - 2) trailing spaces to keep header columns visually aligned with data
     header = " " * lbl_w + "".join(f"{e}{' ' * (col_w - 2)}" for e in col_emojis)
-    lines = [f"*{lang['stat-ttl']}*", "", f"`{header}`"]
+    lines = ["", f"`{header}`"]
 
     for stat in stats:
         label = variant_labels.get(stat.variant_key, stat.variant_key)

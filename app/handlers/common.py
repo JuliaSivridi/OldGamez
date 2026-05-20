@@ -9,6 +9,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, LabeledPrice, Mes
 from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
+from app.i18n.languages import LANGUAGE_CHOICES
 from app.keyboards.language import language_keyboard
 from app.keyboards.menus import display_name_keyboard, game_menu_keyboard, main_menu_keyboard, profile_keyboard, rankings_keyboard
 from app.keyboards.timezone import TIMEZONE_REGIONS, timezone_cities_keyboard, timezone_regions_keyboard
@@ -340,6 +341,56 @@ async def cmd_start(message: Message) -> None:
     )
 
 
+@router.message(Command("games"))
+async def cmd_games_command(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(lang["game-ttl"], 
+        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
+
+
+@router.callback_query(F.data == "menu:games")
+async def callback_menu_games(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, lang["game-ttl"],
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("menu:page:"))
+async def callback_menu_page(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    page = int(callback.data.split(":")[2])
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(callback.message, lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu:top")
+async def callback_menu_top(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    entries, viewer_entry = await get_global_leaderboard(viewer_user_id=user.id)
+    title = f"*{lang['top-all-games']}*"
+    text = format_leaderboard_text(entries, title, lang, viewer_entry)
+    await safe_edit(callback.message, text,
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
 @router.message(Command(*GAME_COMMAND_MAP.keys()))
 async def cmd_game(message: Message, command: CommandObject) -> None:
     if message.from_user is None:
@@ -377,133 +428,6 @@ async def open_game_callback(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.callback_query(F.data == "menu:games")
-async def callback_menu_games(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["game-ttl"],
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.message(Command("games"))
-async def cmd_games_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
-
-
-@router.callback_query(F.data == "menu:stats")
-async def callback_menu_stats(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-
-    stat_games = [g for g in GAMES if g.stat is not None]
-    stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
-
-    cross_streak = get_cross_game_streak_line(user, lang)
-
-    # col widths (display): played=4, wins=3, losses=3, draws=3
-    col_hdr = (
-        f"`{'🕹':<3}"   # 3 Python → 4 display
-        f"{'🏆':<2}"    # 2 Python → 3 display
-        f"{'💀':<2}"    # 2 Python → 3 display
-        f"{'🤝':<2}`"   # 2 Python → 3 display
-    )
-    stats_lines: list[str] = [col_hdr]
-    total_played = total_wins = total_losses = total_draws = 0
-
-    for g in stat_games:
-        stat = stats_map.get(g.code)
-        played = stat.played if stat is not None else 0
-        wins = stat.wins if stat is not None else 0
-        losses = stat.losses if stat is not None else 0
-        draws = stat.draws if stat is not None else 0
-        total_played += played
-        total_wins += wins
-        total_losses += losses
-        total_draws += draws
-
-        first_icon = lang[g.icon_key].split()[0]
-        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
-        stats_lines.append(
-            f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{first_icon} {name}`"
-        )
-
-    stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆{total_wins}  💀{total_losses}  🤝{total_draws}`")
-    streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
-    stats_text = f"*{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
-    await safe_edit(
-        callback.message,
-        stats_text,
-        reply_markup=rankings_keyboard(lang),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data == "menu:streaks")
-async def callback_menu_streaks(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-
-    stat_games = [g for g in GAMES if g.stat is not None]
-    streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
-
-    # col widths (display): current=3, best=4, date=6
-    col_hdr = (
-        f"`{'🔥':<2}"   # 2 Python → 3 display
-        f"{'🏅':<3}"    # 3 Python → 4 display
-        f"{'📅':<5}`"   # 5 Python → 6 display
-    )
-    streak_lines: list[str] = [col_hdr]
-
-    for g in stat_games:
-        gs = streak_map.get(g.code)
-        cur = (gs.current_win_streak or 0) if gs else 0
-        best = (gs.best_win_streak or 0) if gs else 0
-        last_date = gs.last_win_date if gs else None
-        cur_str = str(cur) if cur else "—"
-        best_str = str(best) if best else "—"
-        date_str = last_date.strftime("%d.%m") if last_date else "—"
-
-        first_icon = lang[g.icon_key].split()[0]
-        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
-        streak_lines.append(
-            f"`{cur_str:<3}{best_str:<4}{date_str:<6}{first_icon} {name}`"
-        )
-
-    streaks_text = f"*{lang['stat-streak-ttl']}*\n\n" + "\n".join(streak_lines) + "\n"
-    await safe_edit(
-        callback.message,
-        streaks_text,
-        reply_markup=rankings_keyboard(lang),
-    )
-    await callback.answer()
-
-
-@router.message(Command("lang"))
-async def cmd_lang_command(message: Message) -> None:
-    if message.from_user is None:
-        return
-    user = await upsert_user(message.from_user)
-    lang = get_language_pack(user.language_code)
-    await message.answer(
-        lang["lang-ask"],
-        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
-    )
-
-
 @router.callback_query(F.data.startswith("game:stat:"))
 async def callback_game_stat(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
@@ -519,17 +443,17 @@ async def callback_game_stat(callback: CallbackQuery) -> None:
     if markup is None:
         await callback.answer()
         return
-    game_title = f"{lang['icon-stat']} *{lang[g.name_key]}*"
+    text = f"{lang['icon-stat']} *{lang[g.name_key]}* | *{lang['stat-ttl']}*\n"
     if g.stat.variant:
         stats = await get_all_game_stats(user.id, game_code)
         stats.sort(key=g.stat.sort_key)
         labels = g.stat.variant_labels(lang)
-        text = game_title + " | " + format_variant_stats_text(
+        text += format_variant_stats_text(
             stats, lang, labels, g.stat.fields, has_best_score=g.stat.has_best_score
         )
     else:
         stat = await get_game_stat(user.id, game_code)
-        text = game_title + " | " + format_game_stats_text(stat, lang, g.stat.fields)
+        text += format_game_stats_text(stat, lang, g.stat.fields)
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
@@ -576,33 +500,15 @@ async def callback_game_top(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-@router.callback_query(F.data == "menu:top")
-async def callback_menu_top(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    entries, viewer_entry = await get_global_leaderboard(viewer_user_id=user.id)
-    title = f"*{lang['top-all-games']}*"
-    text = format_leaderboard_text(entries, title, lang, viewer_entry)
-    await safe_edit(
-        callback.message,
-        text,
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
 def _user_identity_line(user) -> str:
-    name_parts = [p for p in [user.first_name, user.last_name] if p]
-    parts = [" ".join(name_parts) or str(user.telegram_user_id)]
-    if user.username:
-        parts.append(f"@{user.username}")
-    parts.append(f"#`{user.telegram_user_id}`")
-    line = " — ".join(parts)
+    line = get_display_name(user)
+
+    display_name = next((name for name, code in LANGUAGE_CHOICES.items() if code == user.language_code), "🇬🇧 English")
+    line += f" | {display_name}"
+
     tz = (user.settings or {}).get("timezone")
     if tz:
-        line += f"\n🌍 {tz}"
+        line += f" | 🌍 {tz}"
     return line
 
 
@@ -616,6 +522,94 @@ async def callback_menu_profile(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.callback_query(F.data == "profile:streaks")
+async def callback_profile_streaks(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+
+    stat_games = [g for g in GAMES if g.stat is not None]
+    streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
+
+    # col widths (display): current=3, best=4, date=6
+    col_hdr = (
+        f"`{'🔥':<2}"   # 2 Python → 3 display
+        f"{'🏅':<3}"    # 3 Python → 4 display
+        f"{'📅':<5}`"   # 5 Python → 6 display
+    )
+    streak_lines: list[str] = [col_hdr]
+
+    for g in stat_games:
+        gs = streak_map.get(g.code)
+        cur = (gs.current_win_streak or 0) if gs else 0
+        best = (gs.best_win_streak or 0) if gs else 0
+        last_date = gs.last_win_date if gs else None
+        cur_str = str(cur) if cur else "—"
+        best_str = str(best) if best else "—"
+        date_str = last_date.strftime("%d.%m") if last_date else "—"
+
+        first_icon = lang[g.icon_key].split()[0]
+        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
+        streak_lines.append(
+            f"`{cur_str:<3}{best_str:<4}{date_str:<6}{first_icon} {name}`"
+        )
+
+    streaks_text = f"{lang['stat-col-streak']} *{lang['stat-streak-ttl']}*\n\n" + "\n".join(streak_lines) + "\n"
+    await safe_edit(callback.message, streaks_text,
+        reply_markup=rankings_keyboard(lang),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "profile:stats")
+async def callback_profile_stats(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+
+    stat_games = [g for g in GAMES if g.stat is not None]
+    stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
+
+    cross_streak = get_cross_game_streak_line(user, lang)
+
+    # col widths (display): played=4, wins=3, losses=3, draws=3
+    col_hdr = (
+        f"`{'🕹':<3}"   # 3 Python → 4 display
+        f"{'🏆':<2}"    # 2 Python → 3 display
+        f"{'💀':<2}"    # 2 Python → 3 display
+        f"{'🤝':<2}`"   # 2 Python → 3 display
+    )
+    stats_lines: list[str] = [col_hdr]
+    total_played = total_wins = total_losses = total_draws = 0
+
+    for g in stat_games:
+        stat = stats_map.get(g.code)
+        played = stat.played if stat is not None else 0
+        wins = stat.wins if stat is not None else 0
+        losses = stat.losses if stat is not None else 0
+        draws = stat.draws if stat is not None else 0
+        total_played += played
+        total_wins += wins
+        total_losses += losses
+        total_draws += draws
+
+        first_icon = lang[g.icon_key].split()[0]
+        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
+        stats_lines.append(
+            f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{first_icon} {name}`"
+        )
+
+    stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆{total_wins}  💀{total_losses}  🤝{total_draws}`")
+    streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
+    stats_text = f"{lang['icon-stat']} *{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
+    await safe_edit(callback.message, stats_text,
+        reply_markup=rankings_keyboard(lang),
+    )
+    await callback.answer()
+
+
 @router.callback_query(F.data == "profile:rankings")
 async def callback_profile_rankings(callback: CallbackQuery) -> None:
     if callback.from_user is None:
@@ -625,7 +619,7 @@ async def callback_profile_rankings(callback: CallbackQuery) -> None:
     rankings = await get_user_rankings(user.id)
 
     if not rankings:
-        body = lang["profile-rankings-empty"]
+        text = lang["profile-rankings-empty"]
     else:
         lines = [f"*{lang['menu-rankings']}*", ""]
         for game_code, pos in rankings:
@@ -633,9 +627,8 @@ async def callback_profile_rankings(callback: CallbackQuery) -> None:
             game_name = lang[g.name_key] if g else game_code
             medal = _TOP_MEDALS[pos - 1] if pos <= len(_TOP_MEDALS) else f"#{pos}"
             lines.append(f"{medal}  {lang[g.icon_key]} {game_name}")
-        body = "\n".join(lines)
+        text = "\n".join(lines)
 
-    text = _user_identity_line(user) + "\n\n" + body
     await safe_edit(callback.message, text, parse_mode="Markdown", reply_markup=rankings_keyboard(lang))
     await callback.answer()
 
@@ -649,9 +642,7 @@ async def callback_profile_name(callback: CallbackQuery) -> None:
     purchased_anon = bool((user.settings or {}).get("purchased_anon"))
     current = get_display_name(user)
     text = lang["profile-name-ask"].format(value=current) + f"\n\n_{lang['profile-name-anon-hint']}_"
-    await safe_edit(
-        callback.message,
-        text,
+    await safe_edit(callback.message, text,
         parse_mode="Markdown",
         reply_markup=display_name_keyboard(lang, user.first_name, user.last_name, user.username, purchased_anon),
     )
@@ -704,6 +695,46 @@ async def callback_profile_name_set(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+@router.message(Command("lang"))
+async def cmd_lang_command(message: Message) -> None:
+    if message.from_user is None:
+        return
+    user = await upsert_user(message.from_user)
+    lang = get_language_pack(user.language_code)
+    await message.answer(
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=message.chat.type),
+    )
+
+
+@router.callback_query(F.data == "profile:lang")
+async def callback_profile_lang(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+    await safe_edit(
+        callback.message,
+        lang["lang-ask"],
+        reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("lang:"))
+async def callback_language_choice(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    lang_code = callback.data.split(":")[1]
+    user = await upsert_user(callback.from_user)
+    await update_user_language(user.id, lang_code)
+    lang = get_language_pack(lang_code)
+    await safe_edit(callback.message, lang["lang-ok"],
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+    )
+    await callback.answer()
+
+
 @router.callback_query(F.data == "profile:tz")
 async def callback_profile_tz(callback: CallbackQuery) -> None:
     if callback.from_user is None:
@@ -745,51 +776,6 @@ async def callback_profile_tz_set(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
     await callback.answer(f"✅ {tz}")
-
-
-@router.callback_query(F.data == "menu:lang")
-async def callback_menu_lang(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
-        return
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["lang-ask"],
-        reply_markup=language_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("lang:"))
-async def callback_language_choice(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
-        return
-    lang_code = callback.data.split(":")[1]
-    user = await upsert_user(callback.from_user)
-    await update_user_language(user.id, lang_code)
-    lang = get_language_pack(lang_code)
-    await safe_edit(
-        callback.message,
-        lang["lang-ok"],
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("menu:page:"))
-async def callback_menu_page(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    page = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await safe_edit(
-        callback.message,
-        lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
-    )
-    await callback.answer()
 
 
 @router.callback_query(F.data == "main:back")

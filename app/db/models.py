@@ -31,7 +31,7 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(64), nullable=True)
     first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    language_code: Mapped[str] = mapped_column(String(10), default="ru")
+    language_code: Mapped[str] = mapped_column(String(10), default="en")
     settings: Mapped[dict] = mapped_column(JSON, default=dict)
     last_win_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     current_win_streak: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
