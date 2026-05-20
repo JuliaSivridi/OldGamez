@@ -410,46 +410,84 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stat_games = [g for g in GAMES if g.stat is not None]
     stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
 
-    streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
     cross_streak = get_cross_game_streak_line(user, lang)
 
-    # Column header in monospace — subtract 1 from width per emoji (emoji=1 Python char but 2 display cols)
-    # col widths (display): played=4, wins=3, streak=3, date=6
+    # col widths (display): played=4, wins=3, losses=3, draws=3
     col_hdr = (
         f"`{'🕹':<3}"   # 3 Python → 4 display
         f"{'🏆':<2}"    # 2 Python → 3 display
-        f"{'🔥':<2}"    # 2 Python → 3 display
-        f"{'📅':<5}`"   # 5 Python → 6 display
+        f"{'💀':<2}"    # 2 Python → 3 display
+        f"{'🤝':<2}`"   # 2 Python → 3 display
     )
     stats_lines: list[str] = [col_hdr]
-    total_played = total_wins = 0
+    total_played = total_wins = total_losses = total_draws = 0
 
     for g in stat_games:
         stat = stats_map.get(g.code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
+        losses = stat.losses if stat is not None else 0
+        draws = stat.draws if stat is not None else 0
         total_played += played
         total_wins += wins
-
-        gs = streak_map.get(g.code)
-        streak_cur = (gs.current_win_streak or 0) if gs else 0
-        last_date = gs.last_win_date if gs else None
-        streak_str = str(streak_cur) if streak_cur else "—"
-        date_str = last_date.strftime("%d.%m") if last_date else "—"
+        total_losses += losses
+        total_draws += draws
 
         first_icon = lang[g.icon_key].split()[0]
         name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
         stats_lines.append(
-            f"`{played:<4}{wins:<3}{streak_str:<3}{date_str:<6}{first_icon} {name}`"
+            f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{first_icon} {name}`"
         )
 
-    stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆 {total_wins}`")
+    stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆{total_wins}  💀{total_losses}  🤝{total_draws}`")
     streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
     stats_text = f"*{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
     await safe_edit(
         callback.message,
         stats_text,
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=rankings_keyboard(lang),
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "menu:streaks")
+async def callback_menu_streaks(callback: CallbackQuery) -> None:
+    if callback.from_user is None or callback.message is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+
+    stat_games = [g for g in GAMES if g.stat is not None]
+    streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
+
+    # col widths (display): current=3, best=4, date=6
+    col_hdr = (
+        f"`{'🔥':<2}"   # 2 Python → 3 display
+        f"{'🏅':<3}"    # 3 Python → 4 display
+        f"{'📅':<5}`"   # 5 Python → 6 display
+    )
+    streak_lines: list[str] = [col_hdr]
+
+    for g in stat_games:
+        gs = streak_map.get(g.code)
+        cur = (gs.current_win_streak or 0) if gs else 0
+        best = (gs.best_win_streak or 0) if gs else 0
+        last_date = gs.last_win_date if gs else None
+        cur_str = str(cur) if cur else "—"
+        best_str = str(best) if best else "—"
+        date_str = last_date.strftime("%d.%m") if last_date else "—"
+
+        first_icon = lang[g.icon_key].split()[0]
+        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
+        streak_lines.append(
+            f"`{cur_str:<3}{best_str:<4}{date_str:<6}{first_icon} {name}`"
+        )
+
+    streaks_text = f"*{lang['stat-streak-ttl']}*\n\n" + "\n".join(streak_lines) + "\n"
+    await safe_edit(
+        callback.message,
+        streaks_text,
+        reply_markup=rankings_keyboard(lang),
     )
     await callback.answer()
 
