@@ -414,12 +414,12 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     cross_streak = get_cross_game_streak_line(user, lang)
 
     # Column header in monospace — subtract 1 from width per emoji (emoji=1 Python char but 2 display cols)
-    # col widths (display): played=5, wins=4, streak=3, date=7
+    # col widths (display): played=4, wins=3, streak=3, date=6
     col_hdr = (
-        f"`{'🕹':<4}"   # 4 Python → 5 display
-        f"{'🏆':<3}"    # 3 Python → 4 display
+        f"`{'🕹':<3}"   # 3 Python → 4 display
+        f"{'🏆':<2}"    # 2 Python → 3 display
         f"{'🔥':<2}"    # 2 Python → 3 display
-        f"{'📅':<6}`"   # 6 Python → 7 display
+        f"{'📅':<5}`"   # 5 Python → 6 display
     )
     stats_lines: list[str] = [col_hdr]
     total_played = total_wins = 0
@@ -440,7 +440,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         first_icon = lang[g.icon_key].split()[0]
         name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
         stats_lines.append(
-            f"`{played:<5}{wins:<4}{streak_str:<3}{date_str:<7}{first_icon} {name}`"
+            f"`{played:<4}{wins:<3}{streak_str:<3}{date_str:<6}{first_icon} {name}`"
         )
 
     stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆 {total_wins}`")
