@@ -72,6 +72,7 @@ class GameConfig:
     open_needs_settings: bool = False
     keyboard: KeyboardConfig | None = None
     stat: StatConfig | None = None    # None for games without stats (random)
+    stat_abbr_key: str | None = None  # i18n key for short name used in stats table; None = use name_key
 
 
 GAMES: list[GameConfig] = [
@@ -86,6 +87,7 @@ GAMES: list[GameConfig] = [
             sort_key=_DIGIT_SORT,
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
         ),
+        stat_abbr_key="game-xo-s",
     ),
     GameConfig(
         code="four_in_row", icon_key="icon-four", name_key="game-four", help_key="help-four",
@@ -94,6 +96,7 @@ GAMES: list[GameConfig] = [
         open_suffix="four", open_text_fn="app.handlers.fourinrow:_four_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        stat_abbr_key="game-four-s",
     ),
     GameConfig(
         code="battleship", icon_key="icon-sea", name_key="game-sea", help_key="help-sea",
@@ -102,6 +105,7 @@ GAMES: list[GameConfig] = [
         open_suffix="sea", open_text_fn="app.handlers.battleship:_sea_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", None),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+        stat_abbr_key="game-sea-s",
     ),
     GameConfig(
         code="minesweeper", icon_key="icon-mines", name_key="game-mines", help_key="help-mines",
@@ -113,6 +117,7 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        stat_abbr_key="game-mines-s",
     ),
     GameConfig(
         code="lightsout", icon_key="icon-lightsout", name_key="game-lightsout", help_key="help-lightsout",
@@ -126,6 +131,7 @@ GAMES: list[GameConfig] = [
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in (4, 5, 6)},
             has_best_score=True,
         ),
+        stat_abbr_key="game-lightsout-s",
     ),
     GameConfig(
         code="npuzzle", icon_key="icon-npuzzle", name_key="game-npuzzle", help_key="help-npuzzle",
@@ -139,6 +145,7 @@ GAMES: list[GameConfig] = [
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
             has_best_score=True,
         ),
+        stat_abbr_key="game-npuzzle-s",
     ),
     GameConfig(
         code="mastermind", icon_key="icon-mastermind", name_key="game-mastermind", help_key="help-mastermind",
@@ -150,6 +157,7 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        stat_abbr_key="game-mastermind-s",
     ),
     GameConfig(
         code="bullscows", icon_key="icon-bullscows", name_key="game-bullscows", help_key="help-bullscows",
@@ -161,6 +169,7 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        stat_abbr_key="game-bullscows-s",
     ),
     GameConfig(
         code="wordle", icon_key="icon-wordle", name_key="game-wordle", help_key="help-wordle",
@@ -180,6 +189,7 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        stat_abbr_key="game-hang-s",
     ),
     GameConfig(
         code="memory", icon_key="icon-mem", name_key="game-mem", help_key="help-mem",
@@ -192,6 +202,7 @@ GAMES: list[GameConfig] = [
             sort_key=_DIGIT_SORT, variant_labels=_memory_labels,
             has_best_score=True,
         ),
+        stat_abbr_key="game-mem-s",
     ),
     GameConfig(
         code="blackjack", icon_key="icon-bj", name_key="game-bj", help_key="help-bj",
@@ -200,6 +211,7 @@ GAMES: list[GameConfig] = [
         open_suffix="bj", open_text_fn="app.handlers.blackjack:_bj_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        stat_abbr_key="game-bj-s",
     ),
     GameConfig(
         code="ropasci", icon_key="icon-rps", name_key="game-rps", help_key="help-rps",
@@ -208,6 +220,7 @@ GAMES: list[GameConfig] = [
         open_suffix="rps", open_text_fn="app.handlers.ropasci:_ropasci_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        stat_abbr_key="game-rps-s",
     ),
     GameConfig(
         code="rpssl", icon_key="icon-rpssl", name_key="game-rpssl", help_key="help-rpssl",
@@ -216,6 +229,7 @@ GAMES: list[GameConfig] = [
         open_suffix="rpssl", open_text_fn="app.handlers.ropasci:_rpssl_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        stat_abbr_key="game-rpssl-s",
     ),
     GameConfig(
         code="random", icon_key="icon-rand", name_key="game-rand", help_key="help-rand",
@@ -424,7 +438,7 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         date_str = last_date.strftime("%d.%m") if last_date else "—"
 
         first_icon = lang[g.icon_key].split()[0]
-        name = lang.get(g.name_key + "-s", lang[g.name_key])
+        name = lang.get(g.stat_abbr_key, lang[g.name_key]) if g.stat_abbr_key else lang[g.name_key]
         stats_lines.append(
             f"`{played:<5}{wins:<4}{streak_str:<3}{date_str:<7}{first_icon} {name}`"
         )
