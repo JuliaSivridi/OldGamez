@@ -732,6 +732,18 @@ def _format_streak_line(current: int, best: int, last_win_date: date | None, lan
     return "\n" + "  ".join(parts) if parts else ""
 
 
+async def get_game_streaks_bulk(user_id: int, game_codes: list[str]) -> dict[str, "UserGameStreak"]:
+    """Return {game_code: UserGameStreak} for all requested codes that have a record."""
+    async with SessionLocal() as session:
+        rows = await session.execute(
+            select(UserGameStreak).where(
+                UserGameStreak.user_id == user_id,
+                UserGameStreak.game_code.in_(game_codes),
+            )
+        )
+        return {gs.game_code: gs for gs in rows.scalars().all()}
+
+
 async def get_game_streak_line(user_id: int, game_code: str, lang: dict) -> str:
     """Fetch per-game streak from DB and return formatted line (or '')."""
     async with SessionLocal() as session:

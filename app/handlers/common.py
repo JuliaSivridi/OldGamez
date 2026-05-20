@@ -23,6 +23,7 @@ from app.services.sessions import (
     get_game_stat,
     get_game_stats_bulk,
     get_game_streak_line,
+    get_game_streaks_bulk,
     get_global_leaderboard,
     get_user_rankings,
 )
@@ -395,27 +396,39 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     stat_games = [g for g in GAMES if g.stat is not None]
     stats_map = await get_game_stats_bulk(user.id, [g.code for g in stat_games])
 
+    streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
     cross_streak = get_cross_game_streak_line(user, lang)
-    stats_lines = [
-        f"{lang['stat-col-played']:<8}{lang['icon-win']:<8}{lang['icon-lose']:<8}{lang['icon-draw']:<8}",
-    ]
-    total_played = total_wins = total_losses = total_draws = 0
+
+    # Column header (plain text — emoji align naturally outside monospace)
+    col_hdr = (
+        f"{lang['stat-col-played']}  "
+        f"{lang['stat-col-wins']}   "
+        f"{lang['stat-col-streak']}   "
+        f"{lang['stat-col-date']}"
+    )
+    stats_lines: list[str] = [col_hdr]
+    total_played = total_wins = 0
+
     for g in stat_games:
         stat = stats_map.get(g.code)
         played = stat.played if stat is not None else 0
         wins = stat.wins if stat is not None else 0
-        losses = stat.losses if stat is not None else 0
-        draws = stat.draws if stat is not None else 0
         total_played += played
         total_wins += wins
-        total_losses += losses
-        total_draws += draws
-        label = f"{lang[g.icon_key]} {lang[g.name_key]}"
-        stats_lines.append(f"`{label}`")
-        stats_lines.append(f"`{played:<6}{wins:<5}{losses:<5}{draws:<5}`")
 
-    stats_lines.append(f"\n`{lang['stat-sum']}`")
-    stats_lines.append(f"`{total_played:<6}{total_wins:<5}{total_losses:<5}{total_draws:<5}`")
+        gs = streak_map.get(g.code)
+        streak_cur = (gs.current_win_streak or 0) if gs else 0
+        last_date = gs.last_win_date if gs else None
+        streak_str = str(streak_cur) if streak_cur else "—"
+        date_str = last_date.strftime("%d.%m") if last_date else "—"
+
+        first_icon = lang[g.icon_key].split()[0]
+        name = lang[g.name_key]
+        stats_lines.append(
+            f"`{played:<5}{wins:<4}{streak_str:<5}{date_str:<7}{first_icon} {name}`"
+        )
+
+    stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆 {total_wins}`")
     streak_header = cross_streak + "\n\n" if cross_streak else ""
     stats_text = f"*{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
     await safe_edit(
