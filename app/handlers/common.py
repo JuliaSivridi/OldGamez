@@ -399,12 +399,13 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
     streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
     cross_streak = get_cross_game_streak_line(user, lang)
 
-    # Column header (plain text — emoji align naturally outside monospace)
+    # Column header in monospace — subtract 1 from width per emoji (emoji=1 Python char but 2 display cols)
+    # col widths (display): played=5, wins=4, streak=3, date=7
     col_hdr = (
-        f"{lang['stat-col-played']}  "
-        f"{lang['stat-col-wins']}   "
-        f"{lang['stat-col-streak']}   "
-        f"{lang['stat-col-date']}"
+        f"`{'🕹':<4}"   # 4 Python → 5 display
+        f"{'🏆':<3}"    # 3 Python → 4 display
+        f"{'🔥':<2}"    # 2 Python → 3 display
+        f"{'📅':<6}`"   # 6 Python → 7 display
     )
     stats_lines: list[str] = [col_hdr]
     total_played = total_wins = 0
@@ -423,13 +424,13 @@ async def callback_menu_stats(callback: CallbackQuery) -> None:
         date_str = last_date.strftime("%d.%m") if last_date else "—"
 
         first_icon = lang[g.icon_key].split()[0]
-        name = lang[g.name_key]
+        name = lang.get(g.name_key + "-s", lang[g.name_key])
         stats_lines.append(
-            f"`{played:<5}{wins:<4}{streak_str:<5}{date_str:<7}{first_icon} {name}`"
+            f"`{played:<5}{wins:<4}{streak_str:<3}{date_str:<7}{first_icon} {name}`"
         )
 
     stats_lines.append(f"\n`{lang['stat-sum']}{total_played}  🏆 {total_wins}`")
-    streak_header = cross_streak + "\n\n" if cross_streak else ""
+    streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
     stats_text = f"*{lang['stat-ttl']}*\n\n" + streak_header + "\n".join(stats_lines) + "\n"
     await safe_edit(
         callback.message,
