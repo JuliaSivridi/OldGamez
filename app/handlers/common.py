@@ -61,8 +61,8 @@ class GameConfig:
     help_key: str
     cmds: list[str]
     menu_fn: str                      # "module:function" for open_X_menu
-    open_suffix: str | None           # "xo" → matches callback "game:xo"; None = no open callback
-    open_text_fn: str | None          # "module:function" for menu text; None if open_suffix is None
+    open_suffix: str | None           # "xo" → button callback "game:xo"; also used by generic handler if open_text_fn is set
+    open_text_fn: str | None          # "module:function" for menu text; None = game has its own handler (e.g. random)
     open_needs_settings: bool = False
     keyboard: KeyboardConfig | None = None
     stat: StatConfig | None = None    # None for games without stats (random)
@@ -70,7 +70,6 @@ class GameConfig:
     menu_page: int = 1                # private chat menu page (1 or 2)
     menu_row: int = 1                 # row within that page (controls grouping in builder)
     group_row: int | None = None      # row in group menu; None = not shown in groups
-    menu_btn: str | None = None       # button callback suffix override; None = use open_suffix
 
 
 GAMES: list[GameConfig] = [
@@ -251,16 +250,16 @@ GAMES: list[GameConfig] = [
         code="random", icon_key="icon-rand", name_key="game-rand", help_key="help-rand",
         cmds=["random"],
         menu_fn="app.handlers.randomfun:open_random_menu",
-        open_suffix=None, open_text_fn=None,  # handled in randomfun.py
+        open_suffix="rand", open_text_fn=None,  # open_text_fn=None → generic handler ignores this; randomfun.py handles "game:rand"
         keyboard=None, stat=None,
-        menu_page=2, menu_row=1, group_row=None, menu_btn="rand",
+        menu_page=2, menu_row=1, group_row=None,
     ),
 ]
 
 # Lookup indices built once at startup
 _GAMES_BY_CODE: dict[str, GameConfig] = {g.code: g for g in GAMES}
 _GAME_OPEN_SUFFIXES: frozenset[str] = frozenset(
-    f"game:{g.open_suffix}" for g in GAMES if g.open_suffix
+    f"game:{g.open_suffix}" for g in GAMES if g.open_suffix and g.open_text_fn
 )
 _GAME_OPEN_BY_SUFFIX: dict[str, GameConfig] = {
     g.open_suffix: g for g in GAMES if g.open_suffix

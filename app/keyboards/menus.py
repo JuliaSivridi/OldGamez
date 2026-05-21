@@ -18,7 +18,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
         for _row, row_iter in groupby(sorted_games, key=row_key_fn):
             row_games = list(row_iter)
             for g in row_games:
-                cb = f"game:{g.menu_btn or g.open_suffix}"
+                cb = f"game:{g.open_suffix}"
                 builder.button(
                     text=f"{lang[g.icon_key]} {lang[g.name_key]}".strip(),
                     callback_data=cb,
