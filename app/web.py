@@ -5,10 +5,9 @@ from datetime import datetime, timezone
 
 from aiohttp import web
 from sqlalchemy import delete, func, select
-from sqlalchemy.orm import selectinload
 
 from app.config import get_settings
-from app.db.models import Feedback, GameSession, GameStat, SessionStatus, User
+from app.db.models import Feedback, GameStat, User
 from app.db.session import SessionLocal
 
 
@@ -32,49 +31,6 @@ async def _load_data() -> dict:
             for u in raw_users
         ]
         user_by_id: dict[int, dict] = {u["id"]: u for u in users}
-
-        # Active / pending sessions
-        r = await sess.execute(
-            select(GameSession)
-            .where(GameSession.status.in_([SessionStatus.active, SessionStatus.pending]))
-            .options(selectinload(GameSession.players))
-            .order_by(GameSession.created_at.desc())
-        )
-        active_sessions = []
-        for gs in r.scalars().all():
-            player_ids = [p.user_id for p in gs.players]
-            players_str = ", ".join(
-                user_by_id[pid]["name"] if pid in user_by_id else f"uid={pid}"
-                for pid in player_ids
-            )
-            turn_user = user_by_id.get(gs.current_turn_user_id or 0, {})
-            active_sessions.append({
-                "id": gs.id,
-                "game": gs.game_code,
-                "mode": gs.mode.value,
-                "status": gs.status.value,
-                "players": players_str or "—",
-                "turn": turn_user.get("name", "—"),
-                "started": gs.started_at or gs.created_at,
-            })
-
-        # Recent finished sessions (last 50)
-        r = await sess.execute(
-            select(GameSession)
-            .where(GameSession.status == SessionStatus.finished)
-            .order_by(GameSession.finished_at.desc())
-            .limit(50)
-        )
-        finished_sessions = []
-        for gs in r.scalars().all():
-            winner = user_by_id.get(gs.winner_user_id or 0, {})
-            finished_sessions.append({
-                "id": gs.id,
-                "game": gs.game_code,
-                "mode": gs.mode.value,
-                "winner": winner.get("name", "draw/bot"),
-                "finished": gs.finished_at,
-            })
 
         # Game stats summary
         r = await sess.execute(
@@ -125,8 +81,6 @@ async def _load_data() -> dict:
 
         return {
             "users": users,
-            "active_sessions": active_sessions,
-            "finished_sessions": finished_sessions,
             "game_summary": game_summary,
             "feedback": feedback_rows,
         }
@@ -140,8 +94,6 @@ def _fmt(dt: datetime | None) -> str:
 
 def _render_html(data: dict, generated_at: str) -> str:
     users = data["users"]
-    active = data["active_sessions"]
-    finished = data["finished_sessions"]
     summary = data["game_summary"]
     feedback = data["feedback"]
 
@@ -153,22 +105,6 @@ def _render_html(data: dict, generated_at: str) -> str:
             trs += f"<tr>{tds}</tr>"
         return f"<table><thead><tr>{ths}</tr></thead><tbody>{trs}</tbody></table>"
 
-    active_table = table(
-        ["#", "Game", "Mode", "Status", "Players", "Turn", "Started"],
-        [
-            [s["id"], s["game"], s["mode"], s["status"], s["players"], s["turn"], _fmt(s["started"])]
-            for s in active
-        ],
-    )
-
-    finished_table = table(
-        ["#", "Game", "Mode", "Winner / result", "Finished"],
-        [
-            [s["id"], s["game"], s["mode"], s["winner"], _fmt(s["finished"])]
-            for s in finished
-        ],
-    )
-
     total_played = sum(s["played"] for s in summary)
     total_wins = sum(s["wins"] for s in summary)
     total_losses = sum(s["losses"] for s in summary)
@@ -178,10 +114,10 @@ def _render_html(data: dict, generated_at: str) -> str:
     summary_table = table(["Game", "Players", "Played", "Wins", "Losses", "Draws"], summary_rows)
 
     users_table = table(
-        ["ID", "Name", "Username", "Lang", "Display fmt", "Anon", "Current game", "Last seen"],
+        ["TG ID", "Name", "Username", "Lang", "Display fmt", "Anon", "Current game", "Last seen"],
         [
             [
-                u["id"], u["name"], u["username"], u["lang"], u["display_fmt"],
+                u["tg_id"], u["name"], u["username"], u["lang"], u["display_fmt"],
                 f"<button class='toggle-anon' data-id='{u['id']}'>{'✅' if u['purchased_anon'] else '⬜'}</button>",
                 u["current_game"], _fmt(u["updated"]),
             ]
@@ -237,8 +173,6 @@ def _render_html(data: dict, generated_at: str) -> str:
 
 <div>
   <span class="badge">👤 Users: {len(users)}</span>
-  <span class="badge">🎮 Active sessions: {len(active)}</span>
-  <span class="badge">✅ Finished (last 50): {len(finished)}</span>
   <span class="badge">🕹 Total plays: {total_played}</span>
   <span class="badge">✉️ Feedback: {len(feedback)}</span>
 </div>
@@ -246,16 +180,6 @@ def _render_html(data: dict, generated_at: str) -> str:
 <details>
 <summary>📊 Game Stats Summary ({len(summary)} games · {total_played} plays)</summary>
 {summary_table}
-</details>
-
-<details open>
-<summary>🎮 Active &amp; Pending Sessions ({len(active)})</summary>
-{active_table if active else "<p style='padding:8px;color:#888'>No active sessions</p>"}
-</details>
-
-<details>
-<summary>✅ Recent Finished Sessions ({len(finished)})</summary>
-{finished_table}
 </details>
 
 <details>

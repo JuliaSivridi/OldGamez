@@ -1,11 +1,30 @@
 {
   "en": {
-    "hi1": "Hello, ",
-    "hi2": " 😋",
-    "choose-game": "\n\nChoose a game",
-    "menu-games": "🕹 All games",
-    "menu-duels": "👥 Duel games",
-    "game-ttl": "🕹 Choose a game",
+    "hi-new": [
+      "Welcome to OldGamez! 🎮",
+      "Hey there! Glad to have you here 👋",
+      "A new player! Welcome aboard 🎲"
+    ],
+    "hi-away": [
+      "You're back! We missed you 🎉",
+      "Long time no see, {name}!",
+      "Oh, look who's here! 👀",
+      "You were gone so long! Welcome back 🎮",
+      "Back at last! Ready to play? 🎲"
+    ],
+    "hi-today": [
+      "You're back already! Can't get enough? 😏",
+      "Again? You're really into this 🎮",
+      "That was quick! Ready for more? ⚡",
+      "Back again! What are we playing? 🎲"
+    ],
+    "hi-return": [
+      "Welcome back, {name}!",
+      "Good to see you again! 👋",
+      "Hey {name}! Back for more? 🎮",
+      "Hi! What are we playing today? 🎲",
+      "Ready to play? Let's go 🎮"
+    ],
     "main-back": "⬅️ Back",
     "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Stats",
@@ -286,12 +305,31 @@
     "default": "👻 IDK, what to say..."
   },
   "fi": {
-    "hi1": "Hei, ",
-    "hi2": " 😋",
-    "choose-game": "\n\nValitse peli",
-    "menu-games": "🕹 Kaikki pelit",
-    "menu-duels": "👥 Duelipelit",
-    "game-ttl": "🕹 Valitse peli",
+    "hi-new": [
+      "Tervetuloa OldGameziin! 🎮",
+      "Hei! Kiva nähdä sinut täällä 👋",
+      "Uusi pelaaja! Tervetuloa 🎲"
+    ],
+    "hi-away": [
+      "Olet palannut! Olimme ikävöineet 🎉",
+      "Pitkästä aikaa, {name}!",
+      "Kas, kuka tulee! 👀",
+      "Niin pitkään poissa — luulimme jo sinun lopettaneen 😄",
+      "Vihdoin takaisin! Ikävöitkö pelejä? 🎮"
+    ],
+    "hi-today": [
+      "Jo taas täällä! Ei saa tarpeekseen? 😏",
+      "Taas sinä! Eikö riittänyt? 🎮",
+      "Nopeasti palasit! Lisää pelejä? ⚡",
+      "Hei taas! Mitä pelataan? 🎲"
+    ],
+    "hi-return": [
+      "Tervetuloa takaisin, {name}!",
+      "Kiva nähdä sinut! 👋",
+      "Hei {name}! Takaisin pelaamaan 🎮",
+      "Hei! Mitä pelataan tänään? 🎲",
+      "Valmiina pelaamaan? Mennään 🎮"
+    ],
     "main-back": "⬅️ Takaisin",
     "main-ttl": "👾 Päävalikko",
     "menu-stat": "📊 Tilastot",
@@ -573,12 +611,31 @@
     "default": "👻 En tiedä mitä sanoa..."
   },
   "ru": {
-    "hi1": "Привет, ",
-    "hi2": " 😋",
-    "choose-game": "\n\nВыбери игру",
-    "menu-games": "🕹 Все игры",
-    "menu-duels": "👥 Игры дуэли",
-    "game-ttl": "🕹 Выбери игру",
+    "hi-new": [
+      "Добро пожаловать в OldGamez! 🎮",
+      "Привет! Рад видеть тебя здесь 👋",
+      "Новый игрок! Добро пожаловать 🎲"
+    ],
+    "hi-away": [
+      "Вернулся! А мы уж заждались 🎉",
+      "Давненько тебя не было, {name}!",
+      "О, смотрите кто пришёл! 👀",
+      "Так долго не было — думали, ушёл навсегда 😄",
+      "Наконец-то! Соскучился по играм? 🎮"
+    ],
+    "hi-today": [
+      "Снова здесь! Затянуло? 😏",
+      "Опять ты! Не наигрался? 🎮",
+      "Быстро вернулся! Ещё партию? ⚡",
+      "Снова ты! Во что играем? 🎲"
+    ],
+    "hi-return": [
+      "С возвращением, {name}!",
+      "Рад тебя видеть! 👋",
+      "Привет, {name}! Снова в игре 🎮",
+      "Привет! Что играем сегодня? 🎲",
+      "Готов играть? Поехали 🎮"
+    ],
     "main-back": "⬅️ Назад",
     "main-ttl": "👾 Главное меню",
     "menu-stat": "📊 Статы",

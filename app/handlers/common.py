@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field as dc_field
+from datetime import datetime, timezone
 from importlib import import_module
 from typing import Any, Callable
 
@@ -10,7 +11,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.handlers.duels import handle_private_duel_start
 from app.handlers.utils import safe_edit
-from app.i18n.translator import get_language_pack
+from app.i18n.translator import LanguagePack, get_language_pack, pick
 from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.sessions import (
     format_game_stats_text,
@@ -433,6 +434,10 @@ def setting_keyboard(lang: dict, g: GameConfig, back_callback: str) -> InlineKey
     return b.as_markup()
 
 
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 def extract_start_argument(message: Message) -> str | None:
     text = (message.text or "").strip()
     parts = text.split(maxsplit=1)
@@ -448,10 +453,62 @@ async def send_current_game_menu(message: Message, user) -> None:
     if handler is not None:
         await handler(message, user, lang)
     else:
-        await message.answer(
-            lang["main-ttl"],
-            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
+        await _open_main_menu(message, user, lang)
+
+
+_NEW_USER_THRESHOLD_SECONDS = 30
+
+
+def _greeting(user, lang: LanguagePack) -> str:
+    """Return a context-aware, randomly chosen greeting line."""
+    now = datetime.now(timezone.utc)
+    prev_seen_str: str | None = (user.settings or {}).get("last_seen_at")
+
+    if prev_seen_str is None:
+        # No last_seen_at yet — truly new user if created just now, otherwise
+        # an existing user who predates this feature.
+        key = (
+            "hi-new"
+            if (now - user.created_at).total_seconds() < _NEW_USER_THRESHOLD_SECONDS
+            else "hi-return"
         )
+    else:
+        prev = datetime.fromisoformat(prev_seen_str)
+        days_away = (now - prev).days
+        if days_away >= 14:
+            key = "hi-away"
+        elif prev.date() == now.date():
+            key = "hi-today"
+        else:
+            key = "hi-return"
+
+    return pick(lang, key, name=(user.first_name or "").strip())
+
+
+async def _open_main_menu(
+    message: Message,
+    user,
+    lang: LanguagePack,
+    page: int = 1,
+    streak: bool = False,
+    edit: bool = False,
+    greeting: bool = False,
+) -> None:
+    """Show (or edit to) the main game menu. Used by commands, callbacks and back-navigation."""
+    parts: list[str] = []
+    if greeting:
+        parts.append(_greeting(user, lang))
+    parts.append(lang["main-ttl"])
+    text = "\n".join(parts)
+    if streak:
+        text += get_cross_game_streak_line(user, lang, brief=True)
+    markup = main_menu_keyboard(lang, chat_type=message.chat.type, page=page)
+    if edit:
+        await safe_edit(message, text, reply_markup=markup)
+    else:
+        await message.answer(text, reply_markup=markup)
+    if greeting:
+        await update_user_settings(user.id, {"last_seen_at": now_iso()})
 
 
 @router.message(CommandStart())
@@ -466,20 +523,11 @@ async def cmd_start(message: Message) -> None:
         join_code = start_argument[5:]
         if await handle_private_duel_start(message, user, lang, join_code):
             return
-        await message.answer(
-            lang["duel-missing"],
-            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
-        )
+        await message.answer(lang["duel-missing"],
+            reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
         return
 
-    text = (
-        f"{lang['hi1']}{message.from_user.first_name or ''}{lang['hi2']}"
-        f"{lang['choose-game']}"
-    )
-    await message.answer(
-        text,
-        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type),
-    )
+    await _open_main_menu(message, user, lang, greeting=True, streak=True)
 
 
 @router.message(Command("games"))
@@ -488,8 +536,7 @@ async def cmd_games_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await message.answer(lang["game-ttl"], 
-        reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
+    await _open_main_menu(message, user, lang)
 
 
 @router.callback_query(F.data == "menu:games")
@@ -498,9 +545,7 @@ async def callback_menu_games(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, lang["game-ttl"],
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
-    )
+    await _open_main_menu(callback.message, user, lang, edit=True)
     await callback.answer()
 
 
@@ -511,9 +556,7 @@ async def callback_menu_page(callback: CallbackQuery) -> None:
     page = int(callback.data.split(":")[2])
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
-    )
+    await _open_main_menu(callback.message, user, lang, page=page, streak=True, edit=True)
     await callback.answer()
 
 
@@ -712,15 +755,11 @@ async def callback_game_top(callback: CallbackQuery) -> None:
 
 @router.callback_query(F.data == "main:back")
 async def callback_menu_back(callback: CallbackQuery) -> None:
-    if callback.from_user is None:
+    if callback.from_user is None or callback.message is None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
     page = 2 if get_current_game(user) in _PAGE2_GAME_CODES else 1
     await update_user_settings(user.id, {"current_game": None})
-    await safe_edit(
-        callback.message,
-        lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
-    )
+    await _open_main_menu(callback.message, user, lang, page=page, streak=True, edit=True)
     await callback.answer()
