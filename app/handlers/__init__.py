@@ -7,6 +7,7 @@ from app.handlers.donate import router as donate_router
 from app.handlers.feedback import router as feedback_router
 from app.handlers.bullscows import router as bullscows_router
 from app.handlers.common import router as common_router
+from app.handlers.profile import router as profile_router
 from app.handlers.fourinrow import router as fourinrow_router
 from app.handlers.hangman import router as hangman_router
 from app.handlers.lightsout import router as lightsout_router
@@ -24,6 +25,7 @@ def register_routers(dispatcher: Dispatcher) -> None:
     dispatcher.message.middleware(NullGuardMiddleware())
     dispatcher.callback_query.middleware(NullGuardMiddleware())
     dispatcher.include_router(common_router)
+    dispatcher.include_router(profile_router)
     dispatcher.include_router(donate_router)
     dispatcher.include_router(feedback_router)
     dispatcher.include_router(randomfun_router)

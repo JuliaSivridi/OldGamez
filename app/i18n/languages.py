@@ -1,7 +1,7 @@
 LANGUAGE_CHOICES = {
     "🇬🇧 English": "en",
-    "🇫🇮 Finnish": "fi",
-    "🇷🇺 Russian": "ru",
+    "🇫🇮 Suomi": "fi",
+    "🇷🇺 Русский": "ru",
 }
 
 _EN = list("abcdefghijklmnopqrstuvwxyz")
