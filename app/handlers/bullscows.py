@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.enums import ButtonStyle
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -29,7 +30,7 @@ def cmplx_keyboard(lang: dict, back_callback: str):
     b = InlineKeyboardBuilder()
     for key, value in (("cmplx-easy", 4), ("cmplx-norm", 5), ("cmplx-hard", 6)):
         b.button(text=lang[key], callback_data=f"bc:size:{value}")
-    b.button(text=lang["main-back"], callback_data=back_callback)
+    b.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
     b.adjust(3, 1)
     return b.as_markup()
 

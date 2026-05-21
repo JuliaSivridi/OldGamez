@@ -10,7 +10,7 @@ def size_keyboard(lang: dict[str, str], back_callback: str) -> InlineKeyboardMar
     builder = InlineKeyboardBuilder()
     for size in (4, 5, 6):
         builder.button(text=f"{lang[str(size)]}✖️{lang[str(size)]}", callback_data=f"lto:size:{size}")
-    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
     builder.adjust(3, 1)
     return builder.as_markup()
 

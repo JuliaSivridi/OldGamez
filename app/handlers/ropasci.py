@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.enums import ChatType
+from aiogram.enums import ButtonStyle, ChatType
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -44,7 +44,7 @@ def rps_mode_keyboard(game_code: str, back_callback: str, lang: dict) -> InlineK
     builder = InlineKeyboardBuilder()
     for wins_needed, label in [(1, "1 / 1"), (2, "2 / 3"), (3, "3 / 5")]:
         builder.button(text=label, callback_data=f"rps:setmode:{game_code}:{wins_needed}")
-    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
     builder.adjust(3, 1)
     return builder.as_markup()
 

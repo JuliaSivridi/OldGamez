@@ -32,6 +32,6 @@ def cmplx_keyboard(lang: dict, back_callback: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for key, value in (("cmplx-easy", "easy"), ("cmplx-norm", "norm"), ("cmplx-hard", "hard")):
         builder.button(text=lang[key], callback_data=f"mm:cmplx:{value}")
-    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
     builder.adjust(3, 1)
     return builder.as_markup()

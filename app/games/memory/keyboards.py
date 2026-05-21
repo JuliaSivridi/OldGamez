@@ -1,3 +1,4 @@
+from aiogram.enums import ButtonStyle
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -40,6 +41,6 @@ def size_keyboard(lang: dict, back_callback: str) -> InlineKeyboardMarkup:
             text=f"{lang[str(rows)]}✖️{lang[str(cols)]}",
             callback_data=f"mem:size:{size}",
         )
-    builder.button(text=lang["main-back"], callback_data=back_callback)
+    builder.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
     builder.adjust(3, 3, 1)
     return builder.as_markup()
