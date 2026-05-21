@@ -385,8 +385,8 @@ def get_current_game(user) -> str | None:
     return get_user_setting(user, "current_game")
 
 
-def _game_menu_text(lang: dict, g: GameConfig, user_settings: dict | None) -> str:
-    """Build the menu text for a game whose setting is driven by a SettingDef."""
+async def _game_menu_text(lang: dict, g: GameConfig, user_id: int, user_settings: dict | None) -> str:
+    """Build the menu text (including streak) for a game driven by a SettingDef."""
     s = g.setting
     raw = (user_settings or {}).get(s.setting_key, s.default)
     try:
@@ -398,10 +398,13 @@ def _game_menu_text(lang: dict, g: GameConfig, user_settings: dict | None) -> st
     else:
         cmplx = s.value_to_cmplx.get(val, s.options[0][0])
         val_str = lang[f"cmplx-{cmplx}"]
-    return (
+    text = (
         f"{lang[f'icon-{g.open_suffix}']} *{lang[f'game-{g.open_suffix}']}*\n"
-        f"{lang[f'setting-{s.kind}']}: {val_str}"
+        f"\n{lang[f'setting-{s.kind}']}: {val_str}"
     )
+    if g.stat is not None:
+        text += await get_game_streak_line(user_id, g.code, lang)
+    return text
 
 
 async def open_game_menu(message: Message, user, lang: dict, game_code: str) -> None:
@@ -410,9 +413,8 @@ async def open_game_menu(message: Message, user, lang: dict, game_code: str) -> 
     if g is None or g.setting is None:
         return
     await update_user_settings(user.id, {"current_game": g.code})
-    streak = await get_game_streak_line(user.id, g.code, lang)
     await message.answer(
-        _game_menu_text(lang, g, user.settings) + streak,
+        await _game_menu_text(lang, g, user.id, user.settings),
         reply_markup=_get_game_keyboard(g, lang, chat_type=message.chat.type),
     )
 
@@ -502,14 +504,14 @@ async def _open_main_menu(
       None       — plain main-ttl only
     """
     parts: list[str] = []
+    parts.append(f"*{lang["main-ttl"]}*")
+    if streak:
+        parts.append(get_cross_game_streak_line(user, lang, brief=True))
     if context == "greeting":
         parts.append(_greeting(user, lang))
     elif context == "nudge":
         parts.append(pick(lang, "play-nudge"))
-    parts.append(lang["main-ttl"])
-    text = "\n".join(parts)
-    if streak:
-        text += get_cross_game_streak_line(user, lang, brief=True)
+    text = "\n\n".join(parts)
     markup = main_menu_keyboard(lang, chat_type=message.chat.type, page=page)
     if edit:
         await safe_edit(message, text, reply_markup=markup)
@@ -605,18 +607,18 @@ async def open_game_callback(callback: CallbackQuery) -> None:
     suffix = callback.data[5:]  # strip "game:"
     g = _GAME_OPEN_BY_SUFFIX[suffix]
     if g.setting is not None:
-        text = _game_menu_text(lang, g, user.settings)
+        text = await _game_menu_text(lang, g, user.id, user.settings)  # streak included
     elif g.open_text_fn is not None:
         text_fn = _load_fn(g.open_text_fn)
         if text_fn is None:
             await callback.answer()
             return
         text = text_fn(lang, user.settings) if g.open_needs_settings else text_fn(lang)
+        if g.stat is not None:
+            text += await get_game_streak_line(user.id, g.code, lang)
     else:
         await callback.answer()
         return
-    if g.stat is not None:
-        text += await get_game_streak_line(user.id, g.code, lang)
     markup = _get_game_keyboard(g, lang, chat_type=callback.message.chat.type)
     if markup is None:
         await callback.answer()
@@ -684,7 +686,7 @@ async def callback_setting(callback: CallbackQuery) -> None:
     updated[s.setting_key] = value
     await safe_edit(
         callback.message,
-        _game_menu_text(lang, g, updated),
+        await _game_menu_text(lang, g, user.id, updated),
         reply_markup=_get_game_keyboard(g, lang, chat_type=callback.message.chat.type),
     )
 
