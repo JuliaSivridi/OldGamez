@@ -56,8 +56,6 @@ class StatConfig:
 @dataclass
 class GameConfig:
     code: str
-    icon_key: str
-    name_key: str
     help_key: str
     cmds: list[str]
     menu_fn: str                      # "module:function" for open_X_menu
@@ -66,7 +64,7 @@ class GameConfig:
     open_needs_settings: bool = False
     keyboard: KeyboardConfig | None = None
     stat: StatConfig | None = None    # None for games without stats (random)
-    abbr_key: str | None = None       # i18n key for short name in stats table; None = use name_key
+    abbr_key: str | None = None       # i18n key for short name in stats table; None = use game-{open_suffix}
     menu_page: int = 1                # private chat menu page (1 or 2)
     menu_row: int = 1                 # row within that page (controls grouping in builder)
     group_row: int | None = None      # row in group menu; None = not shown in groups
@@ -76,7 +74,7 @@ GAMES: list[GameConfig] = [
     # ── Page 1 ────────────────────────────────────────────────────────────────
     # Row 1: XO | BJ
     GameConfig(
-        code="tic_tac_toe", icon_key="icon-xo", name_key="game-xo", abbr_key="abbr-xo", help_key="help-xo",
+        code="tic_tac_toe", abbr_key="abbr-xo", help_key="help-xo",
         cmds=["tictactoe", "xo"],
         menu_fn="app.handlers.tictactoe:open_tictactoe_menu",
         open_suffix="xo", open_text_fn="app.handlers.tictactoe:_xo_menu_text", open_needs_settings=True,
@@ -90,7 +88,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 2: Four | Mem
     GameConfig(
-        code="four_in_row", icon_key="icon-four", name_key="game-four", abbr_key="abbr-four", help_key="help-four",
+        code="four_in_row", abbr_key="abbr-four", help_key="help-four",
         cmds=["fourinrow"],
         menu_fn="app.handlers.fourinrow:open_four_menu",
         open_suffix="four", open_text_fn="app.handlers.fourinrow:_four_menu_text", open_needs_settings=False,
@@ -100,7 +98,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 3: Sea (solo)
     GameConfig(
-        code="battleship", icon_key="icon-sea", name_key="game-sea", abbr_key="abbr-sea", help_key="help-sea",
+        code="battleship", abbr_key="abbr-sea", help_key="help-sea",
         cmds=["battleship"],
         menu_fn="app.handlers.battleship:open_battleship_menu",
         open_suffix="sea", open_text_fn="app.handlers.battleship:_sea_menu_text", open_needs_settings=False,
@@ -113,7 +111,7 @@ GAMES: list[GameConfig] = [
     # ── Page 2 ────────────────────────────────────────────────────────────────
     # Row 1: Mines | Rand
     GameConfig(
-        code="minesweeper", icon_key="icon-mines", name_key="game-mines", abbr_key="abbr-mines", help_key="help-mines",
+        code="minesweeper", abbr_key="abbr-mines", help_key="help-mines",
         cmds=["minesweeper"],
         menu_fn="app.handlers.minesweeper:open_minesweeper_menu",
         open_suffix="mines", open_text_fn="app.handlers.minesweeper:_mines_menu_text", open_needs_settings=True,
@@ -126,7 +124,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 2: Lightsout | Npuzzle
     GameConfig(
-        code="lightsout", icon_key="icon-lightsout", name_key="game-lightsout", abbr_key="abbr-lightsout", help_key="help-lightsout",
+        code="lightsout", abbr_key="abbr-lightsout", help_key="help-lightsout",
         cmds=["lightsout"],
         menu_fn="app.handlers.lightsout:open_lightsout_menu",
         open_suffix="lightsout", open_text_fn="app.handlers.lightsout:_lto_menu_text", open_needs_settings=True,
@@ -140,7 +138,7 @@ GAMES: list[GameConfig] = [
         menu_page=2, menu_row=2, group_row=None,
     ),
     GameConfig(
-        code="npuzzle", icon_key="icon-npuzzle", name_key="game-npuzzle", abbr_key="abbr-npuzzle", help_key="help-npuzzle",
+        code="npuzzle", abbr_key="abbr-npuzzle", help_key="help-npuzzle",
         cmds=["npuzzle"],
         menu_fn="app.handlers.npuzzle:open_npuzzle_menu",
         open_suffix="npuzzle", open_text_fn="app.handlers.npuzzle:_npz_menu_text", open_needs_settings=True,
@@ -155,7 +153,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 3: Mastermind | Bullscows
     GameConfig(
-        code="mastermind", icon_key="icon-mastermind", name_key="game-mastermind", abbr_key="abbr-mastermind", help_key="help-mastermind",
+        code="mastermind", abbr_key="abbr-mastermind", help_key="help-mastermind",
         cmds=["mastermind"],
         menu_fn="app.handlers.mastermind:open_mastermind_menu",
         open_suffix="mastermind", open_text_fn="app.handlers.mastermind:_mm_menu_text", open_needs_settings=True,
@@ -167,7 +165,7 @@ GAMES: list[GameConfig] = [
         menu_page=2, menu_row=3, group_row=None,
     ),
     GameConfig(
-        code="bullscows", icon_key="icon-bullscows", name_key="game-bullscows", abbr_key="abbr-bullscows", help_key="help-bullscows",
+        code="bullscows", abbr_key="abbr-bullscows", help_key="help-bullscows",
         cmds=["bullscows"],
         menu_fn="app.handlers.bullscows:open_bullscows_menu",
         open_suffix="bullscows", open_text_fn="app.handlers.bullscows:_bc_menu_text", open_needs_settings=True,
@@ -180,7 +178,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 4: Wordle | Hang
     GameConfig(
-        code="wordle", icon_key="icon-wordle", name_key="game-wordle", help_key="help-wordle",
+        code="wordle", help_key="help-wordle",
         cmds=["wordle"],
         menu_fn="app.handlers.wordle:open_wordle_menu",
         open_suffix="wordle", open_text_fn="app.handlers.wordle:_wrd_menu_text", open_needs_settings=False,
@@ -189,7 +187,7 @@ GAMES: list[GameConfig] = [
         menu_page=2, menu_row=4, group_row=None,
     ),
     GameConfig(
-        code="hangman", icon_key="icon-hang", name_key="game-hang", abbr_key="abbr-hang", help_key="help-hang",
+        code="hangman", abbr_key="abbr-hang", help_key="help-hang",
         cmds=["hangman"],
         menu_fn="app.handlers.hangman:open_hangman_menu",
         open_suffix="hang", open_text_fn="app.handlers.hangman:_hang_menu_text", open_needs_settings=True,
@@ -203,7 +201,7 @@ GAMES: list[GameConfig] = [
     # ── Page 1 (continued) ────────────────────────────────────────────────────
     # Row 2: Four | Mem  (memory pairs with four_in_row)
     GameConfig(
-        code="memory", icon_key="icon-mem", name_key="game-mem", abbr_key="abbr-mem", help_key="help-mem",
+        code="memory", abbr_key="abbr-mem", help_key="help-mem",
         cmds=["memory"],
         menu_fn="app.handlers.memory:open_memory_menu",
         open_suffix="mem", open_text_fn="app.handlers.memory:_mem_menu_text", open_needs_settings=True,
@@ -217,7 +215,7 @@ GAMES: list[GameConfig] = [
     ),
     # Row 1: XO | BJ  (blackjack pairs with tic_tac_toe)
     GameConfig(
-        code="blackjack", icon_key="icon-bj", name_key="game-bj", abbr_key="abbr-bj", help_key="help-bj",
+        code="blackjack", abbr_key="abbr-bj", help_key="help-bj",
         cmds=["blackjack"],
         menu_fn="app.handlers.blackjack:open_blackjack_menu",
         open_suffix="bj", open_text_fn="app.handlers.blackjack:_bj_menu_text", open_needs_settings=False,
@@ -225,9 +223,9 @@ GAMES: list[GameConfig] = [
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
         menu_page=1, menu_row=1, group_row=1,
     ),
-    # Row 4: RPS
+    # Row 4: RPS | RPSSL
     GameConfig(
-        code="ropasci", icon_key="icon-rps", name_key="game-rps", abbr_key="abbr-rps", help_key="help-rps",
+        code="ropasci", abbr_key="abbr-rps", help_key="help-rps",
         cmds=["rps"],
         menu_fn="app.handlers.ropasci:open_ropasci_menu",
         open_suffix="rps", open_text_fn="app.handlers.ropasci:_ropasci_cb_text", open_needs_settings=True,
@@ -235,20 +233,19 @@ GAMES: list[GameConfig] = [
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
         menu_page=1, menu_row=4, group_row=3,
     ),
-    # Row 5: RPSSL
     GameConfig(
-        code="rpssl", icon_key="icon-rpssl", name_key="game-rpssl", abbr_key="abbr-rpssl", help_key="help-rpssl",
+        code="rpssl", abbr_key="abbr-rpssl", help_key="help-rpssl",
         cmds=["rpssl"],
         menu_fn="app.handlers.ropasci:open_rpssl_menu",
         open_suffix="rpssl", open_text_fn="app.handlers.ropasci:_rpssl_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
-        menu_page=1, menu_row=5, group_row=4,
+        menu_page=1, menu_row=4, group_row=3,
     ),
     # ── Page 2 (continued) ────────────────────────────────────────────────────
     # Row 1: Mines | Rand  (random pairs with minesweeper)
     GameConfig(
-        code="random", icon_key="icon-rand", name_key="game-rand", help_key="help-rand",
+        code="random", help_key="help-rand",
         cmds=["random"],
         menu_fn="app.handlers.randomfun:open_random_menu",
         open_suffix="rand", open_text_fn=None,  # open_text_fn=None → generic handler ignores this; randomfun.py handles "game:rand"
@@ -457,7 +454,7 @@ async def callback_game_stat(callback: CallbackQuery) -> None:
     if markup is None:
         await callback.answer()
         return
-    text = f"{lang['icon-stat']} *{lang[g.name_key]}* | *{lang['stat-ttl']}*\n"
+    text = f"{lang['icon-stat']} *{lang[f"game-{g.open_suffix}"]}* | *{lang['stat-ttl']}*\n"
     if g.stat.variant:
         stats = await get_all_game_stats(user.id, game_code)
         stats.sort(key=g.stat.sort_key)
@@ -487,7 +484,7 @@ async def callback_game_help(callback: CallbackQuery) -> None:
     if markup is None:
         await callback.answer()
         return
-    text = f"{lang['icon-info']} *{lang[g.name_key]}* | *{lang['help-ttl']}*\n\n{lang[g.help_key]}"
+    text = f"{lang['icon-info']} *{lang[f"game-{g.open_suffix}"]}* | *{lang['help-ttl']}*\n\n{lang[g.help_key]}"
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()
 
@@ -508,7 +505,7 @@ async def callback_game_top(callback: CallbackQuery) -> None:
         await callback.answer()
         return
     entries, viewer_entry = await get_game_leaderboard(game_code, viewer_user_id=user.id)
-    title = f"*{lang[g.name_key]}*"
+    title = f"*{lang[f"game-{g.open_suffix}"]}*"
     text = format_leaderboard_text(entries, title, lang, viewer_entry)
     await safe_edit(callback.message, text, reply_markup=markup)
     await callback.answer()

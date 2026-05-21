@@ -23,7 +23,6 @@ from app.handlers.common import get_game_keyboard
 router = Router()
 
 _BC_SIZE_TO_VARIANT = {4: "easy", 5: "normal", 6: "hard"}
-_DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
 _VARIANT_TO_CMPLX_KEY = {"easy": "easy", "normal": "norm", "hard": "hard"}
 
 def cmplx_keyboard(lang: dict, back_callback: str):

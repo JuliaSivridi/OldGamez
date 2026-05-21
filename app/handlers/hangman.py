@@ -85,8 +85,6 @@ async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
     await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:hang"))
     await callback.answer()
 
-_DIFFICULTY_ORDER = {"easy": 0, "normal": 1, "hard": 2}
-
 @router.callback_query(F.data == 'hng:noop')
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()

@@ -19,8 +19,8 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
             row_games = list(row_iter)
             for g in row_games:
                 cb = f"game:{g.open_suffix}"
-                icon = lang[g.icon_key]
-                name = lang[g.name_key]
+                icon = lang[f"icon-{g.open_suffix}"]
+                name = lang[f"game-{g.open_suffix}"]
                 text = f"{icon} {name}".strip() if len(name) <= 16 else icon
                 builder.button(text=text, callback_data=cb)
             layout.append(len(row_games))

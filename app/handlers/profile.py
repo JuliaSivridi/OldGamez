@@ -86,10 +86,9 @@ async def callback_profile_streaks(callback: CallbackQuery) -> None:
         best_str = str(best) if best else "—"
         date_str = last_date.strftime("%d.%m") if last_date else "—"
 
-        first_icon = lang[g.icon_key].split()[0]
-        name = lang.get(g.abbr_key, lang[g.name_key]) if g.abbr_key else lang[g.name_key]
+        name = lang.get(g.abbr_key, lang[f"game-{g.open_suffix}"]) if g.abbr_key else lang[f"game-{g.open_suffix}"]
         streak_lines.append(
-            f"`{cur_str:<3}{best_str:<4}{date_str:<6}{first_icon} {name}`"
+            f"`{cur_str:<3}{best_str:<4}{date_str:<6}{lang[f"icon-{g.open_suffix}"]} {name}`"
         )
 
     streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
@@ -129,10 +128,9 @@ async def callback_profile_stats(callback: CallbackQuery) -> None:
         losses = stat.losses if stat is not None else 0
         draws = stat.draws if stat is not None else 0
 
-        first_icon = lang[g.icon_key].split()[0]
-        name = lang.get(g.abbr_key, lang[g.name_key]) if g.abbr_key else lang[g.name_key]
+        name = lang.get(g.abbr_key, lang[f"game-{g.open_suffix}"]) if g.abbr_key else lang[f"game-{g.open_suffix}"]
         stats_lines.append(
-            f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{first_icon} {name}`"
+            f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{lang[f"icon-{g.open_suffix}"]} {name}`"
         )
 
     stats_text = f"{lang['icon-stat']} *{lang['stat-ttl']}*\n\n" + "\n".join(stats_lines) + "\n"
@@ -154,9 +152,9 @@ async def callback_profile_rankings(callback: CallbackQuery) -> None:
         lines = [f"*{lang['menu-rankings']}*", ""]
         for game_code, pos in rankings:
             g = _GAMES_BY_CODE.get(game_code)
-            game_name = lang[g.name_key] if g else game_code
+            game_name = lang[f"game-{g.open_suffix}"] if g else game_code
             medal = _TOP_MEDALS[pos - 1] if pos <= len(_TOP_MEDALS) else f"#{pos}"
-            lines.append(f"{medal}  {lang[g.icon_key]} {game_name}")
+            lines.append(f"{medal}  {lang[f"icon-{g.open_suffix}"]} {game_name}")
         text = "\n".join(lines)
 
     await safe_edit(callback.message, text, parse_mode="Markdown", reply_markup=rankings_keyboard(lang))
