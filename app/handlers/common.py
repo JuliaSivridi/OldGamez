@@ -225,7 +225,7 @@ GAMES: list[GameConfig] = [
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
         menu_page=1, menu_row=1, group_row=1,
     ),
-    # Row 4: RPS | RPSSL
+    # Row 4: RPS
     GameConfig(
         code="ropasci", icon_key="icon-rps", name_key="game-rps", abbr_key="abbr-rps", help_key="help-rps",
         cmds=["rps"],
@@ -235,6 +235,7 @@ GAMES: list[GameConfig] = [
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
         menu_page=1, menu_row=4, group_row=3,
     ),
+    # Row 5: RPSSL
     GameConfig(
         code="rpssl", icon_key="icon-rpssl", name_key="game-rpssl", abbr_key="abbr-rpssl", help_key="help-rpssl",
         cmds=["rpssl"],
@@ -242,7 +243,7 @@ GAMES: list[GameConfig] = [
         open_suffix="rpssl", open_text_fn="app.handlers.ropasci:_rpssl_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
-        menu_page=1, menu_row=4, group_row=3,
+        menu_page=1, menu_row=5, group_row=4,
     ),
     # ── Page 2 (continued) ────────────────────────────────────────────────────
     # Row 1: Mines | Rand  (random pairs with minesweeper)

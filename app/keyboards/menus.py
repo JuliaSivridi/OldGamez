@@ -20,7 +20,7 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
             for g in row_games:
                 cb = f"game:{g.open_suffix}"
                 builder.button(
-                    text=f"{lang[g.icon_key]} {lang[g.name_key]}".strip(),
+                    text=f"{lang[g.icon_key]} {lang.get(f'menu-{g.open_suffix}', '')}".strip(),
                     callback_data=cb,
                 )
             layout.append(len(row_games))
