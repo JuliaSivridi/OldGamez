@@ -231,6 +231,12 @@ _GAME_OPEN_BY_SUFFIX: dict[str, GameConfig] = {
 }
 GAME_COMMAND_MAP: dict[str, str] = {cmd: g.code for g in GAMES for cmd in g.cmds}
 
+# Game codes shown on page 2 of the main menu (private chat)
+_PAGE2_GAME_CODES: frozenset[str] = frozenset({
+    "minesweeper", "random", "lightsout", "npuzzle",
+    "mastermind", "bullscows", "wordle", "hangman",
+})
+
 
 def _load_fn(path: str) -> Callable | None:
     module_path, func_name = path.split(":", 1)
@@ -481,10 +487,11 @@ async def callback_menu_back(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
+    page = 2 if get_current_game(user) in _PAGE2_GAME_CODES else 1
     await update_user_settings(user.id, {"current_game": None})
     await safe_edit(
         callback.message,
         lang["main-ttl"] + get_cross_game_streak_line(user, lang, brief=True),
-        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type),
+        reply_markup=main_menu_keyboard(lang, chat_type=callback.message.chat.type, page=page),
     )
     await callback.answer()
