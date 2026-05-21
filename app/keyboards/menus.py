@@ -19,10 +19,10 @@ def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> I
             row_games = list(row_iter)
             for g in row_games:
                 cb = f"game:{g.open_suffix}"
-                builder.button(
-                    text=f"{lang[g.icon_key]} {lang.get(f'menu-{g.open_suffix}', '')}".strip(),
-                    callback_data=cb,
-                )
+                icon = lang[g.icon_key]
+                name = lang[g.name_key]
+                text = f"{icon} {name}".strip() if len(name) <= 16 else icon
+                builder.button(text=text, callback_data=cb)
             layout.append(len(row_games))
 
     if chat_type in ("group", "supergroup"):
