@@ -729,7 +729,7 @@ def _format_streak_line(current: int, best: int, last_win_date: date | None, lan
             parts.append(f"🔥 {current}")
     if last_win_date:
         parts.append(f"📅 {last_win_date.strftime('%d.%m.%Y')}")
-    return "\n" + "  ".join(parts) if parts else ""
+    return "\n\n" + "  ".join(parts) if parts else ""
 
 
 async def get_game_streaks_bulk(user_id: int, game_codes: list[str]) -> dict[str, "UserGameStreak"]:
@@ -766,7 +766,7 @@ def get_cross_game_streak_line(user, lang: dict, brief: bool = False) -> str:
     if not current:
         return ""
     if brief:
-        return f"\n🔥 {lang.get('streak-label', 'Win streak')}: {current}"
+        return f"🔥 {lang.get('streak-label', 'Win streak')}: {current}"
     best = getattr(user, "best_win_streak", None) or 0
     last_win_date = getattr(user, "last_win_date", None)
     return _format_streak_line(current, best, last_win_date, lang)
