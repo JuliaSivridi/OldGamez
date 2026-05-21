@@ -519,6 +519,29 @@ _STAT_FIELD_KEYS: dict[str, str] = {
 }
 
 
+def _win_ratio_bar(lang: dict, wins: int, losses: int, draws: int = 0) -> str:
+    """Return a 10-emoji bar showing win/draw/loss ratio.
+
+    Slots are distributed with the Largest Remainder Method so they always
+    sum to exactly 10. Display order: wins | draws | losses.
+    Returns an empty string when no games have been played.
+    """
+    total = wins + losses + draws
+    if total == 0:
+        return ""
+    segments = [("w", wins), ("d", draws), ("l", losses)]
+    active = [(k, v) for k, v in segments if v > 0]
+    n = 10
+    raw = [v / total * n for _, v in active]
+    floored = [int(x) for x in raw]
+    remainder = n - sum(floored)
+    order = sorted(range(len(active)), key=lambda i: raw[i] - floored[i], reverse=True)
+    for i in range(remainder):
+        floored[order[i % len(order)]] += 1
+    icons = {"w": lang["icon-win"], "d": lang["icon-draw"], "l": lang["icon-lose"]}
+    return "".join(icons[k] * floored[i] for i, (k, _) in enumerate(active))
+
+
 def format_game_stats_text(
     stat: GameStat | None,
     lang: dict[str, str],
@@ -534,6 +557,10 @@ def format_game_stats_text(
     for field in fields:
         label = lang[_STAT_FIELD_KEYS[field]]
         result += f"`{label}{str(values[field]).rjust(20 - len(label))}`"
+    draws = values["draws"] if "draws" in fields else 0
+    bar = _win_ratio_bar(lang, values["wins"], values["losses"], draws)
+    if bar:
+        result += f"\n\n{bar}"
     return result
 
 
@@ -575,6 +602,13 @@ def format_variant_stats_text(
             vals.append(str(stat.best_score) if stat.best_score is not None else "—")
         row = f"{label:<{lbl_w}}" + "".join(f"{v:<{col_w}}" for v in vals)
         lines.append(f"`{row}`")
+
+    total_wins = sum(s.wins for s in stats)
+    total_losses = sum(s.losses for s in stats)
+    total_draws = sum(s.draws for s in stats) if "draws" in fields else 0
+    bar = _win_ratio_bar(lang, total_wins, total_losses, total_draws)
+    if bar:
+        lines += ["", bar]
 
     return "\n".join(lines)
 
