@@ -1,53 +1,56 @@
+from itertools import groupby
+
 from aiogram.enums import ButtonStyle, ChatType
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def main_menu_keyboard(lang: dict[str, str], chat_type=None, page: int = 1) -> InlineKeyboardMarkup:
+    # Deferred import to avoid circular dependency (common.py imports menus.py at top level)
+    from app.handlers.common import GAMES
+
     builder = InlineKeyboardBuilder()
+    layout: list[int] = []
+
+    def _add_game_rows(games_subset, row_key_fn) -> None:
+        """Add game buttons grouped by row, preserving GAMES list order within each row."""
+        sorted_games = sorted(games_subset, key=row_key_fn)
+        for _row, row_iter in groupby(sorted_games, key=row_key_fn):
+            row_games = list(row_iter)
+            for g in row_games:
+                cb = f"game:{g.menu_btn or g.open_suffix}"
+                builder.button(
+                    text=f"{lang[g.icon_key]} {lang[g.name_key]}".strip(),
+                    callback_data=cb,
+                )
+            layout.append(len(row_games))
+
     if chat_type in ("group", "supergroup"):
-        builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
-        builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
-        builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
-        builder.button(text=f"{lang['icon-mem']} {lang['menu-mem']}".strip(), callback_data="game:mem")
-        builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
-        builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
+        group_games = [g for g in GAMES if g.group_row is not None]
+        _add_game_rows(group_games, lambda g: g.group_row)
         builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.adjust(2, 2, 2, 2)
-    elif page == 1:
-        ds = lang["menu-page-duel-solo"]
-        s = lang["menu-page-solo"]
-        builder.button(text=f"{ds}  |  {s} ➡", callback_data="menu:page:2", style=ButtonStyle.PRIMARY)
-        builder.button(text=f"{lang['icon-xo']} {lang['menu-xo']}".strip(), callback_data="game:xo")
-        builder.button(text=f"{lang['icon-bj']} {lang['menu-bj']}".strip(), callback_data="game:bj")
-        builder.button(text=f"{lang['icon-four']} {lang['menu-four']}".strip(), callback_data="game:four")
-        builder.button(text=f"{lang['icon-mem']} {lang['menu-mem']}".strip(), callback_data="game:mem")
-        builder.button(text=f"{lang['icon-sea']} {lang['menu-sea']}".strip(), callback_data="game:sea")
-        builder.button(text=f"{lang['icon-rps']} {lang['menu-rps']}".strip(), callback_data="game:rps")
-        builder.button(text=f"{lang['icon-rpssl']} {lang['menu-rpssl']}".strip(), callback_data="game:rpssl")
-        builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
-        builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
-        builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
-        builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(1, 2, 2, 1, 2, 2, 2)
+        layout.append(2)
     else:
         ds = lang["menu-page-duel-solo"]
         s = lang["menu-page-solo"]
-        builder.button(text=f"⬅ {ds}  |  {s}", callback_data="menu:page:1", style=ButtonStyle.PRIMARY)
-        builder.button(text=f"{lang['icon-mines']} {lang['menu-mines']}".strip(), callback_data="game:mines")
-        builder.button(text=f"{lang['icon-rand']} {lang['menu-rand']}".strip(), callback_data="game:rand")
-        builder.button(text=f"{lang['icon-lightsout']} {lang['menu-lightsout']}".strip(), callback_data="game:lightsout")
-        builder.button(text=f"{lang['icon-npuzzle']} {lang['menu-npuzzle']}".strip(), callback_data="game:npuzzle")
-        builder.button(text=f"{lang['icon-mastermind']} {lang['menu-mastermind']}".strip(), callback_data="game:mastermind")
-        builder.button(text=f"{lang['icon-bullscows']} {lang['menu-bullscows']}".strip(), callback_data="game:bullscows")
-        builder.button(text=f"{lang['icon-wordle']} {lang['menu-wordle']}".strip(), callback_data="game:wordle")
-        builder.button(text=f"{lang['icon-hang']} {lang['menu-hang']}".strip(), callback_data="game:hang")
+        if page == 1:
+            builder.button(text=f"{ds}  |  {s} ➡", callback_data="menu:page:2", style=ButtonStyle.PRIMARY)
+        else:
+            builder.button(text=f"⬅ {ds}  |  {s}", callback_data="menu:page:1", style=ButtonStyle.PRIMARY)
+        layout.append(1)
+
+        page_games = [g for g in GAMES if g.menu_page == page]
+        _add_game_rows(page_games, lambda g: g.menu_row)
+
         builder.button(text=lang["menu-top"], callback_data="menu:top", style=ButtonStyle.PRIMARY)
         builder.button(text=lang["menu-donate"], callback_data="menu:donate", style=ButtonStyle.SUCCESS)
+        layout.append(2)
         builder.button(text=lang["menu-profile"], callback_data="menu:profile", style=ButtonStyle.SUCCESS)
         builder.button(text=lang["menu-feedback"], callback_data="menu:feedback", style=ButtonStyle.SUCCESS)
-        builder.adjust(1, 2, 2, 2, 2, 2, 2)
+        layout.append(2)
+
+    builder.adjust(*layout)
     return builder.as_markup()
 
 

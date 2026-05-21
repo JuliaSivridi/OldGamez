@@ -66,10 +66,16 @@ class GameConfig:
     open_needs_settings: bool = False
     keyboard: KeyboardConfig | None = None
     stat: StatConfig | None = None    # None for games without stats (random)
-    abbr_key: str | None = None  # i18n key for short name used in stats table; None = use name_key
+    abbr_key: str | None = None       # i18n key for short name in stats table; None = use name_key
+    menu_page: int = 1                # private chat menu page (1 or 2)
+    menu_row: int = 1                 # row within that page (controls grouping in builder)
+    group_row: int | None = None      # row in group menu; None = not shown in groups
+    menu_btn: str | None = None       # button callback suffix override; None = use open_suffix
 
 
 GAMES: list[GameConfig] = [
+    # ── Page 1 ────────────────────────────────────────────────────────────────
+    # Row 1: XO | BJ
     GameConfig(
         code="tic_tac_toe", icon_key="icon-xo", name_key="game-xo", abbr_key="abbr-xo", help_key="help-xo",
         cmds=["tictactoe", "xo"],
@@ -81,7 +87,9 @@ GAMES: list[GameConfig] = [
             sort_key=_DIGIT_SORT,
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
         ),
+        menu_page=1, menu_row=1, group_row=1,
     ),
+    # Row 2: Four | Mem
     GameConfig(
         code="four_in_row", icon_key="icon-four", name_key="game-four", abbr_key="abbr-four", help_key="help-four",
         cmds=["fourinrow"],
@@ -89,7 +97,9 @@ GAMES: list[GameConfig] = [
         open_suffix="four", open_text_fn="app.handlers.fourinrow:_four_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        menu_page=1, menu_row=2, group_row=2,
     ),
+    # Row 3: Sea (solo)
     GameConfig(
         code="battleship", icon_key="icon-sea", name_key="game-sea", abbr_key="abbr-sea", help_key="help-sea",
         cmds=["battleship"],
@@ -97,7 +107,12 @@ GAMES: list[GameConfig] = [
         open_suffix="sea", open_text_fn="app.handlers.battleship:_sea_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", None),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+        menu_page=1, menu_row=3, group_row=None,
     ),
+    # Row 4: RPS | RPSSL  (continued below after page-2 block)
+
+    # ── Page 2 ────────────────────────────────────────────────────────────────
+    # Row 1: Mines | Rand
     GameConfig(
         code="minesweeper", icon_key="icon-mines", name_key="game-mines", abbr_key="abbr-mines", help_key="help-mines",
         cmds=["minesweeper"],
@@ -108,7 +123,9 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        menu_page=2, menu_row=1, group_row=None,
     ),
+    # Row 2: Lightsout | Npuzzle
     GameConfig(
         code="lightsout", icon_key="icon-lightsout", name_key="game-lightsout", abbr_key="abbr-lightsout", help_key="help-lightsout",
         cmds=["lightsout"],
@@ -121,6 +138,7 @@ GAMES: list[GameConfig] = [
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in (4, 5, 6)},
             has_best_score=True,
         ),
+        menu_page=2, menu_row=2, group_row=None,
     ),
     GameConfig(
         code="npuzzle", icon_key="icon-npuzzle", name_key="game-npuzzle", abbr_key="abbr-npuzzle", help_key="help-npuzzle",
@@ -134,7 +152,9 @@ GAMES: list[GameConfig] = [
             variant_labels=lambda lang: {str(s): f"{s}×{s}" for s in range(3, 9)},
             has_best_score=True,
         ),
+        menu_page=2, menu_row=2, group_row=None,
     ),
+    # Row 3: Mastermind | Bullscows
     GameConfig(
         code="mastermind", icon_key="icon-mastermind", name_key="game-mastermind", abbr_key="abbr-mastermind", help_key="help-mastermind",
         cmds=["mastermind"],
@@ -145,6 +165,7 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        menu_page=2, menu_row=3, group_row=None,
     ),
     GameConfig(
         code="bullscows", icon_key="icon-bullscows", name_key="game-bullscows", abbr_key="abbr-bullscows", help_key="help-bullscows",
@@ -156,7 +177,9 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        menu_page=2, menu_row=3, group_row=None,
     ),
+    # Row 4: Wordle | Hang
     GameConfig(
         code="wordle", icon_key="icon-wordle", name_key="game-wordle", help_key="help-wordle",
         cmds=["wordle"],
@@ -164,6 +187,7 @@ GAMES: list[GameConfig] = [
         open_suffix="wordle", open_text_fn="app.handlers.wordle:_wrd_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, None, None),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+        menu_page=2, menu_row=4, group_row=None,
     ),
     GameConfig(
         code="hangman", icon_key="icon-hang", name_key="game-hang", abbr_key="abbr-hang", help_key="help-hang",
@@ -175,7 +199,10 @@ GAMES: list[GameConfig] = [
             variant=True, fields=["played", "wins", "losses"],
             sort_key=_DIFFICULTY_SORT, variant_labels=_DIFFICULTY_LABELS,
         ),
+        menu_page=2, menu_row=4, group_row=None,
     ),
+    # ── Page 1 (continued) ────────────────────────────────────────────────────
+    # Row 2: Four | Mem  (memory pairs with four_in_row)
     GameConfig(
         code="memory", icon_key="icon-mem", name_key="game-mem", abbr_key="abbr-mem", help_key="help-mem",
         cmds=["memory"],
@@ -187,7 +214,9 @@ GAMES: list[GameConfig] = [
             sort_key=_DIGIT_SORT, variant_labels=_memory_labels,
             has_best_score=True,
         ),
+        menu_page=1, menu_row=2, group_row=2,
     ),
+    # Row 1: XO | BJ  (blackjack pairs with tic_tac_toe)
     GameConfig(
         code="blackjack", icon_key="icon-bj", name_key="game-bj", abbr_key="abbr-bj", help_key="help-bj",
         cmds=["blackjack"],
@@ -195,7 +224,9 @@ GAMES: list[GameConfig] = [
         open_suffix="bj", open_text_fn="app.handlers.blackjack:_bj_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        menu_page=1, menu_row=1, group_row=1,
     ),
+    # Row 4: RPS | RPSSL
     GameConfig(
         code="ropasci", icon_key="icon-rps", name_key="game-rps", abbr_key="abbr-rps", help_key="help-rps",
         cmds=["rps"],
@@ -203,6 +234,7 @@ GAMES: list[GameConfig] = [
         open_suffix="rps", open_text_fn="app.handlers.ropasci:_ropasci_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        menu_page=1, menu_row=4, group_row=3,
     ),
     GameConfig(
         code="rpssl", icon_key="icon-rpssl", name_key="game-rpssl", abbr_key="abbr-rpssl", help_key="help-rpssl",
@@ -211,13 +243,17 @@ GAMES: list[GameConfig] = [
         open_suffix="rpssl", open_text_fn="app.handlers.ropasci:_rpssl_cb_text", open_needs_settings=True,
         keyboard=KeyboardConfig("mode", "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
+        menu_page=1, menu_row=4, group_row=3,
     ),
+    # ── Page 2 (continued) ────────────────────────────────────────────────────
+    # Row 1: Mines | Rand  (random pairs with minesweeper)
     GameConfig(
         code="random", icon_key="icon-rand", name_key="game-rand", help_key="help-rand",
         cmds=["random"],
         menu_fn="app.handlers.randomfun:open_random_menu",
-        open_suffix=None, open_text_fn=None,  # uses random_menu_keyboard, handled in randomfun.py
+        open_suffix=None, open_text_fn=None,  # handled in randomfun.py
         keyboard=None, stat=None,
+        menu_page=2, menu_row=1, group_row=None, menu_btn="rand",
     ),
 ]
 
@@ -231,11 +267,8 @@ _GAME_OPEN_BY_SUFFIX: dict[str, GameConfig] = {
 }
 GAME_COMMAND_MAP: dict[str, str] = {cmd: g.code for g in GAMES for cmd in g.cmds}
 
-# Game codes shown on page 2 of the main menu (private chat)
-_PAGE2_GAME_CODES: frozenset[str] = frozenset({
-    "minesweeper", "random", "lightsout", "npuzzle",
-    "mastermind", "bullscows", "wordle", "hangman",
-})
+# Derived from GAMES — no manual maintenance needed
+_PAGE2_GAME_CODES: frozenset[str] = frozenset(g.code for g in GAMES if g.menu_page == 2)
 
 
 def _load_fn(path: str) -> Callable | None:
