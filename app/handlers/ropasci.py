@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.enums import ButtonStyle, ChatType
+from aiogram.enums import ChatType
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -25,13 +25,12 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.handlers.common import get_game_keyboard, open_game_menu
 
 router = Router()
 
@@ -39,14 +38,6 @@ _RPS_MOVES = ["stone", "scissors", "paper"]
 _RPSSL_MOVES = ["stone", "scissors", "paper", "lizard", "spock"]
 
 # ── Keyboards ─────────────────────────────────────────────────────────────────
-
-def rps_mode_keyboard(game_code: str, back_callback: str, lang: dict) -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    for wins_needed, label in [(1, "1 / 1"), (2, "2 / 3"), (3, "3 / 5")]:
-        builder.button(text=label, callback_data=f"rps:setmode:{game_code}:{wins_needed}")
-    builder.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
-    builder.adjust(3, 1)
-    return builder.as_markup()
 
 def rps_game_keyboard(session_id: int, moves: list[str], active: bool, lang: dict, prefix: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
@@ -187,33 +178,11 @@ async def _sync_rps_duel_messages(bot, session, title_key: str, moves: list[str]
 
 # ── Menus ─────────────────────────────────────────────────────────────────────
 
-def _rps_menu_text(lang: dict, user_settings: dict | None, title_key: str, settings_key: str = "rps_mode") -> str:
-    wins_needed = int((user_settings or {}).get(settings_key, 1))
-    mode_label = MODE_LABEL.get(wins_needed, "?")
-    icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
-    return f"*{lang[icon_key]} {lang[title_key]}*\n{lang['setting-mode']}: {mode_label}"
-
-def _ropasci_cb_text(lang: dict, user_settings: dict | None) -> str:
-    return _rps_menu_text(lang, user_settings, "game-rps")
-
-def _rpssl_cb_text(lang: dict, user_settings: dict | None) -> str:
-    return _rps_menu_text(lang, user_settings, "game-rpssl", "rpssl_mode")
-
 async def open_ropasci_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _rps_menu_text(lang, user.settings, "game-rps") + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 async def open_rpssl_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": rpssl_game.code})
-    streak = await get_game_streak_line(user.id, rpssl_game.code, lang)
-    await message.answer(
-        _rps_menu_text(lang, user.settings, "game-rpssl", "rpssl_mode") + streak,
-        reply_markup=get_game_keyboard(rpssl_game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, rpssl_game.code)
 
 def rps_menu_keyboard(lang: dict, chat_type=None) -> InlineKeyboardMarkup:
     return get_game_keyboard(game.code, lang, chat_type=chat_type)
@@ -483,13 +452,6 @@ async def menu_new_group_rps(callback: CallbackQuery, user, lang) -> None:
                             menu_message_id=callback.message.message_id)
     await callback.answer()
 
-@router.callback_query(GameCallbackFilter("mode", game.code))
-async def menu_rps_mode(callback: CallbackQuery, user, lang) -> None:
-    wins_needed = int((user.settings or {}).get("rps_mode", 1))
-    text = f"{lang['chus-mode']}\n\n{lang['setting-mode']}: {MODE_LABEL.get(wins_needed, '?')}"
-    await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(game.code, "game:rps", lang))
-    await callback.answer()
-
 @router.callback_query(F.data == "rps:noop")
 async def rps_noop(callback: CallbackQuery) -> None:
     await callback.answer()
@@ -563,13 +525,6 @@ async def menu_new_group_rpssl(callback: CallbackQuery, user, lang) -> None:
                             menu_message_id=callback.message.message_id)
     await callback.answer()
 
-@router.callback_query(GameCallbackFilter("mode", rpssl_game.code))
-async def menu_rpssl_mode(callback: CallbackQuery, user, lang) -> None:
-    wins_needed = int((user.settings or {}).get("rpssl_mode", 1))
-    text = f"{lang['chus-mode']}\n\n{lang['setting-mode']}: {MODE_LABEL.get(wins_needed, '?')}"
-    await safe_edit(callback.message, text, reply_markup=rps_mode_keyboard(rpssl_game.code, "game:rpssl", lang))
-    await callback.answer()
-
 @router.callback_query(F.data == "rpssl:noop")
 async def rpssl_noop(callback: CallbackQuery) -> None:
     await callback.answer()
@@ -615,25 +570,3 @@ async def callback_rpssl_move(callback: CallbackQuery) -> None:
         await safe_edit(callback.message, render_text(f"{lang['icon-rpssl']} {lang['game-rpssl']}", state, lang),
                         reply_markup=rps_game_keyboard(session_id, _RPSSL_MOVES, True, lang, "rpssl"))
 
-# ── Shared mode setter ────────────────────────────────────────────────────────
-
-@router.callback_query(F.data.startswith("rps:setmode:"))
-async def callback_setmode(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    parts = callback.data.split(":")
-    game_code, wins_needed = parts[2], int(parts[3])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    is_rpssl = game_code == rpssl_game.code
-    mode_key = "rpssl_mode" if is_rpssl else "rps_mode"
-    await update_user_settings(user.id, {mode_key: wins_needed, "current_game": game_code})
-    updated_settings = dict(user.settings or {})
-    updated_settings[mode_key] = wins_needed
-    if is_rpssl:
-        await safe_edit(callback.message, _rps_menu_text(lang, updated_settings, "game-rpssl", "rpssl_mode"),
-                        reply_markup=get_game_keyboard(rpssl_game.code, lang, chat_type=callback.message.chat.type))
-    else:
-        await safe_edit(callback.message, _rps_menu_text(lang, updated_settings, "game-rps"),
-                        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type))
-    await callback.answer()

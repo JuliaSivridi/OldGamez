@@ -1,39 +1,22 @@
 from aiogram import F, Router
-from aiogram.enums import ButtonStyle
 from aiogram.types import CallbackQuery, Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.db.models import SessionStatus
 from app.games.minesweeper import game
 from app.games.minesweeper.keyboards import field_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
+from app.handlers.utils import validate_session
 from app.i18n.translator import get_language_pack
 from app.services.sessions import (
     create_solo_session,
     finish_session,
     get_active_solo_session,
-    get_game_streak_line,
-    get_session_by_id,
     record_game_result,
     update_session_state,
 )
-from app.services.users import get_user_setting, update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.services.users import upsert_user
+from app.handlers.common import open_game_menu
 
 router = Router()
-
-def cmplx_keyboard(lang: dict[str, str], back_callback: str):
-    b = InlineKeyboardBuilder()
-    for key, value in (
-        ("cmplx-easy", 8),
-        ("cmplx-norm", 12),
-        ("cmplx-hard", 16),
-    ):
-        b.button(text=lang[key], callback_data=f"msw:cmplx:{value}")
-    b.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
-    b.adjust(3, 1)
-    return b.as_markup()
 
 def render_game_text(lang: dict[str, str], state: dict) -> str:
     return (
@@ -57,21 +40,10 @@ async def start_minesweeper_game(message: Message, user, lang: dict[str, str], m
         reply_markup=field_keyboard(lang, session.state, session.id, game_over=False),
     )
 
-_MINES_TO_CMPLX = {8: "easy", 12: "norm", 16: "hard"}
 _MINES_TO_VARIANT = {8: "easy", 12: "normal", 16: "hard"}
 
-def _mines_menu_text(lang: dict, user_settings: dict | None) -> str:
-    mines = int((user_settings or {}).get("minesweeper_mines", 12))
-    cmplx = _MINES_TO_CMPLX.get(mines, "norm")
-    return f"{lang['icon-mines']} *{lang['game-mines']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
-
 async def open_minesweeper_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _mines_menu_text(lang, user.settings) + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
@@ -79,34 +51,9 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_minesweeper_game(callback.message, user, lang, mines_count, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-@router.callback_query(GameCallbackFilter("cmplx", game.code))
-async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
-    mines = int((user.settings or {}).get("minesweeper_mines", 12))
-    cmplx = _MINES_TO_CMPLX.get(mines, "norm")
-    text = f"{lang['chus-cmplx']}\n\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
-    await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:mines"))
-    await callback.answer()
-
 @router.callback_query(F.data == "msw:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
-@router.callback_query(F.data.startswith("msw:cmplx:"))
-async def callback_cmplx(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-    mines_count = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"minesweeper_mines": mines_count, "current_game": game.code})
-    updated = dict(user.settings or {})
-    updated["minesweeper_mines"] = mines_count
-    await safe_edit(
-        callback.message,
-        _mines_menu_text(lang, updated),
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
-    )
 
 @router.callback_query(F.data.startswith("msw:switch:"))
 async def callback_switch_mode(callback: CallbackQuery) -> None:
@@ -133,23 +80,15 @@ async def callback_switch_mode(callback: CallbackQuery) -> None:
 @router.callback_query(F.data.startswith("msw:dig:"))
 @router.callback_query(F.data.startswith("msw:flag:"))
 async def callback_move(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
     _, action, session_id_text, x_text, y_text = callback.data.split(":")
     session_id = int(session_id_text)
     x = int(x_text)
     y = int(y_text)
-
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     menu_msg_id = state.get("menu_message_id")
-    if session.status != SessionStatus.active:
-        return
 
     if action == "dig":
         result = game.handle_dig(state, x, y)

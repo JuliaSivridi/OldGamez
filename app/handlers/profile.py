@@ -86,7 +86,7 @@ async def callback_profile_streaks(callback: CallbackQuery) -> None:
         best_str = str(best) if best else "—"
         date_str = last_date.strftime("%d.%m") if last_date else "—"
 
-        name = lang.get(g.abbr_key, lang[f"game-{g.open_suffix}"]) if g.abbr_key else lang[f"game-{g.open_suffix}"]
+        name = lang.get(f"abbr-{g.open_suffix}", lang[f"game-{g.open_suffix}"])
         streak_lines.append(
             f"`{cur_str:<3}{best_str:<4}{date_str:<6}{lang[f"icon-{g.open_suffix}"]} {name}`"
         )
@@ -128,7 +128,7 @@ async def callback_profile_stats(callback: CallbackQuery) -> None:
         losses = stat.losses if stat is not None else 0
         draws = stat.draws if stat is not None else 0
 
-        name = lang.get(g.abbr_key, lang[f"game-{g.open_suffix}"]) if g.abbr_key else lang[f"game-{g.open_suffix}"]
+        name = lang.get(f"abbr-{g.open_suffix}", lang[f"game-{g.open_suffix}"])
         stats_lines.append(
             f"`{played:<4}{wins:<3}{losses:<3}{draws:<3}{lang[f"icon-{g.open_suffix}"]} {name}`"
         )
@@ -257,8 +257,8 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     if callback.from_user is None:
         return
     lang_code, lang_name = callback.data.split(":")[1], callback.data.split(":")[2]
-    await upsert_user(callback.from_user)
-    user = await update_user_language(callback.from_user.id, lang_code)
+    user = await upsert_user(callback.from_user)
+    user = await update_user_language(user.id, lang_code)
     lang = get_language_pack(lang_code)
     await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
     await callback.answer(f"✅ {lang_name}")

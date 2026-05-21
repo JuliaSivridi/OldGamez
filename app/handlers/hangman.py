@@ -1,31 +1,17 @@
 from aiogram import F, Router
-from aiogram.enums import ButtonStyle, ParseMode
+from aiogram.enums import ParseMode
 from aiogram.types import CallbackQuery, Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.db.models import SessionStatus
 from app.games.hangman import game
 from app.games.hangman.keyboards import letters_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
-from app.i18n.translator import get_language_pack, normalize_language_code
-from app.services.sessions import create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state
-from app.services.users import update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.handlers.utils import validate_session
+from app.i18n.translator import normalize_language_code
+from app.services.sessions import create_solo_session, finish_session, record_game_result, update_session_state
+from app.services.users import upsert_user
+from app.handlers.common import open_game_menu
 
 router = Router()
-
-def cmplx_keyboard(lang: dict[str, str], back_callback: str):
-    b = InlineKeyboardBuilder()
-    for key, value in (
-        ("cmplx-easy", 15),
-        ("cmplx-norm", 10),
-        ("cmplx-hard", 5),
-    ):
-        b.button(text=lang[key], callback_data=f"hng:cmplx:{value}")
-    b.button(text=lang["main-back"], callback_data=back_callback, style=ButtonStyle.SUCCESS)
-    b.adjust(3, 1)
-    return b.as_markup()
 
 def render_text(lang: dict[str, str], state: dict, final: str | None = None) -> str:
     if final == 'win':
@@ -55,21 +41,10 @@ async def start_hangman_game(message: Message, user, lang: dict[str, str], lives
         parse_mode=ParseMode.HTML,
     )
 
-_LIVES_TO_CMPLX = {15: "easy", 10: "norm", 5: "hard"}
 _LIVES_TO_VARIANT = {15: "easy", 10: "normal", 5: "hard"}
 
-def _hang_menu_text(lang: dict, user_settings: dict | None) -> str:
-    lives = int((user_settings or {}).get("hangman_lives", 10))
-    cmplx = _LIVES_TO_CMPLX.get(lives, "norm")
-    return f"{lang['icon-hang']} *{lang['game-hang']}*\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
-
 async def open_hangman_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _hang_menu_text(lang, user.settings) + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
@@ -77,53 +52,20 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_hangman_game(callback.message, user, lang, lives=lives, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-@router.callback_query(GameCallbackFilter("cmplx", game.code))
-async def menu_complexity(callback: CallbackQuery, user, lang) -> None:
-    lives = int((user.settings or {}).get("hangman_lives", 10))
-    cmplx = _LIVES_TO_CMPLX.get(lives, "norm")
-    text = f"{lang['chus-cmplx']}\n\n{lang['setting-cmplx']}: {lang[f'cmplx-{cmplx}']}"
-    await safe_edit(callback.message, text, reply_markup=cmplx_keyboard(lang, "game:hang"))
-    await callback.answer()
-
 @router.callback_query(F.data == 'hng:noop')
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
 
-@router.callback_query(F.data.startswith('hng:cmplx:'))
-async def callback_cmplx(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-    lives = int(callback.data.split(':')[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {'hangman_lives': lives, 'current_game': game.code})
-    updated = dict(user.settings or {})
-    updated["hangman_lives"] = lives
-    await safe_edit(
-        callback.message,
-        _hang_menu_text(lang, updated),
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
-    )
-
 @router.callback_query(F.data.startswith('hng:letter:'))
 @router.callback_query(F.data.startswith('hng:hint:'))
 async def callback_play(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-
     parts = callback.data.split(':')
     action = parts[1]
     session_id = int(parts[2])
-
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-
-    state = dict(session.state)
+    user, lang, session, state = result
     menu_msg_id = state.get("menu_message_id")
     letter = None
     if action == 'hint':

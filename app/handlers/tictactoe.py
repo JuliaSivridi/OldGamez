@@ -9,9 +9,8 @@ from aiogram.types import CallbackQuery, Message
 
 from app.db.models import SessionMode, SessionStatus
 from app.games.tictactoe import game
-from app.games.tictactoe.keyboards import board_keyboard, size_keyboard
+from app.games.tictactoe.keyboards import board_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.keyboards.menus import main_menu_keyboard
@@ -30,13 +29,12 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.handlers.common import get_game_keyboard, open_game_menu
 
 router = Router()
 
@@ -307,17 +305,8 @@ async def join_private_duel(message: Message, user, lang: dict[str, str], sessio
     if session is not None:
         await sync_duel_messages(message.bot, session)
 
-def _xo_menu_text(lang: dict, user_settings: dict | None) -> str:
-    size = int((user_settings or {}).get("tictactoe_size", 3))
-    return f"{lang['icon-xo']} *{lang['game-xo']}*\n{lang['setting-size']}: {lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
-
 async def open_tictactoe_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _xo_menu_text(lang, user.settings) + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
@@ -336,32 +325,6 @@ async def menu_new_group(callback: CallbackQuery, user, lang) -> None:
     size = int((user.settings or {}).get("tictactoe_size", 3))
     await start_tictactoe_group(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
-
-@router.callback_query(GameCallbackFilter("size", game.code))
-async def menu_tictactoe_size(callback: CallbackQuery, user, lang) -> None:
-    size = int((user.settings or {}).get("tictactoe_size", 3))
-    cur = f"{lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
-    text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
-    await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:xo"))
-    await callback.answer()
-
-@router.callback_query(F.data.startswith("ttt:size:"))
-async def callback_tictactoe_size(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-
-    await callback.answer()
-    size = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"tictactoe_size": size, "current_game": game.code})
-    updated_settings = dict(user.settings or {})
-    updated_settings["tictactoe_size"] = size
-    await safe_edit(
-        callback.message,
-        _xo_menu_text(lang, updated_settings),
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
-    )
 
 @router.callback_query(F.data.startswith("ttt:group_join:"))
 async def callback_tictactoe_group_join(callback: CallbackQuery) -> None:

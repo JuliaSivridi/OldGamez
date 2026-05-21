@@ -8,10 +8,8 @@ from aiogram.types import CallbackQuery, Message
 
 from app.db.models import SessionMode, SessionStatus
 from app.games.memory import game
-from app.games.memory.game import GRID_DIMS
-from app.games.memory.keyboards import board_keyboard, size_keyboard
+from app.games.memory.keyboards import board_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard, group_duel_keyboard
 from app.services.duels import (
@@ -28,20 +26,14 @@ from app.services.sessions import (
     create_private_duel_invite,
     create_solo_session,
     finish_session,
-    get_game_streak_line,
     get_session_by_id,
     record_game_result,
     update_session_state,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.handlers.common import get_game_keyboard, open_game_menu
 
 router = Router()
-
-def _mem_menu_text(lang: dict, user_settings: dict | None) -> str:
-    size = int((user_settings or {}).get("memory_size", 4))
-    rows, cols = GRID_DIMS[size]
-    return f"{lang['icon-mem']} *{lang['game-mem']}*\n{lang['setting-size']}: {lang[str(rows)]}{lang['sep-x']}{lang[str(cols)]}"
 
 def render_text(lang: dict, state: dict, final: bool = False) -> str:
     rows, cols = state["rows"], state["cols"]
@@ -125,12 +117,7 @@ async def start_memory_game(message: Message, user, lang: dict, size: int, menu_
     )
 
 async def open_memory_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _mem_menu_text(lang, user.settings) + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 async def join_memory_duel(message: Message, user, lang: dict, session) -> None:
     state = dict(session.state or {})
@@ -207,32 +194,6 @@ async def menu_new_duel(callback: CallbackQuery, user, lang) -> None:
     set_duel_message_ref(state, user.id, invite_msg)
     await update_session_state(session.id, state, None)
     await callback.answer()
-
-@router.callback_query(GameCallbackFilter("size", game.code))
-async def menu_size(callback: CallbackQuery, user, lang) -> None:
-    size = int((user.settings or {}).get("memory_size", 4))
-    rows, cols = GRID_DIMS[size]
-    cur = f"{lang[str(rows)]}✖️{lang[str(cols)]}"
-    text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
-    await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:mem"))
-    await callback.answer()
-
-@router.callback_query(F.data.startswith("mem:size:"))
-async def callback_set_size(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-    size = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"memory_size": size, "current_game": game.code})
-    updated = dict(user.settings or {})
-    updated["memory_size"] = size
-    await safe_edit(
-        callback.message,
-        _mem_menu_text(lang, updated),
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
-    )
 
 @router.callback_query(F.data == "mem:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
@@ -405,7 +366,7 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
                     try:
                         await callback.bot.send_message(
                             chat_id=msg_meta["chat_id"],
-                            text=_mem_menu_text(other_lang, other_user.settings),
+                            text=f"{other_lang['icon-mem']} {other_lang['game-mem']}",
                             reply_markup=get_game_keyboard(game.code, other_lang),
                         )
                     except Exception:

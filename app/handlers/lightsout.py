@@ -3,22 +3,17 @@ import asyncio
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
 
-from app.db.models import SessionStatus
 from app.games.lightsout import game
-from app.games.lightsout.keyboards import board_keyboard, size_keyboard
+from app.games.lightsout.keyboards import board_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
-from app.i18n.translator import get_language_pack
+from app.handlers.utils import validate_session
 from app.services.sessions import (
     create_solo_session,
     finish_session,
-    get_game_streak_line,
-    get_session_by_id,
     record_game_result,
     update_session_state,
 )
-from app.services.users import update_user_settings, upsert_user
-from app.handlers.common import get_game_keyboard
+from app.handlers.common import open_game_menu
 
 router = Router()
 
@@ -37,17 +32,8 @@ async def start_lightsout_game(message: Message, user, lang: dict[str, str], siz
         reply_markup=board_keyboard(session.id, session.state["cells"], size, True, lang),
     )
 
-def _lto_menu_text(lang: dict, user_settings: dict | None) -> str:
-    size = int((user_settings or {}).get("lightsout_size", 5))
-    return f"{lang['icon-lightsout']} *{lang['game-lightsout']}*\n{lang['setting-size']}: {lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
-
 async def open_lightsout_menu(message: Message, user, lang) -> None:
-    await update_user_settings(user.id, {"current_game": game.code})
-    streak = await get_game_streak_line(user.id, game.code, lang)
-    await message.answer(
-        _lto_menu_text(lang, user.settings) + streak,
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
-    )
+    await open_game_menu(message, user, lang, game.code)
 
 @router.callback_query(GameCallbackFilter("bot", game.code))
 async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
@@ -55,49 +41,21 @@ async def menu_new_game(callback: CallbackQuery, user, lang) -> None:
     await start_lightsout_game(callback.message, user, lang, size, menu_message_id=callback.message.message_id)
     await callback.answer()
 
-@router.callback_query(GameCallbackFilter("size", game.code))
-async def menu_size(callback: CallbackQuery, user, lang) -> None:
-    size = int((user.settings or {}).get("lightsout_size", 5))
-    cur = f"{lang[str(size)]}{lang['sep-x']}{lang[str(size)]}"
-    text = f"{lang['chus-size']}\n\n{lang['setting-size']}: {cur}"
-    await safe_edit(callback.message, text, reply_markup=size_keyboard(lang, "game:lightsout"))
-    await callback.answer()
-
 @router.callback_query(F.data == "lto:noop")
 async def callback_noop(callback: CallbackQuery) -> None:
     await callback.answer()
-
-@router.callback_query(F.data.startswith("lto:size:"))
-async def callback_size(callback: CallbackQuery) -> None:
-    if callback.from_user is None or callback.message is None:
-        return
-    await callback.answer()
-    size = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    await update_user_settings(user.id, {"lightsout_size": size, "current_game": game.code})
-    updated = dict(user.settings or {})
-    updated["lightsout_size"] = size
-    await safe_edit(
-        callback.message,
-        _lto_menu_text(lang, updated),
-        reply_markup=get_game_keyboard(game.code, lang, chat_type=callback.message.chat.type),
-    )
 
 @router.callback_query(F.data.startswith("lto:press:"))
 async def callback_press(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     _, _, session_id_text, idx_text = callback.data.split(":")
     session_id = int(session_id_text)
     idx = int(idx_text)
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     menu_msg_id = state.get("menu_message_id")
     result = game.press(state, idx)
     state = result["game_state"]
@@ -125,14 +83,11 @@ async def callback_press(callback: CallbackQuery) -> None:
 async def callback_give_up(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     menu_msg_id = state.get("menu_message_id")
     await finish_session(session.id, state, winner_user_id=None)
     await record_game_result(user.id, game.code, "loss", variant_key=str(state["size"]))
@@ -150,14 +105,11 @@ async def callback_give_up(callback: CallbackQuery) -> None:
 async def callback_solve(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     size = state["size"]
     menu_msg_id = state.get("menu_message_id")
     solution = game.solve(state)

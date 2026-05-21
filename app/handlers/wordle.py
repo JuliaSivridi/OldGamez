@@ -1,22 +1,20 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
 
-from app.db.models import SessionStatus
 from app.games.wordle import game
 from app.games.wordle.game import MARK_EMOJI
 from app.games.wordle.keyboards import game_keyboard
 from app.handlers.filters import GameCallbackFilter
-from app.handlers.utils import safe_edit
-from app.i18n.translator import get_language_pack, normalize_language_code
+from app.handlers.utils import safe_edit, validate_session
+from app.i18n.translator import normalize_language_code
 from app.services.sessions import (
     create_solo_session,
     finish_session,
     get_game_streak_line,
-    get_session_by_id,
     record_game_result,
     update_session_state,
 )
-from app.services.users import update_user_settings, upsert_user
+from app.services.users import update_user_settings
 from app.handlers.common import get_game_keyboard
 
 router = Router()
@@ -84,16 +82,13 @@ async def callback_noop(callback: CallbackQuery) -> None:
 async def callback_letter(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     parts = callback.data.split(":")
     session_id = int(parts[2])
     letter = parts[3]
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     state = game.add_letter(state, letter)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
@@ -102,14 +97,11 @@ async def callback_letter(callback: CallbackQuery) -> None:
 async def callback_hint(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     state = game.apply_hint(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await safe_edit(callback.message, render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
@@ -118,14 +110,11 @@ async def callback_hint(callback: CallbackQuery) -> None:
 async def callback_back(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     state = game.backspace(state)
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(render_text(lang, state), reply_markup=game_keyboard(session.id, state, True, lang))
@@ -134,14 +123,11 @@ async def callback_back(callback: CallbackQuery) -> None:
 async def callback_submit(callback: CallbackQuery) -> None:
     if callback.from_user is None or callback.message is None:
         return
-    await callback.answer()
     session_id = int(callback.data.split(":")[2])
-    user = await upsert_user(callback.from_user)
-    lang = get_language_pack(user.language_code)
-    session = await get_session_by_id(session_id)
-    if session is None or session.created_by_user_id != user.id or session.status != SessionStatus.active:
+    result = await validate_session(callback, session_id)
+    if result is None:
         return
-    state = dict(session.state)
+    user, lang, session, state = result
     result = game.submit_guess(state)
     state = result["game_state"]
     if result["state"] == "invalid":
