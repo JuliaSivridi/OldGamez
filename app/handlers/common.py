@@ -492,12 +492,20 @@ async def _open_main_menu(
     page: int = 1,
     streak: bool = False,
     edit: bool = False,
-    greeting: bool = False,
+    context: str | None = None,
 ) -> None:
-    """Show (or edit to) the main game menu. Used by commands, callbacks and back-navigation."""
+    """Show (or edit to) the main game menu.
+
+    context:
+      "greeting" — personalised welcome phrase (commands: /start, /games)
+      "nudge"    — short playful play-on phrase (button navigation: back, page, menu:games)
+      None       — plain main-ttl only
+    """
     parts: list[str] = []
-    if greeting:
+    if context == "greeting":
         parts.append(_greeting(user, lang))
+    elif context == "nudge":
+        parts.append(pick(lang, "play-nudge"))
     parts.append(lang["main-ttl"])
     text = "\n".join(parts)
     if streak:
@@ -507,7 +515,7 @@ async def _open_main_menu(
         await safe_edit(message, text, reply_markup=markup)
     else:
         await message.answer(text, reply_markup=markup)
-    if greeting:
+    if context == "greeting":
         await update_user_settings(user.id, {"last_seen_at": now_iso()})
 
 
@@ -527,7 +535,7 @@ async def cmd_start(message: Message) -> None:
             reply_markup=main_menu_keyboard(lang, chat_type=message.chat.type))
         return
 
-    await _open_main_menu(message, user, lang, greeting=True, streak=True)
+    await _open_main_menu(message, user, lang, context="greeting", streak=True)
 
 
 @router.message(Command("games"))
@@ -536,7 +544,7 @@ async def cmd_games_command(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await _open_main_menu(message, user, lang)
+    await _open_main_menu(message, user, lang, context="greeting", streak=True)
 
 
 @router.callback_query(F.data == "menu:games")
@@ -545,7 +553,7 @@ async def callback_menu_games(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await _open_main_menu(callback.message, user, lang, edit=True)
+    await _open_main_menu(callback.message, user, lang, context="nudge", edit=True)
     await callback.answer()
 
 
@@ -556,7 +564,7 @@ async def callback_menu_page(callback: CallbackQuery) -> None:
     page = int(callback.data.split(":")[2])
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await _open_main_menu(callback.message, user, lang, page=page, streak=True, edit=True)
+    await _open_main_menu(callback.message, user, lang, page=page, streak=True, context="nudge", edit=True)
     await callback.answer()
 
 
@@ -761,5 +769,5 @@ async def callback_menu_back(callback: CallbackQuery) -> None:
     lang = get_language_pack(user.language_code)
     page = 2 if get_current_game(user) in _PAGE2_GAME_CODES else 1
     await update_user_settings(user.id, {"current_game": None})
-    await _open_main_menu(callback.message, user, lang, page=page, streak=True, edit=True)
+    await _open_main_menu(callback.message, user, lang, page=page, streak=True, context="nudge", edit=True)
     await callback.answer()

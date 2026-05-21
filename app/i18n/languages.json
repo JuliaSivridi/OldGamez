@@ -25,6 +25,16 @@
       "Hi! What are we playing today? 🎲",
       "Ready to play? Let's go 🎮"
     ],
+    "play-nudge": [
+      "What are we playing? 🎮",
+      "One more? ⚡",
+      "Keep going! 🔥",
+      "Don't stop now! 😄",
+      "Rematch? 😏",
+      "Your move 🎲",
+      "What's next? 🎮",
+      "Pick a game! 🎲"
+    ],
     "main-back": "⬅️ Back",
     "main-ttl": "👾 Main menu",
     "menu-stat": "📊 Stats",
@@ -329,6 +339,16 @@
       "Hei {name}! Takaisin pelaamaan 🎮",
       "Hei! Mitä pelataan tänään? 🎲",
       "Valmiina pelaamaan? Mennään 🎮"
+    ],
+    "play-nudge": [
+      "Mitä pelataan? 🎮",
+      "Vielä yksi? ⚡",
+      "Jatketaan! 🔥",
+      "Ei lopeteta vielä! 😄",
+      "Uusintaottelu? 😏",
+      "Sinun vuorosi 🎲",
+      "Mitä seuraavaksi? 🎮",
+      "Valitse peli! 🎲"
     ],
     "main-back": "⬅️ Takaisin",
     "main-ttl": "👾 Päävalikko",
@@ -635,6 +655,16 @@
       "Привет, {name}! Снова в игре 🎮",
       "Привет! Что играем сегодня? 🎲",
       "Готов играть? Поехали 🎮"
+    ],
+    "play-nudge": [
+      "Во что сыграем? 🎮",
+      "Ещё одна? ⚡",
+      "Не останавливаемся! 🔥",
+      "Следующая партия? 😄",
+      "Реванш? 😏",
+      "Ход за тобой 🎲",
+      "Что дальше? 🎮",
+      "Выбирай! 🎲"
     ],
     "main-back": "⬅️ Назад",
     "main-ttl": "👾 Главное меню",
