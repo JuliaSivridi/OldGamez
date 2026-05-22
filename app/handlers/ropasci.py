@@ -28,6 +28,9 @@ from app.services.sessions import (
     get_session_by_id,
     record_game_result,
     update_session_state,
+    xp_gain_from_state,
+    xp_gain_line,
+    xp_group_line,
 )
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard, open_game_menu
@@ -161,6 +164,9 @@ async def _render_rps_duel_for_user(session, user_id: int, title_key: str,
             final = "draw"
         text = render_duel_text_for_viewer(f"{lang[icon_key]} {lang[title_key]}", state, lang, user_id,
                                            my_name=my_name, opp_name=opp_name, final=final)
+        if state.get("xp_gains"):
+            gain = xp_gain_from_state(state, user_id)
+            text += xp_gain_line(gain, lang)
         return text, None
     is_active = not bool(state["current_p1"] if is_p1 else state["current_p2"])
     text = render_duel_text_for_viewer(f"{lang[icon_key]} {lang[title_key]}", state, lang, user_id,
@@ -196,10 +202,10 @@ async def _finish_game(callback: CallbackQuery, session_id: int, state: dict, fi
                        title: str, moves: list, prefix: str, lang: dict, user,
                        open_menu_fn) -> None:
     await finish_session(session_id, state, winner_user_id=user.id if final == "win" else None)
-    await record_game_result(user.id, state.get("game_code", prefix), final)
+    xp = await record_game_result(user.id, state.get("game_code", prefix), final)
     await safe_edit(
         callback.message,
-        render_text(title, state, lang, final=final),
+        render_text(title, state, lang, final=final) + xp_gain_line(xp, lang),
     )
     menu_msg_id = state.get("menu_message_id")
     if menu_msg_id:
@@ -340,14 +346,14 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
     if result["state"] in ("p1_wins", "p2_wins", "draw"):
         if result["state"] == "draw":
             await finish_session(session.id, state, winner_user_id=None)
-            await record_game_result(state["p1_id"], g.code, "draw")
-            await record_game_result(state["p2_id"], g.code, "draw")
+            xp_p1 = await record_game_result(state["p1_id"], g.code, "draw")
+            xp_p2 = await record_game_result(state["p2_id"], g.code, "draw")
         else:
             winner_id = state["p1_id"] if result["state"] == "p1_wins" else state["p2_id"]
             loser_id = state["p2_id"] if result["state"] == "p1_wins" else state["p1_id"]
             await finish_session(session.id, state, winner_user_id=winner_id)
-            await record_game_result(winner_id, g.code, "win")
-            await record_game_result(loser_id, g.code, "loss")
+            xp_p1 = await record_game_result(state["p1_id"], g.code, "win" if state["p1_id"] == winner_id else "loss")
+            xp_p2 = await record_game_result(state["p2_id"], g.code, "win" if state["p2_id"] == winner_id else "loss")
 
         _icon_key = "icon-rpssl" if "rpssl" in title_key else "icon-rps"
         if session.mode == SessionMode.group_match:
@@ -356,12 +362,13 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
             _title = f"{_group_lang[_icon_key]} {_group_lang[title_key]}"
             p1 = await get_user_by_id(state["p1_id"])
             p2 = await get_user_by_id(state["p2_id"])
+            p1_name = format_player_name(p1)
+            p2_name = format_player_name(p2)
             menu_msg_id = state.get("menu_message_id")
             await safe_edit(
                 callback.message,
-                render_multi_text(_title, state, _group_lang,
-                                   format_player_name(p1), format_player_name(p2),
-                                   final=result["state"]),
+                render_multi_text(_title, state, _group_lang, p1_name, p2_name,
+                                   final=result["state"]) + xp_group_line([(p1_name, xp_p1), (p2_name, xp_p2)], _group_lang),
             )
             if menu_msg_id:
                 try:
@@ -370,6 +377,11 @@ async def _handle_multiplayer_move(callback: CallbackQuery, session, state: dict
                     pass
             await open_menu_fn(callback.message, user, lang)
         else:
+            state["xp_gains"] = {
+                str(state["p1_id"]): {"xp": xp_p1.xp, "leveled_up": xp_p1.level_up.number if xp_p1.level_up else None},
+                str(state["p2_id"]): {"xp": xp_p2.xp, "leveled_up": xp_p2.level_up.number if xp_p2.level_up else None},
+            }
+            await update_session_state(session.id, state, None)
             refreshed = await get_session_by_id(session.id)
             if refreshed:
                 await _sync_rps_duel_messages(callback.bot, refreshed, title_key, moves, prefix)

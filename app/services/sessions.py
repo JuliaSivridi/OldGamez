@@ -7,16 +7,24 @@ from types import SimpleNamespace
 from dataclasses import dataclass, field as dc_field
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import selectinload
 
 from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User, UserGameStreak
 from app.db.session import SessionLocal
-from app.services.levels import xp_for_result
+from app.services.levels import LEVELS, LevelDef, get_level, xp_for_result
 from app.services.users import get_display_name
 
 
-INVITE_TTL_DAYS = 7
+INVITE_TTL_DAYS = 7          # days before an unjoined duel invite expires
+GROUP_PENDING_TTL_DAYS = 7  # days before an unjoined group match invite expires
+
+
+@dataclass
+class XPGain:
+    """XP awarded for a game result, with optional level-up info."""
+    xp: int
+    level_up: LevelDef | None = None
 
 
 async def create_solo_session(
@@ -282,6 +290,43 @@ async def expire_stale_private_duels() -> None:
             await session.commit()
 
 
+async def expire_stale_group_matches() -> int:
+    """Mark pending group matches older than GROUP_PENDING_TTL_DAYS as expired. Returns count."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=GROUP_PENDING_TTL_DAYS)
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(GameSession).where(
+                GameSession.mode == SessionMode.group_match,
+                GameSession.status == SessionStatus.pending,
+                GameSession.created_at < cutoff,
+            )
+        )
+        stale = result.scalars().all()
+        for gs in stale:
+            gs.status = SessionStatus.expired
+            gs.finished_at = datetime.now(timezone.utc)
+        if stale:
+            await session.commit()
+        return len(stale)
+
+
+async def delete_stale_sessions() -> int:
+    """Hard-delete all expired and abandoned sessions, including their players. Returns count."""
+    async with SessionLocal() as session:
+        id_rows = await session.execute(
+            select(GameSession.id).where(
+                GameSession.status.in_([SessionStatus.expired, SessionStatus.abandoned])
+            )
+        )
+        ids = [row[0] for row in id_rows.all()]
+        if not ids:
+            return 0
+        await session.execute(delete(SessionPlayer).where(SessionPlayer.session_id.in_(ids)))
+        result = await session.execute(delete(GameSession).where(GameSession.id.in_(ids)))
+        await session.commit()
+        return result.rowcount
+
+
 async def get_active_solo_session(user_id: int, game_code: str) -> GameSession | None:
     async with SessionLocal() as session:
         result = await session.execute(
@@ -364,13 +409,58 @@ def _compute_streak(
     return today, new_current, max(best, new_current)
 
 
+def xp_gain_line(gain: int | XPGain, lang: dict) -> str:
+    """Return '\\n⚡ +N XP' (+ optional level-up line) for appending to a result message."""
+    xp = gain.xp if isinstance(gain, XPGain) else gain
+    level_up = gain.level_up if isinstance(gain, XPGain) else None
+    if xp <= 0:
+        return ""
+    icon = lang.get("icon-xp", "⚡")
+    xp_label = lang.get("level-xp", "XP")
+    line = f"\n{icon} +{xp} {xp_label}"
+    if level_up is not None:
+        lvl_icon = lang.get(f"icon-level-{level_up.number}", "")
+        lvl_name = lang.get(f"level-{level_up.number}", str(level_up.number))
+        level_up_text = lang.get("level-up", "New level!")
+        line += f"\n🎉 {level_up_text} {lvl_icon} {lvl_name}"
+    return line
+
+
+def xp_gain_from_state(state: dict, user_id: int) -> XPGain:
+    """Reconstruct XPGain for a player from state['xp_gains'] (stored at duel end)."""
+    info = (state.get("xp_gains") or {}).get(str(user_id)) or {}
+    if isinstance(info, int):
+        return XPGain(xp=info)
+    xp = info.get("xp", 0)
+    level_num = info.get("leveled_up")
+    level_up = LEVELS[level_num - 1] if level_num and 1 <= level_num <= len(LEVELS) else None
+    return XPGain(xp=xp, level_up=level_up)
+
+
+def xp_group_line(player_gains: list[tuple[str, XPGain]], lang: dict) -> str:
+    """Format '\\nName1 ⚡+N XP [🎉icon], Name2 ⚡+M XP' for group game end."""
+    icon = lang.get("icon-xp", "⚡")
+    xp_label = lang.get("level-xp", "XP")
+    parts = []
+    for name, gain in player_gains:
+        if gain.xp <= 0:
+            continue
+        part = f"{name} {icon}+{gain.xp} {xp_label}"
+        if gain.level_up is not None:
+            lvl_icon = lang.get(f"icon-level-{gain.level_up.number}", "")
+            part += f" 🎉{lvl_icon}"
+        parts.append(part)
+    return ("\n" + ", ".join(parts)) if parts else ""
+
+
 async def record_game_result(
     user_id: int,
     game_code: str,
     result: str,
     variant_key: str = "default",
     best_score: int | None = None,
-) -> None:
+) -> XPGain:
+    """Record game result, award XP, update streaks. Returns XPGain with level-up info."""
     async with SessionLocal() as session:
         existing = await session.execute(
             select(GameStat).where(
@@ -412,19 +502,35 @@ async def record_game_result(
             .values(**values)
         )
 
-        # Award XP for any result (win / draw / loss)
+        # Award XP — read user first to detect level-up and reuse for win-streak
         xp_gain = xp_for_result(variant_key, result)
-        if xp_gain > 0:
-            await session.execute(
-                update(User).where(User.id == user_id).values(xp=User.xp + xp_gain)
-            )
+        old_xp = 0
+        new_xp = 0
+        level_up_def: LevelDef | None = None
+        user_obj = None
 
-        if result == "win":
-            # Determine user's local "today"
+        if xp_gain > 0:
             user_row = await session.execute(
                 select(User).where(User.id == user_id).with_for_update()
             )
             user_obj = user_row.scalar_one_or_none()
+            old_xp = (user_obj.xp or 0) if user_obj else 0
+            new_xp = old_xp + xp_gain
+            await session.execute(
+                update(User).where(User.id == user_id).values(xp=new_xp)
+            )
+            old_level = get_level(old_xp)
+            new_level = get_level(new_xp)
+            if new_level.number > old_level.number:
+                level_up_def = new_level
+
+        if result == "win":
+            # user_obj already loaded above (xp_gain > 0 for wins)
+            if user_obj is None:
+                user_row = await session.execute(
+                    select(User).where(User.id == user_id).with_for_update()
+                )
+                user_obj = user_row.scalar_one_or_none()
             tz_str = ((user_obj.settings or {}).get("timezone", "UTC")) if user_obj else "UTC"
             try:
                 tz = ZoneInfo(tz_str)
@@ -467,6 +573,8 @@ async def record_game_result(
                 )
 
         await session.commit()
+
+    return XPGain(xp=xp_gain, level_up=level_up_def)
 
 
 async def get_game_stats_bulk(user_id: int, game_codes: list[str]) -> dict[str, GameStatSummary]:
@@ -641,6 +749,13 @@ GAME_VARIANT_POINTS: dict[str, dict[str, int]] = {
 _TOP_MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 
 
+def format_rank(pos: int) -> str:
+    """Return medal + number for top-10 ('🥇 #1'), '#N' for others."""
+    if pos <= len(_TOP_MEDALS):
+        return f"{_TOP_MEDALS[pos - 1]} #{pos}"
+    return f"#{pos}"
+
+
 def _build_ratings(rows, points_map: dict[str, int]) -> tuple[dict[int, int], dict[int, str]]:
     user_rating: dict[int, int] = {}
     user_name: dict[int, str] = {}
@@ -667,29 +782,60 @@ def _extract_viewer_entry(
     return None
 
 
-async def get_user_rankings(user_id: int) -> list[tuple[str, int]]:
-    """Returns [(game_code, position)] sorted by position asc, for all games where user has ranked."""
+async def get_user_global_rank(user_id: int) -> int | None:
+    """Return user's 1-based position in the global leaderboard, or None if not ranked."""
     async with SessionLocal() as db:
         rows = (await db.execute(
             select(GameStat.user_id, GameStat.game_code, GameStat.variant_key, GameStat.wins)
             .where(GameStat.wins > 0)
         )).all()
 
-    by_game: dict[str, dict[int, int]] = {}
+    if not rows:
+        return None
+
+    user_rating: dict[int, int] = {}
     for row in rows:
+        pts = GAME_VARIANT_POINTS.get(row.game_code, {}).get(row.variant_key, 1)
+        user_rating[row.user_id] = user_rating.get(row.user_id, 0) + row.wins * pts
+
+    if user_id not in user_rating:
+        return None
+
+    my_score = user_rating[user_id]
+    return sum(1 for score in user_rating.values() if score > my_score) + 1
+
+
+async def get_user_rankings(user_id: int) -> list[tuple[str, int | None]]:
+    """Returns [(game_code, position | None)] for all games the user has played.
+    position is None when the user has played but has no wins (unranked)."""
+    async with SessionLocal() as db:
+        all_rows = (await db.execute(
+            select(GameStat.user_id, GameStat.game_code, GameStat.variant_key, GameStat.wins)
+            .where(GameStat.wins > 0)
+        )).all()
+        user_games: list[str] = (await db.execute(
+            select(GameStat.game_code)
+            .where(GameStat.user_id == user_id, GameStat.played > 0)
+            .distinct()
+        )).scalars().all()
+
+    by_game: dict[str, dict[int, int]] = {}
+    for row in all_rows:
         pts = GAME_VARIANT_POINTS.get(row.game_code, {}).get(row.variant_key, 1)
         uid_map = by_game.setdefault(row.game_code, {})
         uid_map[row.user_id] = uid_map.get(row.user_id, 0) + row.wins * pts
 
-    results: list[tuple[str, int]] = []
-    for game_code, ratings in by_game.items():
-        if user_id not in ratings:
-            continue
-        my_score = ratings[user_id]
-        pos = sum(1 for score in ratings.values() if score > my_score) + 1
-        results.append((game_code, pos))
+    results: list[tuple[str, int | None]] = []
+    for game_code in user_games:
+        ratings = by_game.get(game_code, {})
+        if user_id in ratings:
+            my_score = ratings[user_id]
+            pos = sum(1 for score in ratings.values() if score > my_score) + 1
+            results.append((game_code, pos))
+        else:
+            results.append((game_code, None))
 
-    return sorted(results, key=lambda x: x[1])
+    return sorted(results, key=lambda x: (x[1] is None, x[1] or 0))
 
 
 async def get_game_leaderboard(

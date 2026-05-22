@@ -1,15 +1,22 @@
 """XP and level definitions for OldGamez.
 
-Level theme: Культовые ИИ (Iconic AI references)
-  🍞 Тостер → 💾 Дискета → 🤖 Дроид → 💀 Терминатор
-  → 🔴 HAL 9000 → 🌐 Скайнет → 🌌 42
+Level theme: Iconic AI references
+  🍞 Toaster → 💾 Floppy → 🤖 Droid → 💀 Terminator
+  → 🔴 HAL 9000 → 🌐 Skynet → 🌌 42
 
 XP per win is set by variant_key (difficulty or board size).
 Draws award 20% of the win XP, losses award 10%.
+
+Level names and icons live in languages.json:
+  icon-level-{n}, level-{n}, icon-level-max, level-xp
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.i18n.translator import LanguagePack
 
 
 # ── Level definitions ──────────────────────────────────────────────────────────
@@ -17,19 +24,17 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class LevelDef:
     number: int
-    name: str        # display name (same across all languages)
-    emoji: str
-    xp_required: int # total accumulated XP needed to reach this level
+    xp_required: int  # total accumulated XP needed to reach this level
 
 
 LEVELS: list[LevelDef] = [
-    LevelDef(1, "Тостер",      "🍞",  0),
-    LevelDef(2, "Дискета",     "💾",  1_000),
-    LevelDef(3, "Дроид",       "🤖",  4_000),
-    LevelDef(4, "Терминатор",  "💀",  12_000),
-    LevelDef(5, "HAL 9000",    "🔴",  30_000),
-    LevelDef(6, "Скайнет",     "🌐",  65_000),
-    LevelDef(7, "42",          "🌌",  120_000),
+    LevelDef(1,       0),
+    LevelDef(2,   1_000),
+    LevelDef(3,   4_000),
+    LevelDef(4,  12_000),
+    LevelDef(5,  30_000),
+    LevelDef(6,  65_000),
+    LevelDef(7, 120_000),
 ]
 
 # ── XP per win by variant key ──────────────────────────────────────────────────
@@ -95,9 +100,28 @@ def level_progress(xp: int) -> tuple[LevelDef, int, int | None]:
     return lvl, xp_in, None  # max level
 
 
-def level_line(xp: int) -> str:
-    """One-line summary: e.g. '🍞 Тостер · 847 / 1000 XP'  or  '🌌 42 · 5234 XP ✨'"""
+def level_icon(xp: int, lang: "LanguagePack") -> str:
+    """Return just the level icon emoji for a given XP amount."""
+    n = get_level(xp).number
+    return lang.get(f"icon-level-{n}", "")
+
+
+def level_compact(xp: int, lang: "LanguagePack") -> str:
+    """Compact one-token form: '🍞 ⚡847'  (level icon + XP icon + total XP, no threshold)."""
+    lvl = get_level(xp)
+    icon = lang.get(f"icon-level-{lvl.number}", "")
+    xp_icon = lang.get("icon-xp", "⚡")
+    return f"{icon} {xp_icon}{xp}"
+
+
+def level_line(xp: int, lang: "LanguagePack") -> str:
+    """One-line summary: e.g. '🍞 Toaster · 847 / 1000 XP'  or  '🌌 42 · 5234 XP ✨'"""
     lvl, xp_in, xp_needed = level_progress(xp)
+    n = lvl.number
+    icon = lang.get(f"icon-level-{n}", "")
+    name = lang.get(f"level-{n}", str(n))
+    xp_label = lang.get("level-xp", "XP")
     if xp_needed is None:
-        return f"{lvl.emoji} {lvl.name} · {xp_in:,} XP ✨"
-    return f"{lvl.emoji} {lvl.name} · {xp_in:,} / {xp_needed:,} XP"
+        max_icon = lang.get("icon-level-max", "✨")
+        return f"{icon} {name} · {xp_in:,} {xp_label} {max_icon}"
+    return f"{icon} {name} · {xp_in:,} / {xp_needed:,} {xp_label}"

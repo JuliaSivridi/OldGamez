@@ -10,6 +10,7 @@ from app.services.sessions import (
     finish_session,
     record_game_result,
     update_session_state,
+    xp_gain_line,
 )
 from app.handlers.common import open_game_menu
 
@@ -107,10 +108,10 @@ async def callback_submit(callback: CallbackQuery) -> None:
     state = result["game_state"]
     if result["state"] in ("win", "loss"):
         await finish_session(session.id, state, winner_user_id=user.id if result["state"] == "win" else None)
-        await record_game_result(user.id, game.code, result["state"], variant_key=_MA_TO_VARIANT.get(state["max_attempts"], "easy"))
+        xp = await record_game_result(user.id, game.code, result["state"], variant_key=_MA_TO_VARIANT.get(state["max_attempts"], "easy"))
         menu_msg_id = state.get("menu_message_id")
         await callback.message.edit_text(
-            render_text(lang, state, final=result["state"]),
+            render_text(lang, state, final=result["state"]) + xp_gain_line(xp, lang),
         )
         if menu_msg_id:
             try:

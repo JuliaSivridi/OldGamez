@@ -39,10 +39,18 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 - Global leaderboard across all games — sum of all weighted wins
 - Three interface languages: 🇬🇧 English, 🇫🇮 Finnish, 🇷🇺 Russian — switchable with `/lang`
 
+**XP & progression**
+- XP awarded for every game result (wins earn 10–60 XP by difficulty/size, draws and losses earn a small amount)
+- 7 levels with AI-themed names and icons (🍞 Toaster → 💾 Floppy → 🤖 Droid → 💀 Terminator → 🔴 HAL 9000 → 🌐 Skynet → 🌌 42); level-up notification on result screen
+- Global rank — weighted-wins position across all games, shown in profile and main menu compact line
+- Win streaks tracked per game and as a cross-game combined streak
+- Profile screen: expanded view (level line, global rank, streak); level reference screen with XP thresholds
+
 **Infrastructure**
 - Inline keyboard UI — no reply keyboards, works cleanly in groups
 - HTTP healthcheck endpoint — keeps the container alive on platforms that expect an open port
-- Stale duel invite cleanup runs automatically every 24 hours
+- Admin dashboard at `/dashboard` — user list, game stats summary, running sessions with hidden game state (secrets, mine fields, bot ship positions), feedback inbox
+- Daily expiry of stale pending sessions; weekly hard-delete of expired and abandoned records
 
 ---
 

@@ -33,7 +33,11 @@ from app.services.sessions import (
     get_session_by_id,
     record_game_result,
     update_session_state,
+    xp_gain_from_state,
+    xp_gain_line,
+    xp_group_line,
 )
+from app.services.levels import level_icon
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard
 
@@ -49,6 +53,7 @@ def render_group_status_text(
     lang: dict[str, str],
     state: dict,
     player_names: dict[int, str],
+    winner_icon: str = "",
 ) -> str:
     if state["status"] == "finished":
         if state.get("result") == "draw":
@@ -56,7 +61,7 @@ def render_group_status_text(
         winner_id = state.get("winner_user_id")
         winner_symbol = SYMBOLS[1] if winner_id == state.get("player_red_id") else SYMBOLS[2]
         winner_name = player_names.get(winner_id, str(winner_id or ""))
-        return f"{lang['group-winner']} {winner_symbol} {winner_name}"
+        return f"{lang['group-winner']} {winner_symbol} {winner_name} {winner_icon}".rstrip()
 
     current_turn_user_id = state.get("current_turn_user_id")
     current_symbol = SYMBOLS[1] if current_turn_user_id == state.get("player_red_id") else SYMBOLS[2]
@@ -166,6 +171,9 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
     else:
         text = render_text(lang, state, viewer_user_id=user_id)
         is_active = session.status == SessionStatus.active and session.current_turn_user_id == user_id
+        if state.get("xp_gains") and state.get("status") == "finished":
+            gain = xp_gain_from_state(state, user_id)
+            text += xp_gain_line(gain, lang)
     markup = board_keyboard(
         session.id,
         state["board"],
@@ -464,14 +472,23 @@ async def callback_col(callback: CallbackQuery) -> None:
             state["current_turn_user_id"] = None
             await finish_session(session.id, state, winner_user_id=state["winner_user_id"])
             other_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
+            red_name = player_names.get(state["player_red_id"], str(state["player_red_id"]))
+            yellow_name = player_names.get(state["player_yellow_id"], str(state["player_yellow_id"]))
             if duel_result["state"] == "draw":
-                await record_game_result(user.id, game.code, "draw")
-                await record_game_result(other_user_id, game.code, "draw")
+                xp_red = await record_game_result(state["player_red_id"], game.code, "draw")
+                xp_yellow = await record_game_result(state["player_yellow_id"], game.code, "draw")
             else:
-                await record_game_result(user.id, game.code, "win")
-                await record_game_result(other_user_id, game.code, "loss")
+                winner_is_red = state["winner_user_id"] == state["player_red_id"]
+                xp_red = await record_game_result(state["player_red_id"], game.code, "win" if winner_is_red else "loss")
+                xp_yellow = await record_game_result(state["player_yellow_id"], game.code, "loss" if winner_is_red else "win")
+            winner_user_id = state.get("winner_user_id")
+            w_icon = ""
+            if winner_user_id is not None:
+                winner_obj = await get_user_by_id(winner_user_id)
+                if winner_obj is not None:
+                    w_icon = level_icon(winner_obj.xp or 0, group_lang)
             await callback.message.edit_text(
-                render_group_status_text(group_lang, state, player_names),
+                render_group_status_text(group_lang, state, player_names, winner_icon=w_icon) + xp_group_line([(red_name, xp_red), (yellow_name, xp_yellow)], group_lang),
                 reply_markup=board_keyboard(session.id, state["board"], False, duel_result["line"]),
             )
             menu_msg_id = state.get("menu_message_id")
@@ -520,12 +537,18 @@ async def callback_col(callback: CallbackQuery) -> None:
             await finish_session(session.id, state, winner_user_id=state["winner_user_id"])
             other_user_id = state["player_yellow_id"] if state["player_red_id"] == user.id else state["player_red_id"]
             if duel_result["state"] == "draw":
-                await record_game_result(user.id, game.code, "draw")
-                await record_game_result(other_user_id, game.code, "draw")
+                xp_mine = await record_game_result(user.id, game.code, "draw")
+                xp_other = await record_game_result(other_user_id, game.code, "draw")
             else:
-                await record_game_result(user.id, game.code, "win")
-                await record_game_result(other_user_id, game.code, "loss")
+                xp_mine = await record_game_result(user.id, game.code, "win")
+                xp_other = await record_game_result(other_user_id, game.code, "loss")
+            state["xp_gains"] = {
+                str(user.id): {"xp": xp_mine.xp, "leveled_up": xp_mine.level_up.number if xp_mine.level_up else None},
+                str(other_user_id): {"xp": xp_other.xp, "leveled_up": xp_other.level_up.number if xp_other.level_up else None},
+            }
+            await update_session_state(session.id, state, None)
             refreshed_session = await get_session_by_id(session.id)
+
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
             await delete_guest_join_msg(callback.bot, state)
@@ -565,9 +588,9 @@ async def callback_col(callback: CallbackQuery) -> None:
     if user_result["state"] in {"win", "draw"}:
         state["result"] = user_result["state"]
         await finish_session(session.id, state, winner_user_id=user.id if user_result["state"] == "win" else None)
-        await record_game_result(user.id, game.code, "win" if user_result["state"] == "win" else "draw")
+        xp = await record_game_result(user.id, game.code, "win" if user_result["state"] == "win" else "draw")
         await callback.message.edit_text(
-            render_text(lang, state),
+            render_text(lang, state) + xp_gain_line(xp, lang),
             reply_markup=board_keyboard(session.id, state["board"], False, user_result["line"]),
         )
         if menu_msg_id:
@@ -593,9 +616,9 @@ async def callback_col(callback: CallbackQuery) -> None:
     if bot_result["state"] in {"loss", "draw"}:
         state["result"] = bot_result["state"]
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, "loss" if bot_result["state"] == "loss" else "draw")
+        xp = await record_game_result(user.id, game.code, "loss" if bot_result["state"] == "loss" else "draw")
         await callback.message.edit_text(
-            render_text(lang, state),
+            render_text(lang, state) + xp_gain_line(xp, lang),
             reply_markup=board_keyboard(session.id, state["board"], False, bot_result["line"]),
         )
         if menu_msg_id:

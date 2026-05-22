@@ -13,7 +13,8 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, begin_group_session, create_group_match_session, create_private_duel_invite, create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state, xp_gain_from_state, xp_gain_line
+from app.services.levels import level_icon
 from app.services.users import get_display_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard
 
@@ -90,8 +91,8 @@ async def finish_blackjack(session_id: int, state: dict, lang: dict[str, str], u
     state["status"] = "finished"
     state["result"] = verdict["result"]
     await finish_session(session_id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
-    await record_game_result(user.id, game.code, verdict["result"])
-    await message.edit_text(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown", reply_markup=None)
+    xp = await record_game_result(user.id, game.code, verdict["result"])
+    await message.edit_text(render_game_text(lang, state, verdict["message"] + xp_gain_line(xp, lang)), parse_mode="Markdown", reply_markup=None)
     if menu_msg_id:
         try:
             await message.bot.delete_message(message.chat.id, menu_msg_id)
@@ -110,8 +111,8 @@ async def start_blackjack_game(message: Message, user, lang: dict[str, str], men
         state["status"] = "finished"
         state["result"] = verdict["result"]
         await finish_session(session.id, state, winner_user_id=user.id if verdict["result"] == "win" else None)
-        await record_game_result(user.id, game.code, verdict["result"])
-        await message.answer(render_game_text(lang, state, verdict["message"]), parse_mode="Markdown")
+        xp = await record_game_result(user.id, game.code, verdict["result"])
+        await message.answer(render_game_text(lang, state, verdict["message"] + xp_gain_line(xp, lang)), parse_mode="Markdown")
         if menu_message_id:
             try:
                 await message.bot.delete_message(message.chat.id, menu_message_id)
@@ -127,7 +128,11 @@ async def _render_bj_duel_for_user(session, user_id: int) -> tuple[str, InlineKe
     state = dict(session.state or {})
     is_game_over = session.status == SessionStatus.finished
     if is_game_over:
-        return render_duel_text_for_viewer(state, lang, user_id, final=True), None
+        text = render_duel_text_for_viewer(state, lang, user_id, final=True)
+        if state.get("xp_gains"):
+            gain = xp_gain_from_state(state, user_id)
+            text += xp_gain_line(gain, lang)
+        return text, None
     is_p1 = user_id == state.get("p1_id")
     my_done = state.get("p1_done" if is_p1 else "p2_done", False)
     return render_duel_text_for_viewer(state, lang, user_id), game_keyboard(session.id, lang, is_active=not my_done)
@@ -149,8 +154,13 @@ async def _finish_blackjack_duel(bot, session_id: int, state: dict, current_mess
     await finish_session(session_id, state, winner_user_id=winner_id)
     p1_stat = "win" if result == "p1_wins" else ("loss" if result in ("p2_wins", "both_bust") else "draw")
     p2_stat = "win" if result == "p2_wins" else ("loss" if result in ("p1_wins", "both_bust") else "draw")
-    await record_game_result(p1_id, game.code, p1_stat)
-    await record_game_result(p2_id, game.code, p2_stat)
+    xp_p1 = await record_game_result(p1_id, game.code, p1_stat)
+    xp_p2 = await record_game_result(p2_id, game.code, p2_stat)
+    state["xp_gains"] = {
+        str(p1_id): {"xp": xp_p1.xp, "leveled_up": xp_p1.level_up.number if xp_p1.level_up else None},
+        str(p2_id): {"xp": xp_p2.xp, "leveled_up": xp_p2.level_up.number if xp_p2.level_up else None},
+    }
+    await update_session_state(session_id, state, None)
     refreshed = await get_session_by_id(session_id)
     if refreshed:
         await _sync_bj_duel_messages(bot, refreshed)
@@ -264,7 +274,7 @@ def render_group_joining_text(state: dict, lang: dict) -> str:
         f"{lang['bj-grp-waiting']}"
     )
 
-def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> str:
+def render_group_playing_text(state: dict, lang: dict, final: bool = False, winner_icons: dict[int, str] | None = None) -> str:
     comp_cards = state["comp_cards"]
     comp_cost = state["comp_cost"]
     dealer_icon = lang["icon-bj"]
@@ -294,7 +304,7 @@ def render_group_playing_text(state: dict, lang: dict, final: bool = False) -> s
     if final:
         winners = [p for p in state["players"] if results.get(str(p["id"])) == "win"]
         if winners:
-            names = ", ".join(p["name"] for p in winners)
+            names = ", ".join(f"{p['name']} {(winner_icons or {}).get(p['id'], '')}".rstrip() for p in winners)
             lines.append(f"\n\n{lang['icon-win']} {lang['bj-grp-winner'].format(name=names)}")
 
     return "\n".join(lines)
@@ -337,6 +347,13 @@ async def _finish_group_game(bot, session_id: int, state: dict) -> None:
         result = state["results"].get(str(p["id"]), "loss")
         await record_game_result(p["id"], game.code, result)
 
+    winner_icons: dict[int, str] = {}
+    for p in state["players"]:
+        if state["results"].get(str(p["id"])) == "win":
+            winner_obj = await get_user_by_id(p["id"])
+            if winner_obj is not None:
+                winner_icons[p["id"]] = level_icon(winner_obj.xp or 0, lang)
+
     group_chat_id = state.get("group_chat_id")
     group_msg_id = state.get("group_message_id")
     if group_chat_id and group_msg_id:
@@ -344,7 +361,7 @@ async def _finish_group_game(bot, session_id: int, state: dict) -> None:
             await bot.edit_message_text(
                 chat_id=group_chat_id,
                 message_id=group_msg_id,
-                text=render_group_playing_text(state, lang, final=True),
+                text=render_group_playing_text(state, lang, final=True, winner_icons=winner_icons),
                 reply_markup=None,
                 parse_mode="Markdown",
             )

@@ -5,10 +5,109 @@ from datetime import datetime, timezone
 
 from aiohttp import web
 from sqlalchemy import delete, func, select
+from sqlalchemy.orm import selectinload
 
 from app.config import get_settings
-from app.db.models import Feedback, GameStat, User
+from app.db.models import Feedback, GameSession, GameStat, SessionStatus, User
 from app.db.session import SessionLocal
+
+
+_GAME_NAMES: dict[str, str] = {
+    "tic_tac_toe": "TicTacToe",
+    "four_in_row": "4 in Row",
+    "battleship": "Battleship",
+    "minesweeper": "Minesweeper",
+    "lightsout": "LightsOut",
+    "npuzzle": "N-Puzzle",
+    "mastermind": "Mastermind",
+    "bullscows": "Bulls&Cows",
+    "wordle": "Wordle",
+    "hangman": "Hangman",
+    "memory": "Memory",
+    "blackjack": "Blackjack",
+    "ropasci": "RPS",
+    "rpssl": "RPSSL",
+}
+
+_MODE_LABELS: dict[str, str] = {
+    "solo": "solo",
+    "duel_private": "duel",
+    "group_match": "group",
+}
+
+
+def _render_game_state(game_code: str, state: dict) -> str:
+    """Return a compact human-readable representation of a running game's state."""
+    if not state:
+        return "—"
+
+    if game_code == "mastermind":
+        secret = state.get("secret", [])
+        return "".join(str(s) for s in secret) if secret else "—"
+
+    if game_code == "bullscows":
+        secret = state.get("secret", [])
+        return "".join(str(d) for d in secret) if secret else "—"
+
+    if game_code in ("wordle", "hangman"):
+        return str(state.get("word", "—"))
+
+    if game_code == "tic_tac_toe":
+        board: str = state.get("board", "")
+        size: int = state.get("board_size", 3)
+        if board and size:
+            return "\n".join(board[i:i + size] for i in range(0, len(board), size))
+        return "—"
+
+    if game_code == "minesweeper":
+        field = state.get("field", [])
+        if field:
+            return "\n".join(
+                "".join("*" if c == 9 else (str(c) if c else ".") for c in row)
+                for row in field
+            )
+        return "—"
+
+    if game_code == "lightsout":
+        cells = state.get("cells", [])
+        size = state.get("size", 5)
+        if cells:
+            return "\n".join(
+                "".join("1" if c else "0" for c in cells[i:i + size])
+                for i in range(0, len(cells), size)
+            )
+        return "—"
+
+    if game_code == "battleship":
+        board = state.get("bot_board", [])
+        _SYM = {0: ".", 2: "S", 3: "X", 4: "#"}
+        if board:
+            return "\n".join("".join(_SYM.get(c, "?") for c in row) for row in board)
+        return "—"
+
+    if game_code == "npuzzle":
+        tiles = state.get("tiles", [])
+        size = state.get("size", 3)
+        if tiles:
+            return "\n".join(
+                ", ".join("_" if t == 0 else str(t) for t in tiles[i:i + size])
+                for i in range(0, len(tiles), size)
+            )
+        return "—"
+
+    if game_code == "memory":
+        cards = state.get("cards", [])
+        matched = state.get("matched", [False] * len(cards))
+        cols = state.get("cols", 4)
+        if cards:
+            display = list(cards)
+            return "\n".join(
+                " ".join(display[i:i + cols])
+                for i in range(0, len(display), cols)
+            )
+        return "—"
+
+    return "—"
 
 
 async def _load_data() -> dict:
@@ -79,10 +178,47 @@ async def _load_data() -> dict:
         except Exception:
             feedback_rows = []
 
+        # Running game sessions
+        r = await sess.execute(
+            select(GameSession)
+            .where(GameSession.status.in_([SessionStatus.active, SessionStatus.pending]))
+            .options(selectinload(GameSession.players))
+            .order_by(GameSession.started_at.desc().nulls_last(), GameSession.created_at.desc())
+        )
+        active_sessions = r.scalars().all()
+
+        # Load player user records for active sessions
+        all_player_ids: set[int] = set()
+        for s in active_sessions:
+            for p in s.players:
+                all_player_ids.add(p.user_id)
+        player_name_map: dict[int, str] = {}
+        if all_player_ids:
+            r = await sess.execute(select(User).where(User.id.in_(all_player_ids)))
+            for u in r.scalars().all():
+                player_name_map[u.id] = (
+                    " ".join(filter(None, [u.first_name, u.last_name]))
+                    or (f"@{u.username}" if u.username else f"#{u.telegram_user_id}")
+                )
+
+        running_games = []
+        for s in active_sessions:
+            players_sorted = sorted(s.players, key=lambda p: p.seat_no)
+            player_names = [player_name_map.get(p.user_id, f"uid:{p.user_id}") for p in players_sorted]
+            running_games.append({
+                "id": s.id,
+                "game": _GAME_NAMES.get(s.game_code, s.game_code),
+                "mode": _MODE_LABELS.get(s.mode.value if hasattr(s.mode, "value") else str(s.mode), str(s.mode)),
+                "players": player_names,
+                "state_str": _render_game_state(s.game_code, s.state or {}),
+                "started": s.started_at or s.created_at,
+            })
+
         return {
             "users": users,
             "game_summary": game_summary,
             "feedback": feedback_rows,
+            "running_games": running_games,
         }
 
 
@@ -96,6 +232,7 @@ def _render_html(data: dict, generated_at: str) -> str:
     users = data["users"]
     summary = data["game_summary"]
     feedback = data["feedback"]
+    running_games = data["running_games"]
 
     def table(headers: list[str], rows: list[list]) -> str:
         ths = "".join(f"<th>{h}</th>" for h in headers)
@@ -109,6 +246,22 @@ def _render_html(data: dict, generated_at: str) -> str:
     total_wins = sum(s["wins"] for s in summary)
     total_losses = sum(s["losses"] for s in summary)
     total_draws = sum(s["draws"] for s in summary)
+    # Running games table
+    def _esc(s: str) -> str:
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    running_rows = [
+        [
+            f"#{g['id']}",
+            f"{g['game']} <small style='color:#888'>({g['mode']})</small>",
+            "<br>".join(_esc(n) for n in g["players"]),
+            f"<pre style='margin:0;font-size:11px;line-height:1.4'>{_esc(g['state_str'])}</pre>",
+            _fmt(g["started"]),
+        ]
+        for g in running_games
+    ]
+    running_table = table(["#", "Game", "Players", "State", "Started"], running_rows)
+
     summary_rows = [[s["game"], s["players"], s["played"], s["wins"], s["losses"], s["draws"]] for s in summary]
     summary_rows.append(["<b>Total</b>", "—", f"<b>{total_played}</b>", f"<b>{total_wins}</b>", f"<b>{total_losses}</b>", f"<b>{total_draws}</b>"])
     summary_table = table(["Game", "Players", "Played", "Wins", "Losses", "Draws"], summary_rows)
@@ -161,6 +314,7 @@ def _render_html(data: dict, generated_at: str) -> str:
                cursor: pointer; padding: 2px 7px; font-size: 13px; }
     .del-btn:hover { background: #3a1a1a; border-color: #e07070; }
     .toggle-anon { background: none; border: none; cursor: pointer; font-size: 15px; padding: 0; }
+    td pre { white-space: pre; font-family: monospace; font-size: 11px; line-height: 1.4; margin: 0; color: #a0d8b3; }
     """
 
     return f"""<!DOCTYPE html>
@@ -174,8 +328,14 @@ def _render_html(data: dict, generated_at: str) -> str:
 <div>
   <span class="badge">👤 Users: {len(users)}</span>
   <span class="badge">🕹 Total plays: {total_played}</span>
+  <span class="badge">▶️ Running: {len(running_games)}</span>
   <span class="badge">✉️ Feedback: {len(feedback)}</span>
 </div>
+
+<details open>
+<summary>▶️ Running Games ({len(running_games)})</summary>
+{running_table if running_games else "<p style='padding:8px;color:#888'>No active games</p>"}
+</details>
 
 <details>
 <summary>📊 Game Stats Summary ({len(summary)} games · {total_played} plays)</summary>

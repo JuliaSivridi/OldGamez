@@ -16,6 +16,7 @@ from app.keyboards.menus import game_menu_keyboard, main_menu_keyboard
 from app.services.sessions import (
     format_game_stats_text,
     format_leaderboard_text,
+    format_rank,
     format_variant_stats_text,
     get_all_game_stats,
     get_cross_game_streak_line,
@@ -23,8 +24,10 @@ from app.services.sessions import (
     get_game_stat,
     get_game_streak_line,
     get_global_leaderboard,
+    get_user_global_rank,
 )
-from app.services.users import get_user_setting, update_user_settings, upsert_user
+from app.services.levels import level_compact, level_line
+from app.services.users import get_display_name, get_user_setting, update_user_settings, upsert_user
 
 router = Router()
 
@@ -385,7 +388,7 @@ def get_current_game(user) -> str | None:
     return get_user_setting(user, "current_game")
 
 
-async def _game_menu_text(lang: dict, g: GameConfig, user_id: int, user_settings: dict | None) -> str:
+async def _game_menu_text(lang: dict, g: GameConfig, user_id: int, user_settings: dict | None, *, show_streak: bool = True) -> str:
     """Build the menu text (including streak) for a game driven by a SettingDef."""
     s = g.setting
     raw = (user_settings or {}).get(s.setting_key, s.default)
@@ -402,7 +405,7 @@ async def _game_menu_text(lang: dict, g: GameConfig, user_id: int, user_settings
         f"{lang[f'icon-{g.open_suffix}']} *{lang[f'game-{g.open_suffix}']}*\n"
         f"\n{lang[f'setting-{s.kind}']}: {val_str}"
     )
-    if g.stat is not None:
+    if g.stat is not None and show_streak:
         text += await get_game_streak_line(user_id, g.code, lang)
     return text
 
@@ -412,9 +415,10 @@ async def open_game_menu(message: Message, user, lang: dict, game_code: str) -> 
     g = _GAMES_BY_CODE.get(game_code)
     if g is None or g.setting is None:
         return
+    is_group = message.chat.type in ("group", "supergroup")
     await update_user_settings(user.id, {"current_game": g.code})
     await message.answer(
-        await _game_menu_text(lang, g, user.id, user.settings),
+        await _game_menu_text(lang, g, user.id, user.settings, show_streak=not is_group),
         reply_markup=_get_game_keyboard(g, lang, chat_type=message.chat.type),
     )
 
@@ -503,15 +507,30 @@ async def _open_main_menu(
       "nudge"    — short playful play-on phrase (button navigation: back, page, menu:games)
       None       — plain main-ttl only
     """
-    parts: list[str] = []
-    parts.append(f"*{lang["main-ttl"]}*")
-    if streak:
-        parts.append(get_cross_game_streak_line(user, lang, brief=True))
+    is_group = message.chat.type in ("group", "supergroup")
+
+    # Build compact info line (private only): "Name | 🍞 ⚡847 | 🥇 #1 | 🔥3"
+    info_block: str | None = None
+    if not is_group:
+        info_parts = [get_display_name(user), level_compact(user.xp or 0, lang)]
+        global_rank = await get_user_global_rank(user.id)
+        if global_rank is not None:
+            info_parts.append(format_rank(global_rank))
+        if streak:
+            current_streak = getattr(user, "current_win_streak", None) or 0
+            if current_streak:
+                col = lang.get("stat-col-streak", "🔥")
+                info_parts.append(f"{col}{current_streak}")
+        info_block = " | ".join(info_parts)
+
+    parts: list[str] = [f"*{lang['main-ttl']}*"]
+    if info_block:
+        parts.append(info_block)
     if context == "greeting":
         parts.append(_greeting(user, lang))
     elif context == "nudge":
         parts.append(pick(lang, "play-nudge"))
-    text = "\n\n".join(parts)
+    text = "\n\n".join(p for p in parts if p)
     markup = main_menu_keyboard(lang, chat_type=message.chat.type, page=page)
     if edit:
         await safe_edit(message, text, reply_markup=markup)
@@ -604,17 +623,18 @@ async def open_game_callback(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
+    is_group = callback.message.chat.type in ("group", "supergroup")
     suffix = callback.data[5:]  # strip "game:"
     g = _GAME_OPEN_BY_SUFFIX[suffix]
     if g.setting is not None:
-        text = await _game_menu_text(lang, g, user.id, user.settings)  # streak included
+        text = await _game_menu_text(lang, g, user.id, user.settings, show_streak=not is_group)
     elif g.open_text_fn is not None:
         text_fn = _load_fn(g.open_text_fn)
         if text_fn is None:
             await callback.answer()
             return
         text = text_fn(lang, user.settings) if g.open_needs_settings else text_fn(lang)
-        if g.stat is not None:
+        if g.stat is not None and not is_group:
             text += await get_game_streak_line(user.id, g.code, lang)
     else:
         await callback.answer()
@@ -681,12 +701,13 @@ async def callback_setting(callback: CallbackQuery) -> None:
         value = raw_value
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
+    is_group = callback.message.chat.type in ("group", "supergroup")
     await update_user_settings(user.id, {s.setting_key: value, "current_game": g.code})
     updated = dict(user.settings or {})
     updated[s.setting_key] = value
     await safe_edit(
         callback.message,
-        await _game_menu_text(lang, g, user.id, updated),
+        await _game_menu_text(lang, g, user.id, updated, show_streak=not is_group),
         reply_markup=_get_game_keyboard(g, lang, chat_type=callback.message.chat.type),
     )
 

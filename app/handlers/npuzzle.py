@@ -5,7 +5,7 @@ from app.games.npuzzle import game
 from app.games.npuzzle.keyboards import tiles_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import validate_session
-from app.services.sessions import create_solo_session, finish_session, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, record_game_result, update_session_state, xp_gain_line
 from app.handlers.common import open_game_menu
 
 router = Router()
@@ -54,9 +54,9 @@ async def callback_move(callback: CallbackQuery) -> None:
     state = result["game_state"]
     if result["state"] == "win":
         await finish_session(session.id, state, winner_user_id=user.id)
-        await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state.get("moves", 0))
+        xp = await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state.get("moves", 0))
         await callback.message.edit_text(
-            lang["game-win"],
+            lang["game-win"] + xp_gain_line(xp, lang),
             reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"], active=False),
         )
         if menu_msg_id:
@@ -83,9 +83,9 @@ async def callback_give_up(callback: CallbackQuery) -> None:
     user, lang, session, state = result
     menu_msg_id = state.get("menu_message_id")
     await finish_session(session.id, state, winner_user_id=None)
-    await record_game_result(user.id, game.code, "loss", variant_key=str(state["size"]))
+    xp = await record_game_result(user.id, game.code, "loss", variant_key=str(state["size"]))
     await callback.message.edit_text(
-        lang["game-lose"],
+        lang["game-lose"] + xp_gain_line(xp, lang),
         reply_markup=tiles_keyboard(session.id, state["tiles"], state["size"], active=False),
     )
     if menu_msg_id:

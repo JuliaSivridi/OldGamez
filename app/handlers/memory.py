@@ -29,7 +29,11 @@ from app.services.sessions import (
     get_session_by_id,
     record_game_result,
     update_session_state,
+    xp_gain_from_state,
+    xp_gain_line,
+    xp_group_line,
 )
+from app.services.levels import level_icon
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard, open_game_menu
 
@@ -67,7 +71,7 @@ def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = Fals
     turn_line = lang["mem-your-turn"] if state.get("current_turn_user_id") == viewer_id else lang["mem-opp-turn"]
     return f"{header}\n\n{score}\n{turn_line}"
 
-def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False) -> str:
+def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False, winner_icon: str = "") -> str:
     rows, cols = state["rows"], state["cols"]
     total_pairs = len(state["cards"]) // 2
     header = f"{lang['icon-mem']} {lang['game-mem']} · {rows}×{cols}"
@@ -81,7 +85,7 @@ def render_group_text(lang: dict, state: dict, player_names: dict[int, str], fin
         if winner_id is None:
             result = lang["game-draw"]
         else:
-            result = f"{lang['group-winner']} {player_names.get(winner_id, str(winner_id))}"
+            result = f"{lang['group-winner']} {player_names.get(winner_id, str(winner_id))} {winner_icon}".rstrip()
         return f"{header}\n\n{score}\n\n{result}"
     current_id = state.get("current_turn_user_id")
     current_name = player_names.get(current_id, "?") if current_id else "?"
@@ -97,7 +101,11 @@ async def _sync_mem_duel(bot, session_id: int, state: dict, final: bool = False)
         u = await get_user_by_id(user_id)
         lang = get_language_pack(u.language_code if u else "en")
         is_active = not final and user_id == current_turn_id
-        return render_duel_text(lang, state, user_id, final=final), board_keyboard(session_id, state, is_active)
+        text = render_duel_text(lang, state, user_id, final=final)
+        if final and state.get("xp_gains"):
+            gain = xp_gain_from_state(state, user_id)
+            text += xp_gain_line(gain, lang)
+        return text, board_keyboard(session_id, state, is_active)
 
     await broadcast_private_duel_update(bot, [p1_id, p2_id], message_map, renderer)
 
@@ -259,9 +267,9 @@ async def _flip_solo(callback: CallbackQuery, session, user, lang: dict, idx: in
         if state["found"] == total_pairs:
             state["status"] = "won"
             await finish_session(session.id, state, winner_user_id=user.id)
-            await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state["moves"])
+            xp = await record_game_result(user.id, game.code, "win", variant_key=str(state["size"]), best_score=state["moves"])
             await callback.message.edit_text(
-                render_text(lang, state, final=True),
+                render_text(lang, state, final=True) + xp_gain_line(xp, lang),
                 reply_markup=board_keyboard(session.id, state, False),
             )
             menu_msg_id = state.get("menu_message_id")
@@ -345,10 +353,16 @@ async def _flip_duel(callback: CallbackQuery, session, user, lang: dict, idx: in
             state["status"] = "finished"
             vk = str(state["size"])
             await finish_session(session.id, state, winner_user_id=winner_id)
-            await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
-            await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
+            xp_p1 = await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
+            xp_p2 = await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
+            state["xp_gains"] = {
+                str(state["p1_id"]): {"xp": xp_p1.xp, "leveled_up": xp_p1.level_up.number if xp_p1.level_up else None},
+                str(state["p2_id"]): {"xp": xp_p2.xp, "leveled_up": xp_p2.level_up.number if xp_p2.level_up else None},
+            }
+            await update_session_state(session.id, state, None)
             await _sync_mem_duel(callback.bot, session.id, state, final=True)
             await delete_guest_join_msg(callback.bot, state)
+
             menu_msg_id = state.get("menu_message_id")
             menu_chat = state.get("menu_chat_id")
             if menu_msg_id and menu_chat:
@@ -452,11 +466,18 @@ async def _flip_group(callback: CallbackQuery, session, user, lang: dict, idx: i
             state["status"] = "finished"
             vk = str(state["size"])
             await finish_session(session.id, state, winner_user_id=winner_id)
-            await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
-            await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
+            xp_p1 = await record_game_result(state["p1_id"], game.code, p1_result, variant_key=vk)
+            xp_p2 = await record_game_result(state["p2_id"], game.code, p2_result, variant_key=vk)
+            p1_name = player_names.get(state["p1_id"], str(state["p1_id"]))
+            p2_name = player_names.get(state["p2_id"], str(state["p2_id"]))
             menu_msg_id = state.get("menu_message_id")
+            w_icon = ""
+            if winner_id is not None:
+                winner_obj = await get_user_by_id(winner_id)
+                if winner_obj is not None:
+                    w_icon = level_icon(winner_obj.xp or 0, group_lang)
             await callback.message.edit_text(
-                render_group_text(group_lang, state, player_names, final=True),
+                render_group_text(group_lang, state, player_names, final=True, winner_icon=w_icon) + xp_group_line([(p1_name, xp_p1), (p2_name, xp_p2)], group_lang),
                 reply_markup=board_keyboard(session.id, state, False),
             )
             if menu_msg_id:

@@ -12,7 +12,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.duels import duel_invite_keyboard
 from app.services.duels import broadcast_private_duel_update, build_duel_invite_text, delete_guest_join_msg, get_duel_message_map, set_duel_message_ref
-from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state
+from app.services.sessions import activate_private_duel_session, create_private_duel_invite, create_solo_session, finish_session, get_game_streak_line, get_session_by_id, record_game_result, update_session_state, xp_gain_from_state, xp_gain_line
 from app.services.users import get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard
 
@@ -117,6 +117,9 @@ async def _render_battleship_duel_for_user(session, user_id: int) -> tuple[str, 
     opp_cover = state["p2_cover"] if is_p1 else state["p1_cover"]
     is_active = (not is_game_over) and state.get("current_turn_user_id") == user_id
     text = render_duel_text_for_viewer(state, lang, user_id, is_game_over=is_game_over)
+    if is_game_over and state.get("xp_gains"):
+        gain = xp_gain_from_state(state, user_id)
+        text += xp_gain_line(gain, lang)
     markup = board_keyboard(session.id, opp_cover, opp_board, is_active, is_game_over)
     return text, markup
 
@@ -186,8 +189,13 @@ async def _handle_duel_shot(callback: CallbackQuery, session, user, lang: dict, 
         winner_id = state["p1_id"] if state["result"] == "p1_wins" else state["p2_id"]
         loser_id = state["p2_id"] if state["result"] == "p1_wins" else state["p1_id"]
         await finish_session(session.id, state, winner_user_id=winner_id)
-        await record_game_result(winner_id, game.code, "win")
-        await record_game_result(loser_id, game.code, "loss")
+        xp_winner = await record_game_result(winner_id, game.code, "win")
+        xp_loser = await record_game_result(loser_id, game.code, "loss")
+        state["xp_gains"] = {
+            str(winner_id): {"xp": xp_winner.xp, "leveled_up": xp_winner.level_up.number if xp_winner.level_up else None},
+            str(loser_id): {"xp": xp_loser.xp, "leveled_up": xp_loser.level_up.number if xp_loser.level_up else None},
+        }
+        await update_session_state(session.id, state, None)
         refreshed = await get_session_by_id(session.id)
         if refreshed:
             await _sync_battleship_duel_messages(callback.bot, refreshed)
@@ -286,8 +294,11 @@ async def callback_shot(callback: CallbackQuery) -> None:
 
     if user_result["game_over"]:
         await finish_session(session.id, state, winner_user_id=user.id)
-        await record_game_result(user.id, game.code, "win")
-        await redraw(callback.message, session.id, lang, state, is_game_over=True, is_win=True)
+        xp = await record_game_result(user.id, game.code, "win")
+        await callback.message.edit_text(
+            render_game_text(lang, state, is_game_over=True, is_win=True) + xp_gain_line(xp, lang),
+            reply_markup=board_keyboard(session.id, state["bot_cover"], state["bot_board"], is_active=False, is_game_over=True),
+        )
         if menu_msg_id:
             try:
                 await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)
@@ -301,7 +312,15 @@ async def callback_shot(callback: CallbackQuery) -> None:
         state, outcome = await run_computer_turns(callback.message, session.id, lang, state)
         if outcome == "loss":
             await finish_session(session.id, state, winner_user_id=None)
-            await record_game_result(user.id, game.code, "loss")
+            xp = await record_game_result(user.id, game.code, "loss")
+            if xp_gain_line(xp, lang):
+                try:
+                    await callback.message.edit_text(
+                        render_game_text(lang, state, is_game_over=True, is_win=False) + xp_gain_line(xp, lang),
+                        reply_markup=board_keyboard(session.id, state["bot_cover"], state["bot_board"], is_active=False, is_game_over=True),
+                    )
+                except Exception:
+                    pass
             if menu_msg_id:
                 try:
                     await callback.bot.delete_message(callback.message.chat.id, menu_msg_id)

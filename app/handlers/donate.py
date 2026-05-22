@@ -34,7 +34,11 @@ async def cmd_donate(message: Message) -> None:
         return
     user = await upsert_user(message.from_user)
     lang = get_language_pack(user.language_code)
-    await message.answer(lang["donate-ask"], reply_markup=donate_keyboard(lang))
+    await message.answer(_donate_text(lang), reply_markup=donate_keyboard(lang))
+
+
+def _donate_text(lang: dict) -> str:
+    return f"{lang['donate-info']}\n\n{lang['donate-ask']}"
 
 
 @router.callback_query(F.data == "menu:donate")
@@ -43,7 +47,7 @@ async def callback_donate(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, lang["donate-ask"], reply_markup=donate_keyboard(lang))
+    await safe_edit(callback.message, _donate_text(lang), reply_markup=donate_keyboard(lang))
     await callback.answer()
 
 

@@ -12,6 +12,7 @@ from app.services.sessions import (
     get_active_solo_session,
     record_game_result,
     update_session_state,
+    xp_gain_line,
 )
 from app.services.users import upsert_user
 from app.handlers.common import open_game_menu
@@ -98,9 +99,9 @@ async def callback_move(callback: CallbackQuery) -> None:
 
     if result["state"] == "loss":
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, "loss", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
+        xp = await record_game_result(user.id, game.code, "loss", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
         await callback.message.edit_text(
-            lang["game-lose"],
+            lang["game-lose"] + xp_gain_line(xp, lang),
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
         if menu_msg_id:
@@ -113,9 +114,9 @@ async def callback_move(callback: CallbackQuery) -> None:
 
     if result["state"] == "win":
         await finish_session(session.id, state, winner_user_id=user.id)
-        await record_game_result(user.id, game.code, "win", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
+        xp = await record_game_result(user.id, game.code, "win", variant_key=_MINES_TO_VARIANT.get(state["mines_count"], "normal"))
         await callback.message.edit_text(
-            lang["game-win"],
+            lang["game-win"] + xp_gain_line(xp, lang),
             reply_markup=field_keyboard(lang, state, session.id, game_over=True),
         )
         if menu_msg_id:

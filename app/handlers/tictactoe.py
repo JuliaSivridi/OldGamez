@@ -32,7 +32,11 @@ from app.services.sessions import (
     get_session_by_id,
     record_game_result,
     update_session_state,
+    xp_gain_from_state,
+    xp_gain_line,
+    xp_group_line,
 )
+from app.services.levels import level_icon
 from app.services.users import format_player_name, get_user_by_id, update_user_settings, upsert_user
 from app.handlers.common import get_game_keyboard, open_game_menu
 
@@ -48,6 +52,7 @@ def render_group_status_text(
     state: dict,
     lang: dict[str, str],
     player_names: dict[int, str],
+    winner_icon: str = "",
 ) -> str:
     board_size = state["board_size"]
     win_length = state["win_length"]
@@ -58,7 +63,7 @@ def render_group_status_text(
         winner_id = state.get("winner_user_id")
         winner_symbol = lang["icon-xo-x"] if winner_id == state.get("player_x_id") else lang["icon-xo-o"]
         winner_name = player_names.get(winner_id, str(winner_id or ""))
-        return f"{lang['group-winner']} {winner_symbol} {winner_name}"
+        return f"{lang['group-winner']} {winner_symbol} {winner_name} {winner_icon}".rstrip()
 
     current_turn_user_id = state.get("current_turn_user_id")
     current_symbol = lang["icon-xo-x"] if current_turn_user_id == state.get("player_x_id") else lang["icon-xo-o"]
@@ -130,6 +135,9 @@ async def render_duel_message_for_user(session, user_id: int) -> tuple[str, obje
     else:
         text = render_status_text(state, lang, viewer_user_id=user_id)
         is_active = session.status == SessionStatus.active and session.current_turn_user_id == user_id
+        if state.get("xp_gains") and state.get("status") == "finished":
+            gain = xp_gain_from_state(state, user_id)
+            text += xp_gain_line(gain, lang)
 
     markup = board_keyboard(
         session_id=session.id,
@@ -449,17 +457,28 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             )
             other_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
             vk = str(state["board_size"])
+            x_user_obj = await get_user_by_id(state["player_x_id"])
+            o_user_obj = await get_user_by_id(state["player_o_id"])
+            x_name = format_player_name(x_user_obj)
+            o_name = format_player_name(o_user_obj)
             if duel_turn.state == "draw":
-                await record_game_result(user.id, game.code, "draw", variant_key=vk)
-                await record_game_result(other_user_id, game.code, "draw", variant_key=vk)
+                xp_x = await record_game_result(state["player_x_id"], game.code, "draw", variant_key=vk)
+                xp_o = await record_game_result(state["player_o_id"], game.code, "draw", variant_key=vk)
             else:
-                await record_game_result(user.id, game.code, "win", variant_key=vk)
-                await record_game_result(other_user_id, game.code, "loss", variant_key=vk)
+                winner_is_x = state["winner_user_id"] == state["player_x_id"]
+                xp_x = await record_game_result(state["player_x_id"], game.code, "win" if winner_is_x else "loss", variant_key=vk)
+                xp_o = await record_game_result(state["player_o_id"], game.code, "loss" if winner_is_x else "win", variant_key=vk)
+            winner_user_id = state.get("winner_user_id")
+            w_icon = ""
+            if winner_user_id is not None:
+                winner_obj = await get_user_by_id(winner_user_id)
+                if winner_obj is not None:
+                    w_icon = level_icon(winner_obj.xp or 0, group_lang)
             await callback.message.edit_text(
                 render_group_status_text(state, group_lang, {
-                    state["player_x_id"]: format_player_name(await get_user_by_id(state["player_x_id"])),
-                    state["player_o_id"]: format_player_name(await get_user_by_id(state["player_o_id"])),
-                }),
+                    state["player_x_id"]: x_name,
+                    state["player_o_id"]: o_name,
+                }, winner_icon=w_icon) + xp_group_line([(x_name, xp_x), (o_name, xp_o)], group_lang),
                 reply_markup=board_keyboard(
                     session_id=session.id,
                     board=state["board"],
@@ -534,12 +553,18 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
             other_user_id = state["player_o_id"] if state["player_x_id"] == user.id else state["player_x_id"]
             vk = str(state["board_size"])
             if duel_turn.state == "draw":
-                await record_game_result(user.id, game.code, "draw", variant_key=vk)
-                await record_game_result(other_user_id, game.code, "draw", variant_key=vk)
+                xp_mine = await record_game_result(user.id, game.code, "draw", variant_key=vk)
+                xp_other = await record_game_result(other_user_id, game.code, "draw", variant_key=vk)
             else:
-                await record_game_result(user.id, game.code, "win", variant_key=vk)
-                await record_game_result(other_user_id, game.code, "loss", variant_key=vk)
+                xp_mine = await record_game_result(user.id, game.code, "win", variant_key=vk)
+                xp_other = await record_game_result(other_user_id, game.code, "loss", variant_key=vk)
+            state["xp_gains"] = {
+                str(user.id): {"xp": xp_mine.xp, "leveled_up": xp_mine.level_up.number if xp_mine.level_up else None},
+                str(other_user_id): {"xp": xp_other.xp, "leveled_up": xp_other.level_up.number if xp_other.level_up else None},
+            }
+            await update_session_state(session.id, state, None)
             refreshed_session = await get_session_by_id(session.id)
+
             if refreshed_session is not None:
                 await sync_duel_messages(callback.bot, refreshed_session)
             await delete_guest_join_msg(callback.bot, state)
@@ -592,9 +617,9 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         state["status"] = "finished"
         state["result"] = user_turn.state
         await finish_session(session.id, state, winner_user_id=user.id if user_turn.state == "win" else None)
-        await record_game_result(user.id, game.code, user_turn.state or "draw", variant_key=str(state["board_size"]))
+        xp = await record_game_result(user.id, game.code, user_turn.state or "draw", variant_key=str(state["board_size"]))
         await callback.message.edit_text(
-            render_status_text(state, lang),
+            render_status_text(state, lang) + xp_gain_line(xp, lang),
             reply_markup=board_keyboard(
                 session_id=session.id,
                 board=state["board"],
@@ -645,9 +670,9 @@ async def callback_tictactoe_move(callback: CallbackQuery) -> None:
         state["status"] = "finished"
         state["result"] = bot_turn.state
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, bot_turn.state or "draw", variant_key=str(state["board_size"]))
+        xp = await record_game_result(user.id, game.code, bot_turn.state or "draw", variant_key=str(state["board_size"]))
         await callback.message.edit_text(
-            render_status_text(state, lang),
+            render_status_text(state, lang) + xp_gain_line(xp, lang),
             reply_markup=board_keyboard(
                 session_id=session.id,
                 board=state["board"],

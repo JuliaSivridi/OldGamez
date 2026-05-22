@@ -7,7 +7,7 @@ from app.games.hangman.keyboards import letters_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.handlers.utils import validate_session
 from app.i18n.translator import normalize_language_code
-from app.services.sessions import create_solo_session, finish_session, record_game_result, update_session_state
+from app.services.sessions import create_solo_session, finish_session, record_game_result, update_session_state, xp_gain_line
 from app.services.users import upsert_user
 from app.handlers.common import open_game_menu
 
@@ -80,10 +80,11 @@ async def callback_play(callback: CallbackQuery) -> None:
 
     if result['state'] == 'win':
         await finish_session(session.id, state, winner_user_id=user.id)
+        xp = 0
         if not state.get('hint_used', False):
-            await record_game_result(user.id, game.code, 'win', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
+            xp = await record_game_result(user.id, game.code, 'win', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
         await callback.message.edit_text(
-            render_text(lang, state, final='win'),
+            render_text(lang, state, final='win') + xp_gain_line(xp, lang),
             parse_mode=ParseMode.HTML,
         )
         if menu_msg_id:
@@ -96,9 +97,9 @@ async def callback_play(callback: CallbackQuery) -> None:
 
     if result['state'] == 'loss':
         await finish_session(session.id, state, winner_user_id=None)
-        await record_game_result(user.id, game.code, 'loss', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
+        xp = await record_game_result(user.id, game.code, 'loss', variant_key=_LIVES_TO_VARIANT.get(state['lives_total'], "normal"))
         await callback.message.edit_text(
-            render_text(lang, state, final='loss'),
+            render_text(lang, state, final='loss') + xp_gain_line(xp, lang),
             parse_mode=ParseMode.HTML,
         )
         if menu_msg_id:

@@ -15,12 +15,14 @@ from app.keyboards.menus import (
     rankings_keyboard,
 )
 from app.keyboards.timezone import TIMEZONE_REGIONS, timezone_cities_keyboard, timezone_regions_keyboard
-from app.services.levels import level_line
+from app.services.levels import LEVELS, level_line
 from app.services.sessions import (
     _TOP_MEDALS,
+    format_rank,
     get_cross_game_streak_line,
     get_game_stats_bulk,
     get_game_streaks_bulk,
+    get_user_global_rank,
     get_user_rankings,
 )
 from app.services.users import get_display_name, update_user_language, update_user_settings, upsert_user
@@ -31,18 +33,29 @@ from app.handlers.common import GAMES, _GAMES_BY_CODE
 router = Router()
 
 
-def _user_identity_line(user) -> str:
-    line = get_display_name(user)
-    display_name = next(
+async def _user_identity_block(user, lang) -> str:
+    """Expanded profile header: name/lang/tz · level line · rank · streak."""
+    header = get_display_name(user)
+    lang_display = next(
         (name for name, code in LANGUAGE_CHOICES.items() if code == user.language_code),
         "🇬🇧 English",
     )
-    line += f" | {display_name}"
+    header += f" | {lang_display}"
     tz = (user.settings or {}).get("timezone")
     if tz:
-        line += f" | 🌍 {tz}"
-    line += f"\n{level_line(user.xp or 0)}"
-    return line
+        header += f" | 🌍 {tz}"
+
+    details: list[str] = [level_line(user.xp or 0, lang)]
+
+    global_rank = await get_user_global_rank(user.id)
+    if global_rank is not None:
+        details.append(f"{lang.get('rank-label', 'Rank')}: {format_rank(global_rank)}")
+
+    streak_str = get_cross_game_streak_line(user, lang, brief=True)
+    if streak_str:
+        details.append(streak_str)
+
+    return header + "\n\n" + "\n".join(details)
 
 
 # ── Profile main screen ───────────────────────────────────────────────────────
@@ -53,7 +66,32 @@ async def callback_menu_profile(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await safe_edit(callback.message, await _user_identity_block(user, lang), reply_markup=profile_keyboard(lang))
+    await callback.answer()
+
+
+# ── XP reference screen ──────────────────────────────────────────────────────
+
+@router.callback_query(F.data == "profile:xp")
+async def callback_profile_xp(callback: CallbackQuery) -> None:
+    if callback.from_user is None:
+        return
+    user = await upsert_user(callback.from_user)
+    lang = get_language_pack(user.language_code)
+
+    xp_icon = lang.get("icon-xp", "⚡")
+    xp_label = lang.get("level-xp", "XP")
+
+    lines: list[str] = [f"{xp_icon} *{lang['xp-screen-ttl']}*", ""]
+    for lvl in LEVELS:
+        icon = lang.get(f"icon-level-{lvl.number}", "")
+        name = lang.get(f"level-{lvl.number}", str(lvl.number))
+        threshold = f"{lvl.xp_required:,}".replace(",", " ")
+        lines.append(f"{icon} *{name}* — {threshold} {xp_label}")
+
+    lines += ["", f"_{lang['xp-screen-note']}_"]
+    text = "\n".join(lines)
+    await safe_edit(callback.message, text, reply_markup=profile_keyboard(lang))
     await callback.answer()
 
 
@@ -69,7 +107,7 @@ async def callback_profile_streaks(callback: CallbackQuery) -> None:
     stat_games = [g for g in GAMES if g.stat is not None]
     streak_map = await get_game_streaks_bulk(user.id, [g.code for g in stat_games])
 
-    cross_streak = get_cross_game_streak_line(user, lang)
+    cross_streak = get_cross_game_streak_line(user, lang, brief=True)
 
     # col widths (display): current=3, best=4, date=6
     col_hdr = (
@@ -93,7 +131,7 @@ async def callback_profile_streaks(callback: CallbackQuery) -> None:
             f"`{cur_str:<3}{best_str:<4}{date_str:<6}{lang[f"icon-{g.open_suffix}"]} {name}`"
         )
 
-    streak_header = cross_streak.lstrip("\n") + "\n\n" if cross_streak else ""
+    streak_header = cross_streak + "\n\n" if cross_streak else ""
     streaks_text = (
         f"{lang['stat-col-streak']} *{lang['stat-streak-ttl']}*\n\n"
         + streak_header
@@ -146,17 +184,26 @@ async def callback_profile_rankings(callback: CallbackQuery) -> None:
         return
     user = await upsert_user(callback.from_user)
     lang = get_language_pack(user.language_code)
-    rankings = await get_user_rankings(user.id)
+    rankings, global_rank = await get_user_rankings(user.id), await get_user_global_rank(user.id)
 
-    if not rankings:
+    if not rankings and global_rank is None:
         text = lang["profile-rankings-empty"]
     else:
         lines = [f"*{lang['menu-rankings']}*", ""]
+        if global_rank is not None:
+            lines.append(f"{lang.get('rank-label', 'Rank')}: {format_rank(global_rank)}")
+            lines.append("")
         for game_code, pos in rankings:
             g = _GAMES_BY_CODE.get(game_code)
             game_name = lang[f"game-{g.open_suffix}"] if g else game_code
-            medal = _TOP_MEDALS[pos - 1] if pos <= len(_TOP_MEDALS) else f"#{pos}"
-            lines.append(f"{medal}  {lang[f"icon-{g.open_suffix}"]} {game_name}")
+            game_icon = lang.get(f"icon-{g.open_suffix}", "") if g else ""
+            if pos is None:
+                rank_str = "—"
+            elif pos <= len(_TOP_MEDALS):
+                rank_str = f"{_TOP_MEDALS[pos - 1]} #{pos}"
+            else:
+                rank_str = f"#{pos}"
+            lines.append(f"{rank_str}  {game_icon} {game_name}")
         text = "\n".join(lines)
 
     await safe_edit(callback.message, text, parse_mode="Markdown", reply_markup=rankings_keyboard(lang))
@@ -191,7 +238,7 @@ async def callback_profile_name_set(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     user = await update_user_settings(user.id, {"display_name_format": fmt})
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await safe_edit(callback.message, await _user_identity_block(user, lang), reply_markup=profile_keyboard(lang))
     await callback.answer()
 
 
@@ -262,7 +309,7 @@ async def callback_language_choice(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     user = await update_user_language(user.id, lang_code)
     lang = get_language_pack(lang_code)
-    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await safe_edit(callback.message, await _user_identity_block(user, lang), reply_markup=profile_keyboard(lang))
     await callback.answer(f"✅ {lang_name}")
 
 
@@ -306,5 +353,5 @@ async def callback_profile_tz_set(callback: CallbackQuery) -> None:
     user = await upsert_user(callback.from_user)
     user = await update_user_settings(user.id, {"timezone": tz})
     lang = get_language_pack(user.language_code)
-    await safe_edit(callback.message, _user_identity_line(user), reply_markup=profile_keyboard(lang))
+    await safe_edit(callback.message, await _user_identity_block(user, lang), reply_markup=profile_keyboard(lang))
     await callback.answer(f"✅ {tz}")
