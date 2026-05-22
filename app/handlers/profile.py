@@ -15,6 +15,7 @@ from app.keyboards.menus import (
     rankings_keyboard,
 )
 from app.keyboards.timezone import TIMEZONE_REGIONS, timezone_cities_keyboard, timezone_regions_keyboard
+from app.services.levels import level_line
 from app.services.sessions import (
     _TOP_MEDALS,
     get_cross_game_streak_line,
@@ -40,6 +41,7 @@ def _user_identity_line(user) -> str:
     tz = (user.settings or {}).get("timezone")
     if tz:
         line += f" | 🌍 {tz}"
+    line += f"\n{level_line(user.xp or 0)}"
     return line
 
 

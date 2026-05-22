@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models import GameSession, GameStat, SessionMode, SessionPlayer, SessionStatus, User, UserGameStreak
 from app.db.session import SessionLocal
+from app.services.levels import xp_for_result
 from app.services.users import get_display_name
 
 
@@ -410,6 +411,13 @@ async def record_game_result(
             )
             .values(**values)
         )
+
+        # Award XP for any result (win / draw / loss)
+        xp_gain = xp_for_result(variant_key, result)
+        if xp_gain > 0:
+            await session.execute(
+                update(User).where(User.id == user_id).values(xp=User.xp + xp_gain)
+            )
 
         if result == "win":
             # Determine user's local "today"
