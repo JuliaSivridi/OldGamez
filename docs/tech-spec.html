@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OldGamez — Technical Specification</title>
+<style>
+  @page { margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 0;
+  }
+
+  /* Cover page */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 72px;
+    background: #1c1c1c;
+    color: #fff;
+    page-break-after: always;
+  }
+  .cover .logo {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+  }
+  .cover .logo span { color: #e07e38; }
+  .cover .subtitle {
+    font-size: 18px;
+    color: #a1a1aa;
+    margin-bottom: 40px;
+  }
+  .cover .meta { font-size: 13px; color: #71717a; line-height: 2; }
+  .cover .meta strong { color: #d4d4d8; }
+  .cover .accent-line {
+    width: 60px;
+    height: 4px;
+    background: #e07e38;
+    border-radius: 2px;
+    margin-bottom: 32px;
+  }
+  .cover .inspiration {
+    margin-top: 48px;
+    padding: 16px 20px;
+    border: 1px solid #2a2a2a;
+    border-left: 3px solid #e07e38;
+    border-radius: 6px;
+    background: #222;
+    font-size: 12px;
+    color: #a1a1aa;
+    max-width: 480px;
+  }
+  .cover .inspiration strong { color: #e4e4e7; }
+
+  /* Content pages */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 56px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1c1c1c;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e07e38;
+    page-break-before: always;
+  }
+  h1:first-child { page-break-before: avoid; margin-top: 0; }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1c1c1c;
+    margin-top: 32px;
+    margin-bottom: 10px;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 20px;
+    margin-bottom: 6px;
+  }
+
+  p { margin-bottom: 12px; }
+
+  a { color: #e07e38; text-decoration: none; }
+
+  ul, ol {
+    margin: 8px 0 12px 22px;
+  }
+  li { margin-bottom: 4px; }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #d97706;
+  }
+
+  pre {
+    background: #1c1c1c;
+    color: #e4e4e7;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0 16px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 12.5px;
+  }
+  th {
+    background: #f4f4f5;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid #e4e4e7;
+    color: #374151;
+  }
+  td {
+    padding: 7px 12px;
+    border: 1px solid #e4e4e7;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+    margin-right: 4px;
+  }
+
+  .callout {
+    background: #fff7ed;
+    border-left: 3px solid #e07e38;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12.5px;
+  }
+
+  .note {
+    background: #f0f9ff;
+    border-left: 3px solid #0ea5e9;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12.5px;
+  }
+
+  .dir-tree {
+    background: #1c1c1c;
+    color: #e4e4e7;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0 16px;
+    font-family: 'Consolas', monospace;
+    font-size: 11.5px;
+    line-height: 1.8;
+  }
+  .dir-tree .dim { color: #71717a; }
+  .dir-tree .orange { color: #fb923c; }
+  .dir-tree .green { color: #86efac; }
+  .dir-tree .blue { color: #93c5fd; }
+
+  .toc {
+    background: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin: 24px 0 32px;
+  }
+  .toc h2 { margin-top: 0; margin-bottom: 12px; font-size: 15px; }
+  .toc ol { margin: 0; }
+  .toc li { margin-bottom: 6px; font-size: 13px; }
+  .toc li a { color: #374151; }
+  .toc li a:hover { color: #e07e38; }
+
+  @media print {
+    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo">Old<span>Gamez</span></div>
+  <div class="subtitle">Technical Specification</div>
+  <div class="accent-line"></div>
+  <div class="meta">
+    <strong>Version</strong> 1.0 &nbsp;·&nbsp; <strong>Date</strong> 2026-05-26<br>
+    <strong>Repository</strong> <a href="https://github.com/JuliaSivridi/OldGamez" style="color:#e07e38">github.com/JuliaSivridi/OldGamez</a><br>
+    <strong>Bot</strong> <a href="https://t.me/oldgamez_bot" style="color:#e07e38">@oldgamez_bot</a><br>
+    <strong>Stack</strong> Python 3.12 · aiogram 3.28.2 · PostgreSQL 16 · SQLAlchemy 2.0 · Docker Compose
+  </div>
+  <div class="inspiration">
+    <strong>15 classic mini-games</strong> — solo vs bot, private duels, group matches.<br>
+    XP · levels · per-game leaderboards · win streaks · 3 languages.
+  </div>
+</div>
+
+<div class="content" style="max-width:720px; margin:auto">
+
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#s1">Overview</a></li>
+      <li><a href="#s2">Tech Stack</a></li>
+      <li><a href="#s3">Architecture</a></li>
+      <li><a href="#s4">Package / Folder Structure</a></li>
+      <li><a href="#s5">Data Model</a></li>
+      <li><a href="#s6">Database Schema &amp; Migration History</a></li>
+      <li><a href="#s7">First-Launch Setup</a></li>
+      <li><a href="#s8">Game Session Flows</a></li>
+      <li><a href="#s9">Game Registry</a></li>
+      <li><a href="#s10">XP &amp; Gamification</a></li>
+      <li><a href="#s11">Interaction Surfaces</a></li>
+      <li><a href="#s12">Navigation — Callback Data Patterns</a></li>
+      <li><a href="#s13">HTTP Endpoints</a></li>
+      <li><a href="#s14">Background Tasks</a></li>
+      <li><a href="#s15">i18n</a></li>
+      <li><a href="#s16">First-Time Developer Setup</a></li>
+      <li><a href="#s17">Key Algorithms</a></li>
+    </ol>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s1">1. Overview</h1>
+
+  <p>OldGamez is an async Telegram bot that consolidates 15 classic mini-games under one username. Key design decisions:</p>
+  <ul>
+    <li><strong>Three play modes</strong> — solo vs bot, private duel via invite link, group match with inline buttons</li>
+    <li><strong>Unified gamification</strong> — XP, 7 AI-themed levels, per-game and cross-game win streaks, per-game and global leaderboards</li>
+    <li><strong>Inline keyboard UI only</strong> — no reply keyboards; messages update in-place via <code>edit_message_text</code>, works cleanly in groups</li>
+    <li><strong>Stateless handlers</strong> — all game state lives in <code>game_sessions.state</code> (PostgreSQL JSON); handlers can restart without losing games</li>
+    <li><strong>Zero-copy deployment</strong> — Docker Compose with <code>entrypoint.sh</code> running <code>alembic upgrade head</code> then the bot</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s2">2. Tech Stack</h1>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Library</th><th>Version</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Language</td><td>Python</td><td>3.12</td><td></td></tr>
+      <tr><td>Bot framework</td><td>aiogram</td><td>3.28.2</td><td>Async; long-polling; inline keyboards</td></tr>
+      <tr><td>Database driver</td><td>asyncpg</td><td>0.30.0</td><td>PostgreSQL async driver</td></tr>
+      <tr><td>SQLite driver</td><td>aiosqlite</td><td>0.21.0</td><td>Dev/testing alternative</td></tr>
+      <tr><td>ORM</td><td>SQLAlchemy</td><td>2.0.40</td><td>Async + <code>async_sessionmaker</code></td></tr>
+      <tr><td>Migrations</td><td>alembic</td><td>1.16.1</td><td>Async env; auto-run on startup</td></tr>
+      <tr><td>Config</td><td>pydantic-settings</td><td>2.9.1</td><td>Reads from <code>.env</code> via <code>BaseSettings</code></td></tr>
+      <tr><td>HTTP server</td><td>aiohttp</td><td>transitive</td><td>Healthcheck + dashboard; same event loop</td></tr>
+      <tr><td>Container</td><td>Docker Compose</td><td>—</td><td><code>bot</code> + <code>db</code> (postgres:16-alpine)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s3">3. Architecture</h1>
+
+  <h2>Pattern</h2>
+  <p><strong>Handler → Service → ORM → PostgreSQL</strong></p>
+  <p>No repository abstraction. Handler functions call service functions directly. Service functions open an <code>async with SessionLocal()</code> context, perform ORM operations, commit, and return domain objects or plain dicts.</p>
+
+  <h2>Data-flow diagram</h2>
+  <pre><code>User taps button
+       │
+       ▼
+ aiogram Dispatcher
+ (NullGuardMiddleware — guards from_user / message nulls)
+       │
+       ▼
+ Router (per-game or common)
+ handler function
+       │
+       ├─► upsert_user()              → users table
+       ├─► get / create session       → game_sessions table
+       ├─► GameXxx.method()           → pure Python game logic (no I/O)
+       ├─► update_session_state()     → UPDATE game_sessions
+       ├─► finish_session()           → UPDATE game_sessions status=finished
+       ├─► record_game_result()       → UPSERT game_stats + UPDATE users.xp + streaks
+       └─► message.edit_text()        → Telegram API</code></pre>
+
+  <h2>Write path (solo game move)</h2>
+  <ol>
+    <li>User taps inline button; aiogram delivers <code>CallbackQuery</code></li>
+    <li><code>NullGuardMiddleware</code> verifies <code>from_user</code> and <code>message</code> are not None</li>
+    <li>Handler calls <code>validate_session(callback, session_id)</code> — loads user + lang pack, verifies ownership and <code>status=active</code></li>
+    <li>Handler calls game logic method (pure Python, returns new state dict)</li>
+    <li>Handler calls <code>update_session_state(session_id, new_state, turn_user_id)</code> → SQLAlchemy UPDATE</li>
+    <li>If game over: <code>finish_session()</code> + <code>record_game_result()</code> → updates game_stats, user.xp, streaks</li>
+    <li>Handler calls <code>message.edit_text(rendered_board, reply_markup=keyboard)</code></li>
+  </ol>
+
+  <h2>Error handling</h2>
+  <ul>
+    <li><code>safe_edit()</code> wraps <code>edit_text()</code> and swallows <code>TelegramBadRequest: message is not modified</code></li>
+    <li>All other Telegram errors propagate to aiogram's default handler (logs and continues)</li>
+    <li>Feedback send/forward wrapped in try/except — best-effort delivery</li>
+    <li>Cleanup loop catches and logs exceptions per iteration</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s4">4. Package / Folder Structure</h1>
+
+  <div class="dir-tree">
+<span class="orange">OldGamez/</span><br>
+├── <span class="green">app/</span><br>
+│   ├── <span class="blue">main.py</span>             <span class="dim">Entry point: bot + healthcheck + cleanup loop</span><br>
+│   ├── <span class="blue">config.py</span>           <span class="dim">pydantic-settings Settings; lru_cache singleton</span><br>
+│   ├── <span class="blue">web.py</span>              <span class="dim">aiohttp: /health, /dashboard, REST endpoints</span><br>
+│   ├── <span class="green">db/</span><br>
+│   │   ├── <span class="blue">base.py</span>         <span class="dim">DeclarativeBase</span><br>
+│   │   ├── <span class="blue">models.py</span>       <span class="dim">All ORM models + SessionMode/SessionStatus enums</span><br>
+│   │   └── <span class="blue">session.py</span>      <span class="dim">create_async_engine + SessionLocal</span><br>
+│   ├── <span class="green">games/</span><br>
+│   │   ├── <span class="green">common/</span><br>
+│   │   │   ├── <span class="blue">interfaces.py</span>   <span class="dim">GameModule Protocol</span><br>
+│   │   │   └── <span class="blue">scoring.py</span>      <span class="dim">score_guess(secret, guess) → (bulls, cows)</span><br>
+│   │   └── <span class="orange">&lt;game&gt;/</span><br>
+│   │       ├── <span class="blue">game.py</span>         <span class="dim">Pure game logic class (no I/O, no DB)</span><br>
+│   │       └── <span class="blue">keyboards.py</span>    <span class="dim">Inline keyboard builders for this game</span><br>
+│   ├── <span class="green">handlers/</span><br>
+│   │   ├── <span class="blue">__init__.py</span>     <span class="dim">register_routers(dispatcher)</span><br>
+│   │   ├── <span class="blue">common.py</span>       <span class="dim">GAMES registry + main menu + generic stat/help/top handlers</span><br>
+│   │   ├── <span class="blue">profile.py</span>      <span class="dim">Profile, XP, streaks, stats, rankings, lang, TZ, name</span><br>
+│   │   ├── <span class="blue">donate.py</span>       <span class="dim">Telegram Stars donation flow</span><br>
+│   │   ├── <span class="blue">feedback.py</span>     <span class="dim">FSM-driven feedback + admin notification</span><br>
+│   │   ├── <span class="blue">duels.py</span>        <span class="dim">Private duel join dispatch registry</span><br>
+│   │   ├── <span class="blue">middleware.py</span>   <span class="dim">NullGuardMiddleware</span><br>
+│   │   ├── <span class="blue">utils.py</span>        <span class="dim">safe_edit(), validate_session()</span><br>
+│   │   └── <span class="blue">&lt;game&gt;.py</span>       <span class="dim">Per-game router: solo / duel / group handlers</span><br>
+│   ├── <span class="green">i18n/</span><br>
+│   │   ├── <span class="blue">languages.json</span>  <span class="dim">Translation strings for en / fi / ru</span><br>
+│   │   ├── <span class="blue">languages.py</span>    <span class="dim">LANGUAGE_CHOICES + LANGUAGE_LETTERS</span><br>
+│   │   └── <span class="blue">translator.py</span>   <span class="dim">load_translations() (lru_cache), get_language_pack(), pick()</span><br>
+│   ├── <span class="green">keyboards/</span><br>
+│   │   ├── <span class="blue">menus.py</span>        <span class="dim">main_menu_keyboard, game_menu_keyboard, profile_keyboard</span><br>
+│   │   ├── <span class="blue">duels.py</span>        <span class="dim">duel_invite_keyboard, group_duel_keyboard</span><br>
+│   │   ├── <span class="blue">language.py</span>     <span class="dim">Language selection keyboard</span><br>
+│   │   └── <span class="blue">timezone.py</span>     <span class="dim">TIMEZONE_REGIONS + region/city keyboards</span><br>
+│   └── <span class="green">services/</span><br>
+│       ├── <span class="blue">sessions.py</span>     <span class="dim">Session CRUD, result recording, leaderboard, streak helpers</span><br>
+│       ├── <span class="blue">users.py</span>        <span class="dim">upsert_user, update_user_settings, get_display_name</span><br>
+│       ├── <span class="blue">levels.py</span>       <span class="dim">LEVELS, XP helpers, level_line/compact/icon</span><br>
+│       ├── <span class="blue">duels.py</span>        <span class="dim">Duel link builders, broadcast_private_duel_update</span><br>
+│       └── <span class="blue">feedback.py</span>     <span class="dim">save_feedback()</span><br>
+├── <span class="green">migrations/versions/</span>  <span class="dim">5 Alembic migration files</span><br>
+├── <span class="blue">Dockerfile</span>            <span class="dim">python:3.12-slim; EXPOSE 8080</span><br>
+├── <span class="blue">docker-compose.yml</span>    <span class="dim">bot + db (postgres:16-alpine) services</span><br>
+├── <span class="blue">entrypoint.sh</span>         <span class="dim">alembic upgrade head &amp;&amp; python -m app.main</span><br>
+└── <span class="blue">requirements.txt</span>      <span class="dim">6 direct dependencies</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s5">5. Data Model</h1>
+
+  <h2>User</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td>Internal ID</td></tr>
+      <tr><td><code>telegram_user_id</code></td><td>BigInteger UNIQUE</td><td>Telegram user ID</td></tr>
+      <tr><td><code>username</code></td><td>String(64) nullable</td><td>Updated on every interaction</td></tr>
+      <tr><td><code>first_name</code></td><td>String(255) nullable</td><td>Updated on every interaction</td></tr>
+      <tr><td><code>last_name</code></td><td>String(255) nullable</td><td>Updated on every interaction</td></tr>
+      <tr><td><code>language_code</code></td><td>String(10)</td><td>default=<code>"en"</code>; overridden by <code>settings.language_manual</code></td></tr>
+      <tr><td><code>settings</code></td><td>JSON</td><td>See settings keys table below</td></tr>
+      <tr><td><code>xp</code></td><td>Integer</td><td>default=0; accumulated XP across all games</td></tr>
+      <tr><td><code>last_win_date</code></td><td>Date nullable</td><td>Cross-game streak calculation</td></tr>
+      <tr><td><code>current_win_streak</code></td><td>Integer</td><td>Cross-game active streak</td></tr>
+      <tr><td><code>best_win_streak</code></td><td>Integer</td><td>Cross-game all-time best</td></tr>
+      <tr><td><code>created_at</code> / <code>updated_at</code></td><td>DateTime(tz)</td><td>Auto-set</td></tr>
+    </tbody>
+  </table>
+
+  <h3>user.settings JSON keys</h3>
+  <table>
+    <thead><tr><th>Key</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>language_manual</code></td><td>str</td><td>Explicit language; overrides Telegram language</td></tr>
+      <tr><td><code>display_name_format</code></td><td>str</td><td><code>first</code> / <code>last</code> / <code>username</code> / <code>first_last</code> / <code>last_first</code> / <code>anon</code></td></tr>
+      <tr><td><code>purchased_anon</code></td><td>bool</td><td>Whether user paid 5 ⭐ for anonymous display</td></tr>
+      <tr><td><code>timezone</code></td><td>str</td><td>IANA timezone string; default <code>"UTC"</code></td></tr>
+      <tr><td><code>current_game</code></td><td>str|null</td><td>Last opened game; drives Back button page routing</td></tr>
+      <tr><td><code>last_seen_at</code></td><td>ISO datetime str</td><td>Set on /start; drives greeting variant</td></tr>
+      <tr><td><code>tictactoe_size</code></td><td>int 3–8</td><td>Board size; default 3</td></tr>
+      <tr><td><code>memory_size</code></td><td>int 3–8</td><td>Grid size key; default 4</td></tr>
+      <tr><td><code>minesweeper_mines</code></td><td>int 8/12/16</td><td>Mine count; default 12</td></tr>
+      <tr><td><code>lightsout_size</code></td><td>int 4/5/6</td><td>Grid size; default 5</td></tr>
+      <tr><td><code>npuzzle_size</code></td><td>int 3–8</td><td>Tile grid; default 3</td></tr>
+      <tr><td><code>mastermind_cmplx</code></td><td>str easy/norm/hard</td><td>default "easy"</td></tr>
+      <tr><td><code>bullscows_size</code></td><td>int 4/5/6</td><td>Secret length; default 4</td></tr>
+      <tr><td><code>hangman_lives</code></td><td>int 15/10/5</td><td>default 10</td></tr>
+      <tr><td><code>rps_mode</code></td><td>int 1/2/3</td><td>RPS variant; default 1</td></tr>
+      <tr><td><code>rpssl_mode</code></td><td>int 1/2/3</td><td>RPSSL variant; default 1</td></tr>
+    </tbody>
+  </table>
+
+  <h2>GameSession</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td></td></tr>
+      <tr><td><code>game_code</code></td><td>String(50)</td><td>One of the GAMES codes</td></tr>
+      <tr><td><code>mode</code></td><td>Enum SessionMode</td><td><code>solo</code> / <code>duel_private</code> / <code>group_match</code></td></tr>
+      <tr><td><code>status</code></td><td>Enum SessionStatus</td><td><code>pending</code> / <code>active</code> / <code>finished</code> / <code>abandoned</code> / <code>expired</code></td></tr>
+      <tr><td><code>join_code</code></td><td>String(32) UNIQUE nullable</td><td>8-hex random; present only while duel is pending; cleared on activation</td></tr>
+      <tr><td><code>invite_expires_at</code></td><td>DateTime(tz) nullable</td><td>TTL=7 days for private duels</td></tr>
+      <tr><td><code>telegram_chat_id</code></td><td>BigInteger nullable</td><td>Chat where the game message lives</td></tr>
+      <tr><td><code>created_by_user_id</code></td><td>FK users.id</td><td>Host/creator</td></tr>
+      <tr><td><code>current_turn_user_id</code></td><td>FK users.id nullable</td><td>Null for finished/pending</td></tr>
+      <tr><td><code>state</code></td><td>JSON</td><td>Full game state blob (game-specific structure)</td></tr>
+      <tr><td><code>winner_user_id</code></td><td>FK users.id nullable</td><td>Set on finish</td></tr>
+      <tr><td><code>started_at</code></td><td>DateTime(tz) nullable</td><td>Null for pending sessions</td></tr>
+      <tr><td><code>finished_at</code></td><td>DateTime(tz) nullable</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Invariant:</strong> When a new solo or duel session is created for a user+game that already has an active session, the existing session is set to <code>abandoned</code> before the new one is inserted.
+  </div>
+
+  <h2>SessionPlayer</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td></td></tr>
+      <tr><td><code>session_id</code></td><td>FK game_sessions.id</td><td></td></tr>
+      <tr><td><code>user_id</code></td><td>FK users.id</td><td></td></tr>
+      <tr><td><code>seat_no</code></td><td>Integer</td><td>1=host, 2=guest</td></tr>
+      <tr><td><code>role</code></td><td>String(50) nullable</td><td><code>"player"</code> (solo) / <code>"host"</code> / <code>"guest"</code></td></tr>
+      <tr><td><code>joined_at</code></td><td>DateTime(tz)</td><td></td></tr>
+    </tbody>
+  </table>
+  <p>Unique constraint: <code>(session_id, user_id)</code></p>
+
+  <h2>GameStat</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td></td></tr>
+      <tr><td><code>user_id</code></td><td>FK users.id</td><td></td></tr>
+      <tr><td><code>game_code</code></td><td>String(50)</td><td></td></tr>
+      <tr><td><code>variant_key</code></td><td>String(20)</td><td>default=<code>"default"</code>; for difficulty/size games: <code>"easy"/"normal"/"hard"</code> or <code>"3"</code>–<code>"8"</code></td></tr>
+      <tr><td><code>played</code></td><td>Integer</td><td></td></tr>
+      <tr><td><code>wins</code></td><td>Integer</td><td></td></tr>
+      <tr><td><code>losses</code></td><td>Integer</td><td></td></tr>
+      <tr><td><code>draws</code></td><td>Integer</td><td></td></tr>
+      <tr><td><code>best_score</code></td><td>Integer nullable</td><td>Lower = better (move count); LightsOut, N-Puzzle, Memory</td></tr>
+    </tbody>
+  </table>
+  <p>Unique constraint: <code>(user_id, game_code, variant_key)</code></p>
+
+  <h2>UserGameStreak</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td></td></tr>
+      <tr><td><code>user_id</code></td><td>FK users.id</td><td></td></tr>
+      <tr><td><code>game_code</code></td><td>String(50)</td><td></td></tr>
+      <tr><td><code>last_win_date</code></td><td>Date nullable</td><td></td></tr>
+      <tr><td><code>current_win_streak</code></td><td>Integer</td><td></td></tr>
+      <tr><td><code>best_win_streak</code></td><td>Integer</td><td></td></tr>
+    </tbody>
+  </table>
+  <p>Unique constraint: <code>(user_id, game_code)</code></p>
+
+  <h2>Feedback</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>Integer PK</td><td></td></tr>
+      <tr><td><code>user_id</code></td><td>FK users.id</td><td></td></tr>
+      <tr><td><code>message_text</code></td><td>Text</td><td>Raw text from user</td></tr>
+      <tr><td><code>created_at</code></td><td>DateTime(tz)</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s6">6. Database Schema &amp; Migration History</h1>
+
+  <p><strong>Current schema version:</strong> <code>a1e8c3f07b24</code> (migration 5 of 5)</p>
+
+  <table>
+    <thead><tr><th>Rev ID</th><th>Title</th><th>Date</th><th>Change</th></tr></thead>
+    <tbody>
+      <tr><td><code>0d7a54c2d5d9</code></td><td>initial schema</td><td>2026-05-15</td><td>users, game_sessions, session_players, game_stats (v1)</td></tr>
+      <tr><td><code>c4f2a8b0e691</code></td><td>add feedback</td><td>2026-05-18</td><td>feedback table</td></tr>
+      <tr><td><code>f81c4e9d2a30</code></td><td>game_stats variant_key</td><td>2026-05-18</td><td>Drop+recreate game_stats; add variant_key + best_score; new unique (user_id, game_code, variant_key)</td></tr>
+      <tr><td><code>b7d3f1a9c052</code></td><td>add win streaks</td><td>2026-05-20</td><td>last_win_date, current_win_streak, best_win_streak on users; new user_game_streaks table</td></tr>
+      <tr><td><code>a1e8c3f07b24</code></td><td>add user XP</td><td>2026-05-22</td><td>xp INTEGER NOT NULL DEFAULT 0 on users</td></tr>
+    </tbody>
+  </table>
+
+  <h2>PostgreSQL native enum types</h2>
+  <ul>
+    <li><code>sessionmode</code>: <code>solo</code>, <code>duel_private</code>, <code>group_match</code></li>
+    <li><code>sessionstatus</code>: <code>pending</code>, <code>active</code>, <code>finished</code>, <code>abandoned</code>, <code>expired</code></li>
+  </ul>
+
+  <div class="note">No soft-delete. Finished sessions are retained. Abandoned/expired sessions are hard-deleted weekly by <code>delete_stale_sessions()</code>.</div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s7">7. First-Launch Setup</h1>
+
+  <p>No authentication. Every Telegram user who sends a message is automatically registered.</p>
+
+  <ol>
+    <li>User sends <code>/start</code></li>
+    <li><code>upsert_user(tg_user)</code> — SELECT WHERE telegram_user_id = ?</li>
+    <li>If not found: INSERT new User with Telegram-provided name/username/language</li>
+    <li>If found: UPDATE username/first_name/last_name; preserve <code>language_code</code> if <code>language_manual</code> is set in settings</li>
+    <li>Language pack loaded: Telegram language code normalised to en/fi/ru (default en)</li>
+    <li>Greeting variant selected by comparing <code>settings["last_seen_at"]</code> with now:<br>
+      — No last_seen_at + created within 30 s → <code>hi-new</code><br>
+      — No last_seen_at + older user → <code>hi-return</code><br>
+      — Same calendar day → <code>hi-today</code><br>
+      — Away ≥ 14 days → <code>hi-away</code><br>
+      — Otherwise → <code>hi-return</code>
+    </li>
+    <li>Main menu sent; <code>last_seen_at</code> updated in user.settings</li>
+  </ol>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s8">8. Game Session Flows</h1>
+
+  <h2>Solo game</h2>
+  <ol>
+    <li>User selects game → handler calls <code>new_game_state()</code></li>
+    <li><code>create_solo_session()</code>: abandons any existing active solo session for same user+game; inserts new session <code>status=active</code></li>
+    <li>Board rendered and sent as new message</li>
+    <li>Each move: <code>validate_session()</code> → game logic → <code>update_session_state()</code></li>
+    <li>Game over: <code>finish_session()</code> + <code>record_game_result()</code> → XP + streak update</li>
+  </ol>
+
+  <h2>Private duel</h2>
+  <ol>
+    <li>Host taps "Duel" → <code>create_private_duel_invite()</code>: inserts <code>status=pending</code>, <code>join_code=secrets.token_hex(4)</code>, <code>invite_expires_at=now()+7d</code></li>
+    <li>Bot sends message with Telegram share button wrapping deep link</li>
+    <li>Deep link: <code>https://t.me/{BOT_USERNAME}?start=join_{join_code}</code></li>
+    <li>Guest taps link → <code>/start join_{code}</code> → <code>handle_private_duel_start()</code> → game-specific <code>join_private_duel()</code></li>
+    <li><code>activate_private_duel_session()</code>: adds guest as <code>SessionPlayer(seat_no=2)</code>; <code>status=active</code>; <code>join_code=None</code></li>
+    <li>Both players get separate messages; <code>message_ids</code> stored in state for <code>broadcast_private_duel_update()</code></li>
+  </ol>
+
+  <h2>Group match</h2>
+  <ol>
+    <li>User sends command in group → <code>create_group_match_session()</code>: <code>status=pending</code>, no join_code</li>
+    <li>Bot posts "waiting" message with inline "Join" button</li>
+    <li>Second member taps Join → <code>activate_group_match_session()</code>: adds guest; <code>status=active</code></li>
+    <li>Single message edited in-place as game progresses; XP and streaks recorded for both at finish</li>
+  </ol>
+
+  <h2>Cleanup TTLs</h2>
+  <ul>
+    <li>Private duel invites: expire after 7 days if not joined</li>
+    <li>Pending group matches: expire after 7 days if not joined</li>
+    <li>Expired + abandoned sessions: hard-deleted weekly</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s9">9. Game Registry</h1>
+
+  <p>All 15 games registered in <code>GAMES</code> list in <code>common.py</code>. Four lookup dicts built at startup.</p>
+
+  <table>
+    <thead><tr><th>Code</th><th>Commands</th><th>Solo</th><th>Duel</th><th>Group</th><th>Setting</th><th>Variants</th></tr></thead>
+    <tbody>
+      <tr><td><code>tic_tac_toe</code></td><td>/tictactoe /xo</td><td>✅</td><td>✅</td><td>✅</td><td>size 3–8</td><td>3/4/5/6/7/8</td></tr>
+      <tr><td><code>four_in_row</code></td><td>/fourinrow</td><td>✅</td><td>✅</td><td>✅</td><td>—</td><td>default</td></tr>
+      <tr><td><code>battleship</code></td><td>/battleship</td><td>✅</td><td>✅</td><td>—</td><td>—</td><td>default</td></tr>
+      <tr><td><code>minesweeper</code></td><td>/minesweeper</td><td>✅</td><td>—</td><td>—</td><td>mines 8/12/16</td><td>easy/normal/hard</td></tr>
+      <tr><td><code>lightsout</code></td><td>/lightsout</td><td>✅</td><td>—</td><td>—</td><td>size 4/5/6</td><td>4/5/6</td></tr>
+      <tr><td><code>npuzzle</code></td><td>/npuzzle</td><td>✅</td><td>—</td><td>—</td><td>size 3–8</td><td>3/4/5/6/7/8</td></tr>
+      <tr><td><code>mastermind</code></td><td>/mastermind</td><td>✅</td><td>—</td><td>—</td><td>easy/norm/hard</td><td>easy/normal/hard</td></tr>
+      <tr><td><code>bullscows</code></td><td>/bullscows</td><td>✅</td><td>—</td><td>—</td><td>size 4/5/6</td><td>easy/normal/hard</td></tr>
+      <tr><td><code>wordle</code></td><td>/wordle</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>default</td></tr>
+      <tr><td><code>hangman</code></td><td>/hangman</td><td>✅</td><td>—</td><td>—</td><td>lives 15/10/5</td><td>easy/normal/hard</td></tr>
+      <tr><td><code>memory</code></td><td>/memory</td><td>✅</td><td>✅</td><td>✅</td><td>size 3–8</td><td>3/4/5/6/7/8</td></tr>
+      <tr><td><code>blackjack</code></td><td>/blackjack</td><td>✅</td><td>✅</td><td>✅</td><td>—</td><td>default</td></tr>
+      <tr><td><code>ropasci</code></td><td>/rps</td><td>✅</td><td>✅</td><td>✅</td><td>mode 1/2/3</td><td>default</td></tr>
+      <tr><td><code>rpssl</code></td><td>/rpssl</td><td>✅</td><td>✅</td><td>✅</td><td>mode 1/2/3</td><td>default</td></tr>
+      <tr><td><code>random</code></td><td>/random</td><td>✅</td><td>—</td><td>—</td><td>—</td><td>no stats</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">Memory grid dimensions (rows × cols): 3→3×4, 4→4×4, 5→5×6, 6→6×6, 7→7×8, 8→8×8. All totals are even; pairs sampled from a pool of 64 emoji.</div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s10">10. XP &amp; Gamification</h1>
+
+  <h2>XP per result</h2>
+  <table>
+    <thead><tr><th>Variant key</th><th>Win XP</th><th>Draw XP</th><th>Loss XP</th></tr></thead>
+    <tbody>
+      <tr><td><code>easy</code> / <code>3</code></td><td>10</td><td>2</td><td>1</td></tr>
+      <tr><td><code>norm</code> / <code>normal</code> / <code>4</code></td><td>25 / 15</td><td>5 / 3</td><td>3 / 2</td></tr>
+      <tr><td><code>hard</code> / <code>8</code></td><td>60</td><td>12</td><td>6</td></tr>
+      <tr><td><code>5</code></td><td>25</td><td>5</td><td>3</td></tr>
+      <tr><td><code>6</code></td><td>35</td><td>7</td><td>4</td></tr>
+      <tr><td><code>7</code></td><td>50</td><td>10</td><td>5</td></tr>
+      <tr><td><code>default</code></td><td>15</td><td>3</td><td>2</td></tr>
+    </tbody>
+  </table>
+  <p>Draw = <code>round(win_xp × 0.2)</code>, min 1. Loss = <code>round(win_xp × 0.1)</code>, min 1.</p>
+
+  <h2>Level thresholds</h2>
+  <table>
+    <thead><tr><th>#</th><th>Name</th><th>Icon</th><th>XP threshold</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Toaster</td><td>🍞</td><td>0</td></tr>
+      <tr><td>2</td><td>Floppy</td><td>💾</td><td>1,000</td></tr>
+      <tr><td>3</td><td>Droid</td><td>🤖</td><td>4,000</td></tr>
+      <tr><td>4</td><td>Terminator</td><td>💀</td><td>12,000</td></tr>
+      <tr><td>5</td><td>HAL 9000</td><td>🔴</td><td>30,000</td></tr>
+      <tr><td>6</td><td>Skynet</td><td>🌐</td><td>65,000</td></tr>
+      <tr><td>7</td><td>42</td><td>🌌</td><td>120,000</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Leaderboard scoring (GAME_VARIANT_POINTS)</h2>
+  <table>
+    <thead><tr><th>Game</th><th>Points per win by variant</th></tr></thead>
+    <tbody>
+      <tr><td>tic_tac_toe, npuzzle</td><td>3→1, 4→2, 5→4, 6→8, 7→16, 8→25</td></tr>
+      <tr><td>memory</td><td>3→1, 4→1, 5→5, 6→5, 7→25, 8→25</td></tr>
+      <tr><td>lightsout</td><td>4→1, 5→5, 6→25</td></tr>
+      <tr><td>minesweeper, mastermind, hangman, bullscows</td><td>easy→1, normal→5, hard→25</td></tr>
+      <tr><td>four_in_row, battleship, wordle, blackjack, ropasci, rpssl</td><td>default→1</td></tr>
+    </tbody>
+  </table>
+  <p>Global rank = sum of all per-game weighted wins; position computed at query time (no stored rank column).</p>
+
+  <h2>Streak logic</h2>
+  <p>Win streaks use the user's stored IANA timezone. Streak continues if <code>last_win_date == today - 1 day</code>; resets to 1 if gap &gt; 1 day; same-day wins are idempotent (no double count). Per-game and cross-game streaks are updated on every <code>record_game_result()</code> win.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s11">11. Interaction Surfaces</h1>
+
+  <h2>Main menu</h2>
+  <ul>
+    <li><strong>Private:</strong> two pages of games; compact user info line (Name | Level icon ⚡XP | rank | streak); page switch via <code>menu:page:{n}</code></li>
+    <li><strong>Group:</strong> single page; only games with <code>group_row != None</code>; info line suppressed</li>
+    <li>Greeting variants driven by <code>last_seen_at</code>: hi-new / hi-today / hi-return / hi-away</li>
+  </ul>
+
+  <h2>Game menu</h2>
+  <ul>
+    <li>Shows: icon + name + current setting + per-game streak (private only)</li>
+    <li>Buttons: Play / Duel / Group / Size-Cmplx / 📊 Stats / 🏆 Top / ❓ Help / ⬅ Back</li>
+    <li>Group chat: only "Group" button shown; no Play or Duel buttons</li>
+  </ul>
+
+  <h2>Profile (private only)</h2>
+  <p>Keyboard layout: <code>adjust(3, 2, 2, 1)</code> = Streaks/Stats/Rankings | XP/Name | Lang/Tz | Back</p>
+  <ul>
+    <li><code>profile:streaks</code> — per-game streak table</li>
+    <li><code>profile:stats</code> — per-game played/W/L/D table</li>
+    <li><code>profile:rankings</code> — global rank + all played games with positions</li>
+    <li><code>profile:xp</code> — level reference table + note explaining XP vs rank</li>
+    <li><code>profile:name</code> — display name format; anon mode purchasable for 5 ⭐</li>
+    <li><code>profile:lang</code> — language picker (🇬🇧 / 🇫🇮 / 🇷🇺)</li>
+    <li><code>profile:tz</code> — timezone picker (region → city, 2-column layout)</li>
+  </ul>
+
+  <h2>Donate</h2>
+  <p>Amounts: 50 / 100 / 200 / 500 Telegram Stars (currency <code>XTR</code>, <code>provider_token=""</code>). Explanation text shown before amount selection.</p>
+
+  <h2>Feedback</h2>
+  <p>Private chat only. FSM state <code>FeedbackStates.waiting_for_text</code>. Saved to DB; if <code>FEEDBACK_CHAT_ID</code> configured: sends formatted notification + forwards the original message to that chat.</p>
+
+  <h2>Admin Dashboard</h2>
+  <p>Protected by <code>DASHBOARD_TOKEN</code> query parameter. Self-contained HTML with: running games (hidden game state: mine field, bot board, secret), game stats summary, user list, feedback inbox with delete buttons.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s12">12. Navigation — Callback Data Patterns</h1>
+
+  <table>
+    <thead><tr><th>Pattern</th><th>Handler</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>menu:games</code></td><td>common</td><td>Back to main menu</td></tr>
+      <tr><td><code>menu:page:{n}</code></td><td>common</td><td>Switch main menu page</td></tr>
+      <tr><td><code>menu:top</code></td><td>common</td><td>Global leaderboard</td></tr>
+      <tr><td><code>menu:profile</code></td><td>profile</td><td>Profile screen</td></tr>
+      <tr><td><code>menu:feedback</code></td><td>feedback</td><td>Feedback entry (private only)</td></tr>
+      <tr><td><code>menu:donate</code></td><td>donate</td><td>Donate screen</td></tr>
+      <tr><td><code>main:back</code></td><td>common</td><td>Return to main menu</td></tr>
+      <tr><td><code>game:{suffix}</code></td><td>common</td><td>Open game menu</td></tr>
+      <tr><td><code>game:bot:{code}</code></td><td>per-game</td><td>Start solo game</td></tr>
+      <tr><td><code>game:duel:{code}</code></td><td>per-game</td><td>Create private duel invite</td></tr>
+      <tr><td><code>game:group:{code}</code></td><td>per-game</td><td>Create group match</td></tr>
+      <tr><td><code>game:cmplx/size/mode:{code}</code></td><td>common</td><td>Open setting screen</td></tr>
+      <tr><td><code>game:stat:{code}</code></td><td>common</td><td>Stats screen</td></tr>
+      <tr><td><code>game:top:{code}</code></td><td>common</td><td>Per-game leaderboard</td></tr>
+      <tr><td><code>game:help:{code}</code></td><td>common</td><td>Help text</td></tr>
+      <tr><td><code>{prefix}:{value}</code></td><td>common</td><td>Save complexity/size value</td></tr>
+      <tr><td><code>profile:*</code></td><td>profile</td><td>Profile sub-screens</td></tr>
+      <tr><td><code>lang:{code}:{name}</code></td><td>profile</td><td>Set language</td></tr>
+      <tr><td><code>profile:tz:region:{r}</code></td><td>profile</td><td>Pick TZ region</td></tr>
+      <tr><td><code>profile:tz:set:{tz}</code></td><td>profile</td><td>Save timezone</td></tr>
+      <tr><td><code>profile:name:set:{fmt}</code></td><td>profile</td><td>Set display format</td></tr>
+      <tr><td><code>profile:name:buy:anon</code></td><td>profile</td><td>Purchase anon mode (5 ⭐)</td></tr>
+      <tr><td><code>donate:{amount}</code></td><td>donate</td><td>Send Stars invoice</td></tr>
+      <tr><td><code>feedback:cancel</code></td><td>feedback</td><td>Cancel feedback</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deep link</h2>
+  <p><code>https://t.me/{BOT_USERNAME}?start=join_{join_code}</code> — handled by <code>cmd_start</code>, dispatched via <code>PRIVATE_DUEL_HANDLERS</code> registry to the game-specific join function.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s13">13. HTTP Endpoints</h1>
+
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Response</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/</code></td><td>—</td><td>"ok" text</td></tr>
+      <tr><td>GET</td><td><code>/health</code></td><td>—</td><td>"ok" text</td></tr>
+      <tr><td>GET</td><td><code>/dashboard</code></td><td><code>?token=</code></td><td>HTML page</td></tr>
+      <tr><td>DELETE</td><td><code>/dashboard/feedback/{id}</code></td><td><code>?token=</code></td><td>204</td></tr>
+      <tr><td>POST</td><td><code>/dashboard/users/{id}/toggle-anon</code></td><td><code>?token=</code></td><td>JSON</td></tr>
+    </tbody>
+  </table>
+  <p>The aiohttp server runs on the same async event loop as the aiogram bot via <code>asyncio.create_task</code>.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s14">14. Background Tasks</h1>
+
+  <h2>cleanup_loop() — asyncio.create_task</h2>
+  <pre><code>loop:
+  sleep 24h
+  expire_stale_private_duels()
+    -- SET status=expired WHERE mode=duel_private
+    -- AND status=pending AND invite_expires_at &lt; now()
+  expire_stale_group_matches()
+    -- SET status=expired WHERE mode=group_match
+    -- AND status=pending AND created_at &lt; now()-7d
+  days_since_deletion += 1
+  if days_since_deletion >= 7:
+    delete_stale_sessions()
+      -- DELETE WHERE status IN (expired, abandoned)
+    days_since_deletion = 0</code></pre>
+
+  <div class="note">Also runs once at startup (before polling begins) to catch sessions that expired while the bot was down.</div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s15">15. i18n</h1>
+
+  <p>Three language packs: <code>en</code>, <code>fi</code>, <code>ru</code>. Stored in <code>app/i18n/languages.json</code>, loaded once via <code>lru_cache</code>.</p>
+  <ul>
+    <li>Keys with multiple variants (greetings) are stored as <code>list[str]</code></li>
+    <li><code>pick(pack, key, **fmt)</code> randomly selects one; filters out variants containing <code>{name}</code> if name is empty</li>
+    <li>Language selection persisted as <code>user.settings["language_manual"]</code> — survives Telegram profile language changes</li>
+    <li>Alphabet for Hangman/Wordle: <code>LANGUAGE_LETTERS</code> (en: a–z; fi: a–z+å,ä,ö; ru: а–я)</li>
+    <li>Supported languages: <code>{"🇬🇧 English": "en", "🇫🇮 Suomi": "fi", "🇷🇺 Русский": "ru"}</code></li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s16">16. First-Time Developer Setup</h1>
+
+  <ol>
+    <li>Copy env file: <code>cp .env.example .env</code></li>
+    <li>Fill required variables:</li>
+  </ol>
+
+  <table>
+    <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>BOT_TOKEN</code></td><td>Token from @BotFather</td></tr>
+      <tr><td><code>BOT_USERNAME</code></td><td>Username without @ (needed for duel invite links)</td></tr>
+      <tr><td><code>DATABASE_URL</code></td><td><code>postgresql+asyncpg://botuser:botpass@db:5432/oldgamez</code></td></tr>
+      <tr><td><code>PORT</code></td><td>Healthcheck port; default 8080</td></tr>
+      <tr><td><code>DASHBOARD_TOKEN</code></td><td>Secret for /dashboard access</td></tr>
+      <tr><td><code>FEEDBACK_CHAT_ID</code></td><td>(Optional) Telegram chat ID for feedback notifications</td></tr>
+    </tbody>
+  </table>
+
+  <pre><code># Start
+docker compose up -d --build
+
+# entrypoint.sh runs:
+#   alembic upgrade head
+#   python -m app.main
+
+# Stop + wipe data
+docker compose down -v</code></pre>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h1 id="s17">17. Key Algorithms</h1>
+
+  <h2>TicTacToe — smart bot move (get_smart_move)</h2>
+  <pre><code>free_positions = all empty cells
+
+for each pos in free_positions:
+  if bot wins by placing here → return pos immediately
+
+  if user wins by placing here → add to "block" list
+  if bot gets (win_length-1) in a row → add to "nice" list
+  if user gets (win_length-1) in a row → add to "threat" list
+
+priority: block → nice → threat → center → corners → random
+
+# win_length = board_size for 3×3/4×4; board_size-1 for 5×5+</code></pre>
+
+  <h2>Bulls and Cows / Mastermind scoring (score_guess)</h2>
+  <pre><code>bulls = count(positions where secret[i] == guess[i])
+secret_rest = secret digits that didn't match positionally
+guess_rest  = guess digits that didn't match positionally
+cows = sum(min(secret_rest.count(x), guess_rest.count(x))
+           for x in set(guess_rest))
+return bulls, cows</code></pre>
+
+  <h2>Win ratio bar (_win_ratio_bar) — Largest Remainder Method</h2>
+  <pre><code>raw[i]     = count[i] / total * 10
+floored[i] = floor(raw[i])
+remainder  = 10 - sum(floored)
+
+sort segments by (raw[i] - floored[i]) descending
+assign 1 extra slot to each of top `remainder` segments
+
+render: win_icon × w_slots | draw_icon × d_slots | loss_icon × l_slots
+# always exactly 10 icons total</code></pre>
+
+  <h2>Blackjack soft-17 detection (is_soft)</h2>
+  <pre><code>if no ace in hand → return False
+non_ace_sum = sum of non-ace card values
+ace_count = count of aces
+return non_ace_sum + 11 + (ace_count - 1) ≤ 21
+  # True = at least one ace can be counted as 11 without busting</code></pre>
+  <p>Dealer uses <strong>H17 rule</strong>: hits on soft 17, stands on hard 17 and above.</p>
+
+  <h2>XP level detection (get_level)</h2>
+  <pre><code>current = LEVELS[0]
+for lvl in LEVELS:
+  if xp >= lvl.xp_required:
+    current = lvl
+return current   # last level whose threshold is ≤ xp</code></pre>
+
+  <h2>Win streak update (_compute_streak)</h2>
+  <pre><code>if last_win_date == today:
+  return unchanged          # idempotent
+
+if last_win_date == today - 1 day:
+  new_current = current + 1  # streak continues
+else:
+  new_current = 1            # streak broken or first win
+
+return today, new_current, max(best, new_current)</code></pre>
+
+  <h2>Leaderboard ranking (computed at query time)</h2>
+  <pre><code>user_score[uid] = sum(
+  wins * GAME_VARIANT_POINTS[game][variant]
+  for each GameStat row with wins > 0
+)
+my_pos = count(scores > my_score) + 1
+# No stored rank column — always recomputed fresh</code></pre>
+
+</div><!-- /content -->
+</body>
+</html>

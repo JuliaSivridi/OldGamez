@@ -28,6 +28,16 @@ class BlackjackGame:
     def is_blackjack(self, cards: list[dict[str, str]], cost: int) -> bool:
         return cost == 21 and len(cards) == 2
 
+    def is_soft(self, cards: list[dict]) -> bool:
+        """True if the hand contains an ace counted as 11 (soft hand)."""
+        if not any(c["rank"] == "!" for c in cards):
+            return False
+        costs = {"🤴": 10, "👸": 10, "👨‍🦰": 10, "🔟": 10, "9️⃣": 9, "8️⃣": 8, "7️⃣": 7, "6️⃣": 6, "5️⃣": 5, "4️⃣": 4, "3️⃣": 3, "2️⃣": 2}
+        non_ace = sum(costs[c["rank"]] for c in cards if c["rank"] != "!")
+        ace_count = sum(1 for c in cards if c["rank"] == "!")
+        # at least one ace can be counted as 11 without busting
+        return non_ace + 11 + (ace_count - 1) <= 21
+
     def new_game_state(self, lang: dict[str, str]) -> dict:
         comp_cards = [self._random_card(lang)]
         user_cards = [self._random_card(lang), self._random_card(lang)]
@@ -41,9 +51,14 @@ class BlackjackGame:
         }
 
     def dealer_finish(self, state: dict, lang: dict[str, str]) -> dict:
-        while state["comp_cost"] <= 17:
-            state["comp_cards"].append(self._random_card(lang))
-            state["comp_cost"] = self.cards_cost(state["comp_cards"])
+        """Dealer draws on 16 or less, and on soft 17 (H17 rule); stands on hard 17+."""
+        while True:
+            cost = state["comp_cost"]
+            if cost < 17 or (cost == 17 and self.is_soft(state["comp_cards"])):
+                state["comp_cards"].append(self._random_card(lang))
+                state["comp_cost"] = self.cards_cost(state["comp_cards"])
+            else:
+                break
         return state
 
     def resolve_result(self, lang: dict[str, str], comp_cards: list[dict[str, str]], comp_cost: int, user_cards: list[dict[str, str]], user_cost: int) -> dict:
@@ -191,7 +206,7 @@ class BlackjackGame:
         """Dealer finishes; winners = players with the highest non-busted hand."""
         comp_cards = state["comp_cards"]
         comp_cost = state["comp_cost"]
-        while comp_cost <= 17:
+        while comp_cost < 17 or (comp_cost == 17 and self.is_soft(comp_cards)):
             comp_cards.append(self._random_card_bare())
             comp_cost = self.cards_cost(comp_cards)
         state["comp_cards"] = comp_cards
