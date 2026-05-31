@@ -9,7 +9,7 @@ from aiogram.types import CallbackQuery, Message
 from app.db.models import SessionStatus
 from app.games.sheepwolves.game import SheepWolvesGame
 from app.games.sheepwolves.keyboards import board_keyboard
-from app.handlers.common import get_game_keyboard, open_game_menu
+from app.handlers.common import get_game_keyboard
 from app.handlers.filters import GameCallbackFilter
 from app.i18n.translator import get_language_pack
 from app.services.sessions import (
@@ -36,7 +36,12 @@ def _sw_menu_text(lang: dict) -> str:
 
 
 async def open_sw_menu(message: Message, user, lang: dict) -> None:
-    await open_game_menu(message, user, lang, game.code)
+    await update_user_settings(user.id, {"current_game": game.code})
+    streak = await get_game_streak_line(user.id, game.code, lang)
+    await message.answer(
+        _sw_menu_text(lang) + streak,
+        reply_markup=get_game_keyboard(game.code, lang, chat_type=message.chat.type),
+    )
 
 
 # ── Status text ───────────────────────────────────────────────────────────────

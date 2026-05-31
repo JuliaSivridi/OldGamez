@@ -73,11 +73,36 @@ class SheepWolvesGame:
 
     def _evaluate(self, sheep: list, wolves: list) -> int:
         """Heuristic score from wolves' perspective (higher = better for wolves)."""
-        sheep_r = sheep[0]
-        sheep_move_count = len(self.sheep_moves(sheep, wolves))
-        wolf_avg_row = sum(w[0] for w in wolves) / 4
-        # fewer sheep moves = better; sheep far from row 0 = better; wolves advanced = better
-        return sheep_move_count * (-3) + sheep_r * 4 + int(wolf_avg_row) * 2
+        sheep_r, sheep_c = sheep
+
+        # Fewer sheep moves = better for wolves
+        sheep_moves = len(self.sheep_moves(sheep, wolves))
+
+        # Sheep far from row 0 = good for wolves (wolves won't lose soon)
+        row_score = sheep_r * 5
+
+        # Column containment: sheep must be between the outermost wolves
+        wolf_cols = sorted(w[1] for w in wolves)
+        min_wc, max_wc = wolf_cols[0], wolf_cols[-1]
+        if min_wc <= sheep_c <= max_wc:
+            flank_score = 6
+        else:
+            flank_score = -12  # sheep has escaped the column fence
+
+        # Large gaps between adjacent wolves let sheep slip through
+        max_gap = max(wolf_cols[i + 1] - wolf_cols[i] for i in range(3))
+        gap_score = -max_gap * 2
+
+        # Wolves must stay IN FRONT of the sheep (row < sheep_r).
+        # Wolves that have overshot (row >= sheep_r) are useless blockers.
+        front_rows = [w[0] for w in wolves if w[0] < sheep_r]
+        if front_rows:
+            lead_row = max(front_rows)  # closest blocking wolf to sheep
+            front_score = lead_row * 2
+        else:
+            front_score = -20  # no wolf is between sheep and row-0 = critical
+
+        return row_score + sheep_moves * (-3) + flank_score + gap_score + front_score
 
     def _minimax(
         self,
