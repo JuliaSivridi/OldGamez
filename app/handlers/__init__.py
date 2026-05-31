@@ -18,6 +18,7 @@ from app.handlers.npuzzle import router as npuzzle_router
 from app.handlers.randomfun import router as randomfun_router
 from app.handlers.ropasci import router as ropasci_router
 from app.handlers.tictactoe import router as tictactoe_router
+from app.handlers.sheepwolves import router as sheepwolves_router
 from app.handlers.wordle import router as wordle_router
 
 
@@ -41,4 +42,5 @@ def register_routers(dispatcher: Dispatcher) -> None:
     dispatcher.include_router(mastermind_router)
     dispatcher.include_router(bullscows_router)
     dispatcher.include_router(memory_router)
+    dispatcher.include_router(sheepwolves_router)
     dispatcher.include_router(wordle_router)

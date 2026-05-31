@@ -125,13 +125,22 @@ GAMES: list[GameConfig] = [
         stat=StatConfig(variant=False, fields=["played", "wins", "losses", "draws"]),
         menu_page=1, menu_row=2, group_row=2,
     ),
-    # Row 3: Sea (solo)
+    # Row 3: Sea | SheepWolves
     GameConfig(
         code="battleship",
         cmds=["battleship"],
         menu_fn="app.handlers.battleship:open_battleship_menu",
         open_suffix="sea", open_text_fn="app.handlers.battleship:_sea_menu_text", open_needs_settings=False,
         keyboard=KeyboardConfig(None, "duel", None),
+        stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
+        menu_page=1, menu_row=3, group_row=None,
+    ),
+    GameConfig(
+        code="sheep_wolves",
+        cmds=["sheepwolves", "sw"],
+        menu_fn="app.handlers.sheepwolves:open_sw_menu",
+        open_suffix="sw", open_text_fn="app.handlers.sheepwolves:_sw_menu_text", open_needs_settings=False,
+        keyboard=KeyboardConfig(None, None, None),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
         menu_page=1, menu_row=3, group_row=None,
     ),
