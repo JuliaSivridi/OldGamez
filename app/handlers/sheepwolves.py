@@ -59,7 +59,7 @@ def render_status(state: dict, lang: dict) -> str:
 
 # ── Keyboard builder (context-aware) ─────────────────────────────────────────
 
-def _active_keyboard(session_id: int, state: dict) -> object:
+def _active_keyboard(session_id: int, state: dict, lang: dict) -> object:
     """Return the right keyboard for the current interactive state."""
     sheep = state["sheep"]
     wolves = state["wolves"]
@@ -69,7 +69,7 @@ def _active_keyboard(session_id: int, state: dict) -> object:
 
     if turn == "sheep" and player_side == "sheep":
         targets = game.sheep_moves(sheep, wolves)
-        return board_keyboard(session_id, sheep, wolves, sheep_targets=targets)
+        return board_keyboard(session_id, sheep, wolves, lang, sheep_targets=targets)
 
     if turn == "wolves" and player_side == "wolves":
         all_moves = game.all_wolf_moves(wolves, sheep)
@@ -77,19 +77,19 @@ def _active_keyboard(session_id: int, state: dict) -> object:
         if selected_wolf is not None and selected_wolf in selectables:
             wolf_targets = game.wolf_moves_for(selected_wolf, wolves, sheep)
             return board_keyboard(
-                session_id, sheep, wolves,
+                session_id, sheep, wolves, lang,
                 wolf_targets=wolf_targets,
                 selected_wolf=selected_wolf,
                 wolf_selectables=selectables,
             )
-        return board_keyboard(session_id, sheep, wolves, wolf_selectables=selectables)
+        return board_keyboard(session_id, sheep, wolves, lang, wolf_selectables=selectables)
 
     # Computer's turn — inactive board
-    return board_keyboard(session_id, sheep, wolves)
+    return board_keyboard(session_id, sheep, wolves, lang)
 
 
-def _inactive_keyboard(session_id: int, state: dict) -> object:
-    return board_keyboard(session_id, state["sheep"], state["wolves"])
+def _inactive_keyboard(session_id: int, state: dict, lang: dict) -> object:
+    return board_keyboard(session_id, state["sheep"], state["wolves"], lang)
 
 
 # ── Computer move helpers ─────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ async def _finish_game(
 
     await message.edit_text(
         render_status(state, lang) + xp_gain_line(xp, lang),
-        reply_markup=_inactive_keyboard(session_id, state),
+        reply_markup=_inactive_keyboard(session_id, state, lang),
     )
 
     menu_msg_id = state.get("menu_message_id")
@@ -151,7 +151,7 @@ async def _do_comp_wolves_move(
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await message.edit_text(
         render_status(state, lang),
-        reply_markup=_active_keyboard(session.id, state),
+        reply_markup=_active_keyboard(session.id, state, lang),
     )
 
 
@@ -176,7 +176,7 @@ async def _do_comp_sheep_move(
     await update_session_state(session.id, state, current_turn_user_id=user.id)
     await message.edit_text(
         render_status(state, lang),
-        reply_markup=_active_keyboard(session.id, state),
+        reply_markup=_active_keyboard(session.id, state, lang),
     )
 
 
@@ -202,7 +202,7 @@ async def start_sheep_wolves_game(
         # Show initial board (computer as sheep moves first)
         msg = await message.answer(
             render_status(state, lang),
-            reply_markup=_inactive_keyboard(session.id, state),
+            reply_markup=_inactive_keyboard(session.id, state, lang),
         )
         await asyncio.sleep(COMP_MOVE_DELAY)
         await _do_comp_sheep_move(msg, session, state, lang, user)
@@ -210,7 +210,7 @@ async def start_sheep_wolves_game(
         # Player is sheep — show valid sheep moves immediately
         await message.answer(
             render_status(state, lang),
-            reply_markup=_active_keyboard(session.id, state),
+            reply_markup=_active_keyboard(session.id, state, lang),
         )
 
 
@@ -270,7 +270,7 @@ async def callback_sheep_move(callback: CallbackQuery) -> None:
     await update_session_state(session_id, state, current_turn_user_id=None)
     await callback.message.edit_text(
         render_status(state, lang),
-        reply_markup=_inactive_keyboard(session_id, state),
+        reply_markup=_inactive_keyboard(session_id, state, lang),
     )
     await asyncio.sleep(COMP_MOVE_DELAY)
     await _do_comp_wolves_move(callback.message, session, state, lang, user)
@@ -306,7 +306,7 @@ async def callback_wolf_select(callback: CallbackQuery) -> None:
     await update_session_state(session_id, state, current_turn_user_id=user.id)
     await callback.message.edit_text(
         render_status(state, lang),
-        reply_markup=_active_keyboard(session_id, state),
+        reply_markup=_active_keyboard(session_id, state, lang),
     )
 
 
@@ -349,7 +349,7 @@ async def callback_wolf_move(callback: CallbackQuery) -> None:
     await update_session_state(session_id, state, current_turn_user_id=None)
     await callback.message.edit_text(
         render_status(state, lang),
-        reply_markup=_inactive_keyboard(session_id, state),
+        reply_markup=_inactive_keyboard(session_id, state, lang),
     )
     await asyncio.sleep(COMP_MOVE_DELAY)
     await _do_comp_sheep_move(callback.message, session, state, lang, user)

@@ -11,6 +11,7 @@ def board_keyboard(
     session_id: int,
     sheep: list,
     wolves: list,
+    lang: dict,
     *,
     sheep_targets: list | None = None,
     wolf_targets: list | None = None,
@@ -20,9 +21,9 @@ def board_keyboard(
     """
     Build 8×8 inline keyboard for Sheep & Wolves.
 
-    sheep_targets  – cells the sheep can move to (shown as 🟨, callback sw:sm)
-    wolf_targets   – cells the selected wolf can move to (shown as 🟨, callback sw:wm)
-    selected_wolf  – index of the currently-selected wolf (shown as 🟩)
+    sheep_targets  – cells the sheep can move to (🟨, callback sw:sm)
+    wolf_targets   – cells the selected wolf can move to (🟨, callback sw:wm)
+    selected_wolf  – index of the currently-selected wolf (🟩)
     wolf_selectables – indices of wolves the player may click to select (callback sw:ws)
     """
     sheep_pos = (sheep[0], sheep[1])
@@ -38,27 +39,27 @@ def board_keyboard(
             pos = (r, c)
 
             if not _is_dark(r, c):
-                row.append(InlineKeyboardButton(text="⬜", callback_data="sw:noop"))
+                row.append(InlineKeyboardButton(text=lang["sw-cell-light"], callback_data="sw:noop"))
 
             elif pos == sheep_pos:
-                row.append(InlineKeyboardButton(text="🐑", callback_data="sw:noop"))
+                row.append(InlineKeyboardButton(text=lang["sw-sheep"], callback_data="sw:noop"))
 
             elif pos in wolf_pos_map:
                 wi = wolf_pos_map[pos]
-                text = "🟩" if selected_wolf == wi else "🐺"
+                text = lang["sw-wolf-sel"] if selected_wolf == wi else lang["sw-wolf"]
                 cb = f"sw:ws:{session_id}:{wi}" if wi in selectables else "sw:noop"
                 row.append(InlineKeyboardButton(text=text, callback_data=cb))
 
             elif pos in sheep_target_set:
                 cb = f"sw:sm:{session_id}:{r}:{c}"
-                row.append(InlineKeyboardButton(text="🟨", callback_data=cb))
+                row.append(InlineKeyboardButton(text=lang["sw-move"], callback_data=cb))
 
             elif pos in wolf_target_set and selected_wolf is not None:
                 cb = f"sw:wm:{session_id}:{selected_wolf}:{r}:{c}"
-                row.append(InlineKeyboardButton(text="🟨", callback_data=cb))
+                row.append(InlineKeyboardButton(text=lang["sw-move"], callback_data=cb))
 
             else:
-                row.append(InlineKeyboardButton(text="⬛", callback_data="sw:noop"))
+                row.append(InlineKeyboardButton(text=lang["sw-cell-dark"], callback_data="sw:noop"))
 
         rows.append(row)
 

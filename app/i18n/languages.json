@@ -341,7 +341,13 @@
         "abbr-sw": "S&W",
         "help-sw": "1 sheep 🐑 vs 4 wolves 🐺 on a chessboard.\n\n*Sheep* moves diagonally in all directions.\n*Wolves* move diagonally forward only.\n\n🐑 *Sheep wins* by reaching the wolves’ starting row.\n🐺 *Wolves win* by blocking the sheep so it cannot move.\n\nSheep moves first. Sides are assigned randomly.",
         "sw-you-sheep": "You play as 🐑 Sheep",
-        "sw-you-wolves": "You play as 🐺 Wolves"
+        "sw-you-wolves": "You play as 🐺 Wolves",
+        "sw-cell-light": "⬜",
+        "sw-cell-dark": "⬛",
+        "sw-sheep": "🐑",
+        "sw-wolf": "🐺",
+        "sw-wolf-sel": "🟩",
+        "sw-move": "🟨"
     },
     "fi": {
         "hi-new": [
@@ -686,7 +692,13 @@
         "abbr-sw": "L&S",
         "help-sw": "1 lammas 🐑 vs 4 sutta 🐺 shakkilaudalla.\n\n*Lammas* liikkuu vinottain kaikkiin suuntiin.\n*Sudet* liikkuvat vain eteenpäin vinottain.\n\n🐑 *Lammas voittaa* saavuttamalla susien lähtörivin.\n🐺 *Sudet voittavat* sulkemalla lampaan niin, että se ei voi liikkua.\n\nLammas aloittaa. Puolet arvotaan satunnaisesti.",
         "sw-you-sheep": "Olet 🐑 Lammas",
-        "sw-you-wolves": "Olet 🐺 Sudet"
+        "sw-you-wolves": "Olet 🐺 Sudet",
+        "sw-cell-light": "⬜",
+        "sw-cell-dark": "⬛",
+        "sw-sheep": "🐑",
+        "sw-wolf": "🐺",
+        "sw-wolf-sel": "🟩",
+        "sw-move": "🟨"
     },
     "ru": {
         "hi-new": [
@@ -1027,6 +1039,12 @@
         "abbr-sw": "О&В",
         "help-sw": "1 овца 🐑 против 4 волков 🐺 на шахматной доске.\n\n*Овца* ходит по диагонали во все стороны.\n*Волки* ходят только вперёд по диагонали.\n\n🐑 *Овца побеждает*, добравшись до стартового ряда волков.\n🐺 *Волки побеждают*, заблокировав овцу так, чтобы ей некуда было ходить.\n\nОвца ходит первой. Стороны определяются случайно.",
         "sw-you-sheep": "Вы играете за 🐑 Овцу",
-        "sw-you-wolves": "Вы играете за 🐺 Волков"
+        "sw-you-wolves": "Вы играете за 🐺 Волков",
+        "sw-cell-light": "⬜",
+        "sw-cell-dark": "⬛",
+        "sw-sheep": "🐑",
+        "sw-wolf": "🐺",
+        "sw-wolf-sel": "🟩",
+        "sw-move": "🟨"
     }
 }
