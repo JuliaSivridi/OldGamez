@@ -1,6 +1,12 @@
 # OldGamez Bot
 
-A Telegram bot with classic mini-games — play solo against the bot, challenge a friend via invite link, or start a match right in a group chat.
+A Telegram bot with 16 classic mini-games — play solo against the bot, challenge a friend via invite link, or start a match right in a group chat.
+
+[![Bot](https://img.shields.io/badge/@oldgamez__bot-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/oldgamez_bot)
+![Python](https://img.shields.io/badge/Python_3.12-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![aiogram](https://img.shields.io/badge/aiogram_3.x-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)
+![Postgres](https://img.shields.io/badge/PostgreSQL_16-%23316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-%230db7ed?style=for-the-badge&logo=docker&logoColor=white)
 
 ---
 
@@ -11,6 +17,7 @@ A Telegram bot with classic mini-games — play solo against the bot, challenge 
 | ❌⭕ Tic-Tac-Toe | ✅ | ✅ | ✅ |
 | 🔴🟡 Four in a Row | ✅ | ✅ | ✅ |
 | 🚢 Battleship | ✅ | ✅ | |
+| 🐑🐺 Sheep & Wolves | ✅ | ✅ | ✅ |
 | 💣 Minesweeper | ✅ | | |
 | 🔆 Lights Out | ✅ | | |
 | 🧩 15-Puzzle | ✅ | | |
@@ -120,9 +127,10 @@ app/
 | `/start` | Main menu |
 | `/games` | List of all games |
 | `/lang` | Change interface language |
-| `/tictactoe` `/xo` | ❌⭕️ Tic-Tac-Toe |
+| `/tictactoe` `/xo` | ❌⭕ Tic-Tac-Toe |
 | `/fourinrow` | 🔴🟡 Four in a Row |
 | `/battleship` | 🚢 Battleship |
+| `/sheepwolves` `/sw` | 🐑🐺 Sheep & Wolves |
 | `/minesweeper` | 💣 Minesweeper |
 | `/lightsout` | 🔆 Lights Out |
 | `/npuzzle` | 🧩 15-Puzzle |
