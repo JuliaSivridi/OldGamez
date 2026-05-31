@@ -907,8 +907,17 @@ def format_leaderboard_text(
 
 # ── Streak display helpers ────────────────────────────────────────────────────
 
+def _streak_is_alive(last_win_date: date | None) -> bool:
+    """A streak is alive if the last win was today or yesterday."""
+    if last_win_date is None:
+        return False
+    return last_win_date >= date.today() - timedelta(days=1)
+
+
 def _format_streak_line(current: int, best: int, last_win_date: date | None, lang: dict) -> str:
     """Format per-game or cross-game streak line. Returns '' when no data."""
+    if not _streak_is_alive(last_win_date):
+        current = 0
     parts: list[str] = []
     if current > 0:
         if best > current:
@@ -951,10 +960,10 @@ def get_cross_game_streak_line(user, lang: dict, brief: bool = False) -> str:
     """Return cross-game streak line from already-loaded User object.
     brief=True → only current streak number (for main menu)."""
     current = getattr(user, "current_win_streak", None) or 0
-    if not current:
+    last_win_date = getattr(user, "last_win_date", None)
+    if not current or not _streak_is_alive(last_win_date):
         return ""
     if brief:
         return f"🔥 {lang.get('streak-label', 'Win streak')}: {current}"
     best = getattr(user, "best_win_streak", None) or 0
-    last_win_date = getattr(user, "last_win_date", None)
     return _format_streak_line(current, best, last_win_date, lang)
