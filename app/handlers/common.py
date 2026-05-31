@@ -20,6 +20,7 @@ from app.services.sessions import (
     format_variant_stats_text,
     get_all_game_stats,
     get_cross_game_streak_line,
+    streak_is_alive,
     get_game_leaderboard,
     get_game_stat,
     get_game_streak_line,
@@ -518,7 +519,8 @@ async def _open_main_menu(
             info_parts.append(format_rank(global_rank))
         if streak:
             current_streak = getattr(user, "current_win_streak", None) or 0
-            if current_streak:
+            last_win_date = getattr(user, "last_win_date", None)
+            if current_streak and streak_is_alive(last_win_date):
                 col = lang.get("stat-col-streak", "🔥")
                 info_parts.append(f"{col}{current_streak}")
         info_block = " | ".join(info_parts)
