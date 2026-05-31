@@ -5,9 +5,31 @@
 
 ---
 
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Tech Stack](#2-tech-stack)
+3. [Architecture](#3-architecture)
+4. [Package / Folder Structure](#4-package--folder-structure)
+5. [Data Model](#5-data-model)
+6. [Database / Storage Schema](#6-database--storage-schema)
+7. [First-Launch Setup](#7-first-launch-setup)
+8. [Game Session Flows](#8-game-session-flows)
+9. [Game Registry](#9-game-registry)
+10. [XP & Gamification](#10-xp--gamification)
+11. [Interaction Surfaces](#11-interaction-surfaces)
+12. [Navigation — Callback Data Patterns](#12-navigation--callback-data-patterns)
+13. [HTTP Endpoints](#13-http-endpoints)
+14. [Background Tasks](#14-background-tasks)
+15. [i18n](#15-i18n)
+16. [First-Time Developer Setup](#16-first-time-developer-setup)
+17. [Key Algorithms](#17-key-algorithms)
+
+---
+
 ## 1. Overview
 
-OldGamez is an async Telegram bot that consolidates 15 classic mini-games under one username. The main design goals are:
+OldGamez is an async Telegram bot that consolidates 16 classic mini-games under one username. The main design goals are:
 
 - **Three play modes** — solo vs bot, private duel via invite link, group match with inline buttons
 - **Unified gamification** — XP, 7 AI-themed levels, per-game and cross-game win streaks, per-game and global leaderboards
@@ -138,7 +160,8 @@ OldGamez/
 │   ├── env.py              Alembic async env
 │   └── versions/           5 migration files (see §6)
 ├── docs/
-│   └── tech-spec-example.css
+│   ├── tech-spec.md
+│   └── tech-spec.html
 ├── infra/
 │   └── notes.md
 ├── Dockerfile
@@ -391,7 +414,7 @@ No authentication flow. There is no sign-in step — every Telegram user who sen
 
 ## 9. Game Registry
 
-All 15 games registered in `GAMES` list in `common.py`. Lookup indices built at startup:
+All 16 games registered in `GAMES` list in `common.py`. Lookup indices built at startup:
 - `_GAMES_BY_CODE: dict[str, GameConfig]`
 - `_GAME_OPEN_BY_SUFFIX: dict[str, GameConfig]`
 - `_GAMES_BY_SETTING_PREFIX: dict[str, GameConfig]`
@@ -404,6 +427,7 @@ All 15 games registered in `GAMES` list in `common.py`. Lookup indices built at 
 | `tic_tac_toe` | `/tictactoe` `/xo` | ✅ | ✅ | ✅ | `tictactoe_size` (3–8) | size: 3/4/5/6/7/8 |
 | `four_in_row` | `/fourinrow` | ✅ | ✅ | ✅ | — | default |
 | `battleship` | `/battleship` | ✅ | ✅ | — | — | default |
+| `sheep_wolves` | `/sheepwolves` `/sw` | ✅ | ✅ | ✅ | — | default |
 | `minesweeper` | `/minesweeper` | ✅ | — | — | `minesweeper_mines` 8/12/16 | easy/normal/hard |
 | `lightsout` | `/lightsout` | ✅ | — | — | `lightsout_size` 4/5/6 | 4/5/6 |
 | `npuzzle` | `/npuzzle` | ✅ | — | — | `npuzzle_size` (3–8) | 3/4/5/6/7/8 |
@@ -457,7 +481,7 @@ Points per win by variant (used for ranking, not XP):
 | `memory` | 3=1, 4=1, 5=5, 6=5, 7=25, 8=25 |
 | `lightsout` | 4×4=1, 5×5=5, 6×6=25 |
 | `minesweeper`, `mastermind`, `hangman`, `bullscows` | easy=1, normal=5, hard=25 |
-| `four_in_row`, `battleship`, `wordle`, `blackjack`, `ropasci`, `rpssl` | default=1 |
+| `four_in_row`, `battleship`, `sheep_wolves`, `wordle`, `blackjack`, `ropasci`, `rpssl` | default=1 |
 
 Global rank = sum of all per-game weighted wins; position computed at query time (no stored rank column).
 
@@ -470,6 +494,8 @@ Win streaks use the user's stored timezone (IANA string from `user.settings["tim
 
 Both per-game (`UserGameStreak`) and cross-game (`User.current_win_streak`) streaks are maintained on every `record_game_result()` win call.
 
+**Stale streak display:** Streaks are not reset in the DB lazily — they reset to 1 on the next win. For display purposes, `streak_is_alive(last_win_date)` checks whether `last_win_date >= today - 1 day`; if not, the streak is shown as 0 / hidden in all UI surfaces (game menu, profile, main menu header).
+
 ---
 
 ## 11. Interaction Surfaces
@@ -479,8 +505,8 @@ Both per-game (`UserGameStreak`) and cross-game (`User.current_win_streak`) stre
 - `/start` or `/games` → `cmd_start` / `cmd_games_command`
 - Displays: bold title, compact user info line (private only): `Name | 🍞 ⚡847 | 🥇 #1 | 🔥3`
 - Group chat: info line suppressed; only title + greeting/nudge + game buttons
-- Two pages (private): page 1 = XO/BJ/Four/Mem/RPS/RPSSL/Sea; page 2 = Mines/Rand/LightsOut/NPuzzle/MM/BC/Wordle/Hang
-- Group chat: single page with games that have `group_row != None` (TicTacToe, FourInRow, Memory, Blackjack, RPS, RPSSL)
+- Two pages (private): page 1 = XO/BJ/Four/Mem/Sea/SW/RPS/RPSSL; page 2 = Mines/Rand/LightsOut/NPuzzle/MM/BC/Wordle/Hang
+- Group chat: single page with games that have `group_row != None` (TicTacToe, FourInRow, Memory, Blackjack, RPS, RPSSL, SheepWolves)
 - Callback `"menu:page:{n}"` → switch pages
 - Callback `"main:back"` → return to menu (page inferred from `current_game` setting)
 - Greeting variants: `hi-new`, `hi-today`, `hi-return`, `hi-away` (random choice from list in lang pack)
@@ -562,7 +588,12 @@ REST endpoints (all require `?token=TOKEN`):
 | `profile:name:buy:anon` | `profile.callback_profile_name_buy_anon` | Purchase anon mode |
 | `donate:{amount}` | `donate.callback_donate_amount` | Send Stars invoice |
 | `feedback:cancel` | `feedback.callback_feedback_cancel` | Cancel feedback |
-| `{game_join_cb}` | per-game handler | Join group match |
+| `sw:noop` | `sheepwolves.callback_noop` | Light square / inactive cell tap |
+| `sw:sm:{sid}:{r}:{c}` | `sheepwolves.callback_sheep_move` | Sheep move to (r, c) |
+| `sw:ws:{sid}:{wi}` | `sheepwolves.callback_wolf_select` | Select wolf #wi |
+| `sw:wm:{sid}:{wi}:{r}:{c}` | `sheepwolves.callback_wolf_move` | Move wolf #wi to (r, c) |
+| `sw:group_join:{sid}` | `sheepwolves.callback_sw_group_join` | Join SW group match |
+| `{game_join_cb}` | per-game handler | Join other group matches |
 
 ### Deep link
 
@@ -612,6 +643,8 @@ Keys with multiple variants (greeting strings) are stored as `list[str]`. `pick(
 Language selection persisted as `user.settings["language_manual"]` — survives Telegram profile language changes.
 
 Alphabet for Hangman/Wordle letter buttons stored in `LANGUAGE_LETTERS` (en: a–z; fi: a–z+å,ä,ö; ru: а–я).
+
+All game-specific display text — including board emoji — is stored in `languages.json` and accessed via the language pack. No hardcoded display strings in handler or keyboard code.
 
 ---
 
@@ -668,6 +701,39 @@ return random.choice(first non-empty priority list)
 ```
 
 Win length: board_size for 3×3 and 4×4; board_size-1 for 5×5 and larger.
+
+### Sheep & Wolves — minimax with alpha-beta pruning
+
+The bot plays both sides (sheep or wolves) using the same minimax engine. Wolves are maximising, sheep is minimising.
+
+**Board rules:**
+- 8×8 board, dark squares only (`(r+c) % 2 == 1`)
+- Wolves start at row 0, columns 1/3/5/7; can only move diagonally forward (`dr=+1`)
+- Sheep starts at row 7, random column from `{0,2,4,6}`; can move diagonally in all 4 directions
+- Sheep wins by reaching row 0; wolves win by leaving the sheep with no moves
+
+**Search depths:** wolves AI uses `depth=8`; sheep AI uses `depth=6`.
+
+**Evaluation function** (from wolves' perspective, higher = better for wolves):
+
+```
+sheep_moves   = len(valid moves for sheep)
+row_score     = sheep_r * 5                   # sheep far from row 0 is good
+flank_score   = +6 if sheep_c is between leftmost and rightmost wolf column
+              = -12 otherwise                 # sheep escaped the column fence
+gap_score     = -(max column gap between adjacent sorted wolves) * 2
+front_rows    = [w.row for w in wolves if w.row < sheep.row]
+front_score   = max(front_rows) * 2 if front_rows else -20
+                # wolves must stay in front of sheep (lower row);
+                # if no wolf is between sheep and row 0 → critical penalty
+return row_score + sheep_moves * (-3) + flank_score + gap_score + front_score
+```
+
+Terminal scores: wolves win → `+1000 + depth`; sheep win → `-1000 - depth` (deeper wins/losses are slightly less valued, which prefers faster victories).
+
+**Two-step wolf selection UX (player as wolves):**
+1. Player clicks a wolf → `sw:ws:{sid}:{wi}` callback: wolf is highlighted 🟩, valid destinations shown as 🟨; selection stored in `state["selected_wolf"]`
+2. Player clicks a 🟨 cell → `sw:wm:{sid}:{wi}:{r}:{c}` callback: wolf moves, state updated
 
 ### Bulls and Cows / Mastermind scoring (`score_guess`)
 
