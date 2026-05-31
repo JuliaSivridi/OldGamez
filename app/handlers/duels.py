@@ -16,6 +16,7 @@ PRIVATE_DUEL_HANDLERS: dict[str, str] = {
     "battleship": "app.handlers.battleship:join_battleship_duel",
     "blackjack": "app.handlers.blackjack:join_blackjack_duel",
     "memory": "app.handlers.memory:join_memory_duel",
+    "sheep_wolves": "app.handlers.sheepwolves:join_sw_duel",
 }
 
 

@@ -57,6 +57,26 @@ class SheepWolvesGame:
 
     # ── Game state ────────────────────────────────────────────────────────────
 
+    def new_duel_state(self, host_user_id: int, guest_user_id: int) -> dict:
+        """Create initial state for a duel/group match with randomly assigned sides."""
+        sheep_col = random.choice([0, 2, 4, 6])
+        if random.choice([True, False]):
+            sheep_uid, wolves_uid = host_user_id, guest_user_id
+        else:
+            sheep_uid, wolves_uid = guest_user_id, host_user_id
+        return {
+            "sheep": [7, sheep_col],
+            "wolves": [[0, 1], [0, 3], [0, 5], [0, 7]],
+            "turn": "sheep",
+            "sheep_user_id": sheep_uid,
+            "wolves_user_id": wolves_uid,
+            "current_turn_user_id": sheep_uid,
+            "selected_wolf": None,
+            "winner": None,
+            "status": "active",
+        }
+
+
     def new_game_state(self, player_side: str) -> dict:
         sheep_col = random.choice([0, 2, 4, 6])
         return {

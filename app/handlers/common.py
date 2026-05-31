@@ -140,9 +140,9 @@ GAMES: list[GameConfig] = [
         cmds=["sheepwolves", "sw"],
         menu_fn="app.handlers.sheepwolves:open_sw_menu",
         open_suffix="sw", open_text_fn="app.handlers.sheepwolves:_sw_menu_text", open_needs_settings=False,
-        keyboard=KeyboardConfig(None, None, None),
+        keyboard=KeyboardConfig(None, "duel", "group"),
         stat=StatConfig(variant=False, fields=["played", "wins", "losses"]),
-        menu_page=1, menu_row=3, group_row=None,
+        menu_page=1, menu_row=3, group_row=3,
     ),
     # Row 4: RPS | RPSSL  (continued below after page-2 block)
 
