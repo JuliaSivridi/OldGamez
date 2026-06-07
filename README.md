@@ -2,6 +2,9 @@
 
 A Telegram bot with 16 classic mini-games — play solo against the bot, challenge a friend via invite link, or start a match right in a group chat.
 
+> Originally built as 9 separate PHP bots (2025): [[PHP repo](https://github.com/JuliaSivridi/php_pikkupelit_bot)]
+> Consolidated into this project in 2026 using Claude as a coding agent.
+
 [![Bot](https://img.shields.io/badge/@oldgamez__bot-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/oldgamez_bot)
 
 ![Python](https://img.shields.io/badge/Python_3.12-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
