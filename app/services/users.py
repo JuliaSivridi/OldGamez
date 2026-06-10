@@ -6,11 +6,21 @@ from app.db.session import SessionLocal
 from app.i18n.translator import DEFAULT_LANGUAGE
 
 
+# Characters that break legacy-Markdown parsing in bot messages.
+# Names are sanitized at display time only — the DB keeps the real values.
+_MD_BREAKERS = str.maketrans("", "", "_*[]`")
+
+
+def md_safe(s: str) -> str:
+    """Strip characters that break legacy-Markdown from user-provided text."""
+    return s.translate(_MD_BREAKERS).strip()
+
+
 def get_display_name(user) -> str:
     fmt = (user.settings or {}).get("display_name_format", "first")
-    fn = user.first_name or ""
-    ln = user.last_name or ""
-    un = user.username or ""
+    fn = md_safe(user.first_name or "")
+    ln = md_safe(user.last_name or "")
+    un = md_safe(user.username or "")
     if fmt == "anon":
         return "#####"
     if fmt == "username" and un:

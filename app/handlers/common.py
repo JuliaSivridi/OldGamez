@@ -28,7 +28,7 @@ from app.services.sessions import (
     get_user_global_rank,
 )
 from app.services.levels import level_compact, level_line
-from app.services.users import get_display_name, get_user_setting, update_user_settings, upsert_user
+from app.services.users import get_display_name, get_user_setting, md_safe, update_user_settings, upsert_user
 
 router = Router()
 
@@ -498,7 +498,7 @@ def _greeting(user, lang: LanguagePack) -> str:
         else:
             key = "hi-return"
 
-    return pick(lang, key, name=(user.first_name or "").strip())
+    return pick(lang, key, name=md_safe(user.first_name or ""))
 
 
 async def _open_main_menu(

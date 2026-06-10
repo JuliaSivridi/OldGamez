@@ -14,7 +14,7 @@ from app.handlers.utils import safe_edit
 from app.i18n.translator import get_language_pack
 from app.keyboards.menus import main_menu_keyboard
 from app.services.feedback import save_feedback
-from app.services.users import upsert_user
+from app.services.users import md_safe, upsert_user
 
 router = Router()
 
@@ -80,8 +80,8 @@ async def handle_feedback_text(message: Message, state: FSMContext) -> None:
     settings = get_settings()
     if settings.feedback_chat_id:
         tg = message.from_user
-        name = " ".join(filter(None, [tg.first_name, tg.last_name]))
-        mention = f"@{tg.username}" if tg.username else f"id={tg.id}"
+        name = md_safe(" ".join(filter(None, [tg.first_name, tg.last_name])))
+        mention = f"@{md_safe(tg.username)}" if tg.username else f"id={tg.id}"
         dev_lang = get_language_pack("en")
         notify_text = dev_lang["feedback-notify"].format(
             name=name, mention=mention, lang_code=user.language_code
