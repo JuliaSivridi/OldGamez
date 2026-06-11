@@ -147,3 +147,10 @@ app/
 | `/random` | 🎲 Random fun (coin, card, dice) |
 | `/rps` | ✊ Rock Paper Scissors |
 | `/rpssl` | ✊ Rock Paper Scissors Lizard Spock 🖖 |
+
+---
+
+## Documentation
+
+- **Technical specification:** [`docs/tech-spec.md`](docs/tech-spec.md)
+
