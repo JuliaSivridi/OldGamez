@@ -86,6 +86,10 @@ User taps button
        └─► message.edit_text() → Telegram API
 ```
 
+### Display safety
+
+User-provided text (first name, last name, username) is stored in the DB unchanged, but **sanitized at display time** via `md_safe()` before being inserted into any bot message. `md_safe()` strips characters that break legacy-Markdown parsing (`_`, `*`, `[`, `]`, backtick). This prevents `sendMessage` failures for users whose Telegram names contain those characters.
+
 ### Write path (example: solo game move)
 
 1. User taps inline button; aiogram delivers `CallbackQuery`
@@ -152,7 +156,7 @@ OldGamez/
 │   │   └── timezone.py     TIMEZONE_REGIONS dict + region/city keyboards
 │   └── services/
 │       ├── sessions.py     All session CRUD, result recording, leaderboard, streak helpers
-│       ├── users.py        upsert_user, update_user_settings, get_display_name
+│       ├── users.py        upsert_user, update_user_settings, get_display_name, md_safe
 │       ├── levels.py       LEVELS definitions, XP helpers, level_line/level_compact/level_icon
 │       ├── duels.py        Duel link builders, message-map helpers, broadcast_private_duel_update
 │       └── feedback.py     save_feedback()
@@ -160,8 +164,7 @@ OldGamez/
 │   ├── env.py              Alembic async env
 │   └── versions/           5 migration files (see §6)
 ├── docs/
-│   ├── tech-spec.md
-│   └── tech-spec.html
+│   └── tech-spec.md
 ├── infra/
 │   └── notes.md
 ├── Dockerfile
