@@ -68,8 +68,10 @@ def render_duel_text(lang: dict, state: dict, viewer_id: int, final: bool = Fals
             result = lang["game-lose"]
         return f"{header}\n\n{score}\n\n{result}"
 
-    turn_line = lang["mem-your-turn"] if state.get("current_turn_user_id") == viewer_id else lang["mem-opp-turn"]
-    return f"{header}\n\n{score}\n{turn_line}"
+    is_my_turn = state.get("current_turn_user_id") == viewer_id
+    turn_line = lang["turn-user"] if is_my_turn else lang["turn-friend"]
+    turn_icon = lang["stat-normal"] if is_my_turn else lang["icon-user"]
+    return f"{header}\n\n{score}\n{turn_icon} {turn_line}"
 
 def render_group_text(lang: dict, state: dict, player_names: dict[int, str], final: bool = False, winner_icon: str = "") -> str:
     rows, cols = state["rows"], state["cols"]
